@@ -1,4 +1,11 @@
-// income.js
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize i18n
     translatePage();
@@ -7,16 +14,202 @@ document.addEventListener('DOMContentLoaded', () => {
     const langToggle = document.getElementById('langToggle');
     const incomeTableBody = document.getElementById('incomeTableBody');
     const totalIncomeEl = document.getElementById('totalIncome');
-    const invoiceCountEl = document.getElementById('invoiceCount');
     const cashIncomeEl = document.getElementById('cashIncome');
     const cardIncomeEl = document.getElementById('cardIncome');
+    const invoiceCountEl = document.getElementById('invoiceCount');
     
     const searchInput = document.getElementById('searchInput');
     const filterDateInput = document.getElementById('filterDate');
     const paymentFilter = document.getElementById('paymentFilter');
-    const resetFiltersBtn = document.getElementById('resetFilters');
+    const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
-    let allInvoices = []; // To be filled from DB
+    let allInvoices = [];
+
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    filterDateInput.value = today;
+    
+    const detailsModal = document.getElementById('detailsModal');
+    const detailsContent = document.getElementById('detailsContent');
+    const modalTitle = document.getElementById('modalTitle');
+    const addEditItemBtn = document.getElementById('addEditItemBtn');
+    const saveBillEditBtn = document.getElementById('saveBillEditBtn');
+    const printIncomeReportBtn = document.getElementById('printIncomeReportBtn');
+    
+    let currentEditingBillId = null;
+
+    window.viewBillDetails = function(id) {
+        const items = db.getRepairItems(id);
+        const detailsModal = document.getElementById('detailsModal');
+        const detailsContent = document.getElementById('detailsContent');
+        
+        detailsContent.innerHTML = `
+            <table class="w-full" style="border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #eee;">
+                        <th style="text-align: left; padding: 0.5rem;">Item</th>
+                        <th style="text-align: center; padding: 0.5rem;">Qty</th>
+                        <th style="text-align: right; padding: 0.5rem;">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${items.map(i => `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 0.5rem;">${i.item_name}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${i.quantity}</td>
+                            <td style="padding: 0.5rem; text-align: right;">$${i.unit_price.toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        
+        modalTitle.textContent = "Bill Details";
+        addEditItemBtn.style.display = 'none';
+        saveBillEditBtn.style.display = 'none';
+        detailsModal.classList.add('active');
+    };
+
+    window.editBill = function(bill) {
+        currentEditingBillId = bill.id;
+        const items = db.getRepairItems(bill.id);
+        
+        modalTitle.textContent = "Edit Bill - " + bill.customer_name;
+        addEditItemBtn.style.display = 'block';
+        saveBillEditBtn.style.display = 'block';
+        
+        renderEditItems(items);
+        detailsModal.classList.add('active');
+    };
+
+    function renderEditItems(items) {
+        detailsContent.innerHTML = `
+            <table class="w-full" id="editItemsTable">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="editItemsBody">
+                    ${items.map(i => `
+                        <tr>
+                            <td><input type="text" class="form-control" value="${i.item_name}"></td>
+                            <td><input type="number" class="form-control" value="${i.quantity}" style="width: 70px;"></td>
+                            <td><input type="number" class="form-control" value="${i.unit_price}" style="width: 100px;" step="0.01"></td>
+                            <td><button class="btn btn-outline" style="color:red;" onclick="this.closest('tr').remove()">×</button></td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    addEditItemBtn.onclick = () => {
+        const tbody = document.getElementById('editItemsBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="form-control" placeholder="New Item"></td>
+            <td><input type="number" class="form-control" value="1" style="width: 70px;"></td>
+            <td><input type="number" class="form-control" value="0" style="width: 100px;" step="0.01"></td>
+            <td><button class="btn btn-outline" style="color:red;" onclick="this.closest('tr').remove()">×</button></td>
+        `;
+        tbody.appendChild(tr);
+    };
+
+    saveBillEditBtn.onclick = () => {
+        if (!currentEditingBillId) return;
+        
+        const rows = document.querySelectorAll('#editItemsBody tr');
+        const newItems = [];
+        let newTotal = 0;
+        
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const name = inputs[0].value;
+            const qty = parseInt(inputs[1].value) || 0;
+            const price = parseFloat(inputs[2].value) || 0;
+            
+            if (name && qty > 0) {
+                newItems.push({ name, qty, price });
+                newTotal += qty * price;
+            }
+        });
+        
+        if (newItems.length === 0) {
+            alert("Bill must have at least one valid item");
+            return;
+        }
+
+        // Update database
+        db.deleteRepairItems(currentEditingBillId);
+        newItems.forEach(item => {
+            db.addRepairItem({
+                repair_id: currentEditingBillId,
+                item_name: item.name,
+                quantity: item.qty,
+                unit_price: item.price
+            });
+        });
+        
+        // Update repair total and description
+        const desc = newItems.map(i => i.name).join(', ');
+        db.updateRepairFull(currentEditingBillId, newTotal, desc);
+        
+        detailsModal.classList.remove('active');
+        loadInvoices();
+        alert("Bill updated successfully");
+    };
+
+    document.getElementById('closeDetailsBtn').addEventListener('click', () => {
+        document.getElementById('detailsModal').classList.remove('active');
+    });
+
+    printIncomeReportBtn.onclick = () => {
+        const t = translations[getCurrentLanguage()];
+        const tableHtml = document.querySelector('.table-container table').outerHTML;
+        const totalHtml = document.querySelector('.stat-grid').innerHTML;
+        
+        detailsContent.innerHTML = `
+            <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #0d9488; padding-bottom: 1rem;">
+                <h1 style="color: #0d9488;">${t.appName}</h1>
+                <h2>${t.incomeTitle} Report</h2>
+            </div>
+            <div class="stat-grid" style="margin-bottom: 2rem; display: flex; gap: 1rem;">
+                ${totalHtml}
+            </div>
+            ${tableHtml.replace('Actions', '').replace(/<button.*<\/button>/g, '')}
+        `;
+        
+        modalTitle.textContent = t.incomeTitle + " Report Preview";
+        addEditItemBtn.style.display = 'none';
+        saveBillEditBtn.style.display = 'none';
+        
+        // Add a print button specifically for the report inside the modal? 
+        // No, I'll just change saveBillEditBtn to Print if it's report mode.
+        saveBillEditBtn.textContent = t.print;
+        saveBillEditBtn.style.display = 'block';
+        saveBillEditBtn.onclick = async () => {
+            const { ipcRenderer } = require('electron');
+            const dateStr = filterDateInput.value || new Date().toISOString().split('T')[0];
+            const fileName = `IncomeReport_${dateStr}.pdf`;
+
+            const result = await ipcRenderer.invoke('print-to-pdf', {
+                folder: 'reports',
+                name: fileName
+            });
+
+            if (result.success) {
+                alert('Report saved to: ' + result.path);
+            } else {
+                alert('Saving failed: ' + result.error);
+            }
+        };
+        
+        detailsModal.classList.add('active');
+    };
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -24,48 +217,46 @@ document.addEventListener('DOMContentLoaded', () => {
         setLanguage(newLang);
     });
 
-    // Mock Database Fetch
+    // Load Data from DB
     async function loadInvoices() {
-        // Mock data
-        allInvoices = [
-            { id: 1, date: '2026-06-13', customer: 'Ahmed Mahmoud', payment: 'Cash', amount: 195.00 },
-            { id: 2, date: '2026-06-08', customer: 'Sara Allen', payment: 'ATM / Card', amount: 380.00 },
-            { id: 3, date: '2026-06-15', customer: 'Ahmed Mahmoud', payment: 'Cash', amount: 50.00 },
-            { id: 4, date: '2026-05-20', customer: 'John Doe', payment: 'ATM / Card', amount: 1200.00 }
-        ];
-
-        renderInvoices(allInvoices);
-        updateStats(allInvoices);
+        allInvoices = db.getRepairs();
+        applyFilters();
     }
 
     function renderInvoices(data) {
         incomeTableBody.innerHTML = '';
         data.forEach(inv => {
             const tr = document.createElement('tr');
-            const badgeClass = inv.payment === 'Cash' ? 'badge-cash' : 'badge-card';
             const lang = getCurrentLanguage();
             const t = translations[lang];
-            const paymentText = inv.payment === 'Cash' ? t.cash : t.card;
+            const paymentText = inv.payment_method === 'Cash' ? t.cash : t.card;
 
             tr.innerHTML = `
                 <td>${inv.date}</td>
-                <td>${inv.customer}</td>
-                <td><span class="badge ${badgeClass}">${paymentText}</span></td>
-                <td class="font-bold">$${inv.amount.toFixed(2)}</td>
+                <td><span class="font-bold text-teal" style="cursor: pointer;" onclick="viewBillDetails(${inv.id})">${inv.customer_name}</span></td>
+                <td><span class="badge ${inv.payment_method === 'Cash' ? 'badge-cash' : 'badge-card'}">${paymentText}</span></td>
+                <td class="font-bold">$${parseFloat(inv.total_amount).toFixed(2)}</td>
+                <td>
+                    ${inv.date === today ? `
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editBill(${JSON.stringify(inv).replace(/"/g, '&quot;')})">
+                            <span data-i18n="edit">Edit</span>
+                        </button>
+                    ` : ''}
+                </td>
             `;
             incomeTableBody.appendChild(tr);
         });
     }
 
     function updateStats(data) {
-        const total = data.reduce((sum, inv) => sum + inv.amount, 0);
-        const cash = data.filter(inv => inv.payment === 'Cash').reduce((sum, inv) => sum + inv.amount, 0);
-        const card = data.filter(inv => inv.payment === 'ATM / Card').reduce((sum, inv) => sum + inv.amount, 0);
+        const total = data.reduce((sum, inv) => sum + inv.total_amount, 0);
+        const cash = data.filter(i => i.payment_method === 'Cash').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const card = data.filter(i => i.payment_method === 'ATM / Card').reduce((sum, inv) => sum + inv.total_amount, 0);
 
         totalIncomeEl.textContent = `$${total.toFixed(2)}`;
-        invoiceCountEl.textContent = data.length;
         cashIncomeEl.textContent = `$${cash.toFixed(2)}`;
         cardIncomeEl.textContent = `$${card.toFixed(2)}`;
+        if (invoiceCountEl) invoiceCountEl.textContent = data.length;
     }
 
     // Filter Logic
@@ -75,8 +266,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const payment = paymentFilter.value;
 
         const filtered = allInvoices.filter(inv => {
-            const matchesSearch = inv.customer.toLowerCase().includes(searchTerm);
-            const matchesPayment = payment === 'all' || inv.payment === payment;
+            const matchesSearch = inv.customer_name.toLowerCase().includes(searchTerm);
+            const matchesPayment = payment === 'all' || inv.payment_method === payment;
             const matchesDate = !filterDate || inv.date === filterDate;
             
             return matchesSearch && matchesPayment && matchesDate;
@@ -94,10 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         searchInput.value = '';
         filterDateInput.value = '';
         paymentFilter.value = 'all';
-        renderInvoices(allInvoices);
-        updateStats(allInvoices);
+        applyFilters();
     });
 
-    // Initialize
+    // Initial Load
     loadInvoices();
 });

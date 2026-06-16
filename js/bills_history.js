@@ -1,4 +1,11 @@
-// bills_history.js
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize i18n
     translatePage();
@@ -13,7 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('closeModalBtn');
     const printBillBtn = document.getElementById('printBillBtn');
 
-    let allBills = []; // To be filled from DB
+    let allBills = [];
+
+    // Set default date to today
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    filterDateInput.value = today;
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -21,28 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setLanguage(newLang);
     });
 
-    // Mock Database Fetch
+    // Database Fetch
     async function loadBills() {
-        // Mock data with items
-        allBills = [
-            { 
-                id: 1, date: '2026-06-16', customer: 'Ahmed Mahmoud', payment: 'Cash', amount: 195.00,
-                carModel: 'Toyota Camry', odometer: '55000', notes: 'Oil change',
-                items: [
-                    { name: 'Engine Oil', qty: 1, price: 150, total: 150 },
-                    { name: 'Oil Filter', qty: 1, price: 45, total: 45 }
-                ]
-            },
-            { 
-                id: 2, date: '2026-06-16', customer: 'Sara Allen', payment: 'ATM / Card', amount: 380.00,
-                carModel: 'Honda Civic', odometer: '22000', notes: 'Brake check',
-                items: [
-                    { name: 'Brake Pads', qty: 1, price: 300, total: 300 },
-                    { name: 'Labor', qty: 1, price: 80, total: 80 }
-                ]
-            }
-        ];
-
+        allBills = db.getRepairs();
         applyFilters();
     }
 
@@ -51,37 +44,38 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(bill => {
             const tr = document.createElement('tr');
             tr.className = 'clickable-row';
-            const badgeClass = bill.payment === 'Cash' ? 'badge-cash' : 'badge-card';
+            const badgeClass = bill.payment_method === 'Cash' ? 'badge-cash' : 'badge-card';
             const lang = getCurrentLanguage();
             const t = translations[lang];
-            const paymentText = bill.payment === 'Cash' ? t.cash : t.card;
+            const paymentText = bill.payment_method === 'Cash' ? t.cash : t.card;
 
             tr.innerHTML = `
                 <td>${bill.date}</td>
-                <td>${bill.customer}</td>
+                <td>${bill.customer_name}</td>
                 <td><span class="badge ${badgeClass}">${paymentText}</span></td>
-                <td class="font-bold">$${bill.amount.toFixed(2)}</td>
+                <td class="font-bold">$${parseFloat(bill.total_amount).toFixed(2)}</td>
             `;
             tr.onclick = () => showBillDetails(bill);
             historyTableBody.appendChild(tr);
         });
     }
 
-    function showBillDetails(bill) {
+    async function showBillDetails(bill) {
         const lang = getCurrentLanguage();
         const t = translations[lang];
+
+        // Fetch items from DB
+        const items = db.getRepairItems(bill.id);
 
         billDetailContent.innerHTML = `
             <div style="border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
                 <div style="display: flex; justify-content: space-between;">
                     <div>
-                        <p><strong>${t.customer}:</strong> ${bill.customer}</p>
-                        <p><strong>${t.carModel}:</strong> ${bill.carModel}</p>
-                        <p><strong>${t.odometer}:</strong> ${bill.odometer}</p>
+                        <p><strong>${t.customer}:</strong> ${bill.customer_name}</p>
                     </div>
                     <div style="text-align: right;">
                         <p><strong>${t.date}:</strong> ${bill.date}</p>
-                        <p><strong>${t.payment}:</strong> ${bill.payment}</p>
+                        <p><strong>${t.payment}:</strong> ${bill.payment_method}</p>
                     </div>
                 </div>
             </div>
@@ -95,21 +89,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     </tr>
                 </thead>
                 <tbody>
-                    ${bill.items.map(item => `
+                    ${items.map(item => `
                         <tr style="border-bottom: 1px solid #eee;">
-                            <td style="padding: 0.5rem;">${item.name}</td>
-                            <td style="padding: 0.5rem; text-align: center;">${item.qty}</td>
-                            <td style="padding: 0.5rem; text-align: right;">$${item.price.toFixed(2)}</td>
-                            <td style="padding: 0.5rem; text-align: right;">$${item.total.toFixed(2)}</td>
+                            <td style="padding: 0.5rem;">${item.item_name}</td>
+                            <td style="padding: 0.5rem; text-align: center;">${item.quantity}</td>
+                            <td style="padding: 0.5rem; text-align: right;">$${parseFloat(item.unit_price).toFixed(2)}</td>
+                            <td style="padding: 0.5rem; text-align: right;">$${(item.quantity * item.unit_price).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
             <div style="text-align: right; margin-top: 1.5rem; font-size: 1.25rem; font-weight: 700; color: #0d9488;">
-                ${t.total}: $${bill.amount.toFixed(2)}
-            </div>
-            <div style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
-                <strong>${t.notes}:</strong> ${bill.notes || '---'}
+                ${t.total}: $${parseFloat(bill.total_amount).toFixed(2)}
             </div>
         `;
 
@@ -129,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filtered = allBills.filter(bill => {
             const matchesDate = !filterDate || bill.date === filterDate;
-            const matchesSearch = bill.customer.toLowerCase().includes(searchTerm);
+            const matchesSearch = bill.customer_name.toLowerCase().includes(searchTerm);
             return matchesDate && matchesSearch;
         });
 

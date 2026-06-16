@@ -1,4 +1,11 @@
-// billing.js
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize i18n
     translatePage();
@@ -20,14 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const payCashBtn = document.getElementById('payCash');
     const payCardBtn = document.getElementById('payCard');
     const confirmPrintBtn = document.getElementById('confirmPrintBtn');
+    const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
     const receiptModal = document.getElementById('receiptModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const printReceiptBtn = document.getElementById('printReceiptBtn');
     const receiptContent = document.getElementById('receiptContent');
+    const selectedCustomerDisplay = document.getElementById('selectedCustomerDisplay');
 
     let paymentMethod = 'Cash';
-    let customersData = []; 
     let selectedCustomer = null;
+    let isCurrentBillProcessed = false;
+    let currentBillData = null;
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -35,18 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setLanguage(newLang);
     });
 
-    // Mock Database Fetch
-    async function loadCustomers() {
-        // Enriched mock data
-        customersData = [
-            { id: 1, name: 'Ahmed Mahmoud', phone: '0501234567', car_name: 'Toyota Camry', plate_number: 'ABC-123' },
-            { id: 2, name: 'Sara Allen', phone: '0559876543', car_name: 'Honda Civic', plate_number: 'XYZ-789' },
-            { id: 3, name: 'John Smith', phone: '0561112223', car_name: 'Ford F-150', plate_number: 'TUX-456' },
-            { id: 4, name: 'Ahmed Ali', phone: '0564445556', car_name: 'Tesla Model 3', plate_number: 'EV-101' }
-        ];
-    }
-
-    // Dynamic Search
+    // Dynamic Search using Real DB
     customerSearch.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         if (term.length < 2) {
@@ -54,11 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const filtered = customersData.filter(c => 
-            c.name.toLowerCase().includes(term) || 
-            c.phone.includes(term)
-        );
-
+        const filtered = db.searchCustomers(term);
         renderSearchResults(filtered);
     });
 
@@ -181,9 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (inputs[0].value) {
                 lines.push({
                     name: inputs[0].value,
-                    qty: inputs[1].value,
-                    price: inputs[2].value,
-                    total: parseFloat(inputs[1].value) * parseFloat(inputs[2].value)
+                    qty: parseFloat(inputs[1].value) || 1,
+                    price: parseFloat(inputs[2].value) || 0,
+                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0)
                 });
             }
         });
@@ -193,14 +188,103 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const now = new Date();
+        const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        const grandTotal = lines.reduce((sum, l) => sum + l.total, 0);
+
+        currentBillData = {
+            customer_id: selectedCustomer.id,
+            lines: lines,
+            total_amount: grandTotal,
+            payment_method: paymentMethod,
+            date: todayStr,
+            odometer: document.getElementById('odometer').value,
+            notes: document.getElementById('notes').value
+        };
+
+        isCurrentBillProcessed = false;
+        confirmPaymentBtn.style.opacity = '1';
+        confirmPaymentBtn.disabled = false;
+
         generateReceipt(lines);
         receiptModal.classList.add('active');
     });
 
+    confirmPaymentBtn.addEventListener('click', () => {
+        if (isCurrentBillProcessed) {
+            const lang = getCurrentLanguage();
+            alert(translations[lang].billAlreadyProcessed);
+            return;
+        }
+
+        if (!currentBillData) return;
+
+        // Save to Database
+        const repairId = db.addRepair({
+            customer_id: currentBillData.customer_id,
+            description: currentBillData.lines.map(l => l.name).join(', '),
+            date: currentBillData.date,
+            total_amount: currentBillData.total_amount,
+            payment_method: currentBillData.payment_method,
+            odometer: currentBillData.odometer,
+            notes: currentBillData.notes
+        });
+
+        currentBillData.lines.forEach(l => {
+            db.addRepairItem({
+                repair_id: repairId,
+                item_name: l.name,
+                quantity: l.qty,
+                unit_price: l.price
+            });
+        });
+
+        isCurrentBillProcessed = true;
+        confirmPaymentBtn.style.opacity = '0.5';
+        
+        const lang = getCurrentLanguage();
+        alert(translations[lang].billProcessed);
+        
+        // Reset form after saving
+        resetForm();
+    });
+
+    function resetForm() {
+        customerSearch.value = '';
+        selectedCustomer = null;
+        if (selectedCustomerDisplay) {
+            selectedCustomerDisplay.innerHTML = '';
+            selectedCustomerDisplay.style.display = 'none';
+        }
+        
+        customerName.value = '';
+        customerPhone.value = '';
+        carModelInput.value = '';
+        plateNumberInput.value = '';
+
+        lineItemsBody.innerHTML = `
+            <tr>
+                <td><input type="text" class="form-control" placeholder="e.g. Engine Oil Change"></td>
+                <td><input type="number" class="form-control qty-input" value="1" min="1"></td>
+                <td><input type="number" class="form-control price-input" value="0" min="0" step="0.01"></td>
+                <td class="font-bold text-teal line-subtotal">$0.00</td>
+                <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
+            </tr>
+        `;
+        attachRowListeners(lineItemsBody.querySelector('tr'));
+        updateGrandTotal();
+        
+        isCurrentBillProcessed = false;
+        currentBillData = null;
+        receiptModal.classList.remove('active');
+    }
+
     function generateReceipt(lines) {
         const lang = getCurrentLanguage();
         const t = translations[lang];
-        const date = new Date().toLocaleDateString();
+        const now = new Date();
+        const date = now.toLocaleDateString();
+        const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         const total = grandTotalEl.textContent;
 
         receiptContent.innerHTML = `
@@ -218,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="text-align: right;">
                     <p><strong>${t.date}:</strong> ${date}</p>
                     <p><strong>${t.payment}:</strong> ${paymentMethod}</p>
+                    ${currentBillData && currentBillData.odometer ? `<p><strong>${t.odometer}:</strong> ${currentBillData.odometer}</p>` : ''}
                 </div>
             </div>
             <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
@@ -243,6 +328,26 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #0d9488;">
                 ${t.total}: ${total}
             </div>
+
+            ${currentBillData && currentBillData.notes ? `
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                <p style="margin: 0; font-weight: 700; color: #1e293b;">${t.notes}:</p>
+                <p style="margin: 0.5rem 0 0 0; color: #475569; white-space: pre-wrap;">${currentBillData.notes}</p>
+            </div>
+            ` : ''}
+
+            <!-- Footer Section -->
+            <div style="margin-top: 4rem; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 1rem;">
+                <div style="font-size: 0.9rem; color: #64748b;">
+                    <p><strong>Contact Us:</strong></p>
+                    <p>01010103777</p>
+                    <p>01010606016</p>
+                </div>
+                <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
+                    <p><strong>Engineer's Signature:</strong></p>
+                    <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                </div>
+            </div>
         `;
 
         if (lang === 'ar') {
@@ -254,8 +359,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     closeModalBtn.addEventListener('click', () => receiptModal.classList.remove('active'));
-    printReceiptBtn.addEventListener('click', () => window.print());
+    printReceiptBtn.addEventListener('click', async () => {
+        const { ipcRenderer } = require('electron');
+        const dateStr = currentBillData ? currentBillData.date : new Date().toISOString().split('T')[0];
+        const customerNameStr = (selectedCustomer ? selectedCustomer.name : 'Unknown').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const fileName = `${dateStr}_${customerNameStr}.pdf`;
 
-    // Initialize
-    loadCustomers();
+        const result = await ipcRenderer.invoke('print-to-pdf', {
+            folder: 'bills',
+            name: fileName
+        });
+
+        if (result.success) {
+            console.log('Bill saved to:', result.path);
+        } else {
+            alert('Printing/Saving failed: ' + result.error);
+        }
+    });
+
 });

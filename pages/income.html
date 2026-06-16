@@ -98,7 +98,10 @@
                         <option value="ATM / Card" data-i18n="card">Card</option>
                     </select>
                 </div>
-                <button class="btn btn-outline" id="resetFilters">↻</button>
+                <button class="btn btn-outline" id="resetFiltersBtn" data-i18n="reset">Reset</button>
+                <button class="btn btn-primary" id="printIncomeReportBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                </button>
             </div>
 
             <div class="table-container">
@@ -109,6 +112,7 @@
                             <th data-i18n="customer">Customer</th>
                             <th data-i18n="payment">Payment</th>
                             <th data-i18n="amount">Amount</th>
+                            <th data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="incomeTableBody">
@@ -118,6 +122,23 @@
             </div>
         </div>
     </main>
+
+    <!-- Details/Edit Modal -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="card-title" id="modalTitle" data-i18n="serviceHistory">Bill Details</h3>
+                <button class="btn btn-outline" id="addEditItemBtn" style="display: none;">+ Add Item</button>
+            </div>
+            
+            <div id="detailsContent" class="mt-4"></div>
+            
+            <div class="flex justify-between mt-6">
+                <button class="btn btn-outline" id="closeDetailsBtn" data-i18n="close">Close</button>
+                <button class="btn btn-primary" id="saveBillEditBtn" style="display: none;" data-i18n="save">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
     <script src="../js/i18n.js"></script>
     <script src="../js/income.js"></script>

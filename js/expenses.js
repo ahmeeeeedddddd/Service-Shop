@@ -1,4 +1,11 @@
-// expenses.js
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize i18n
     translatePage();
@@ -10,12 +17,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalExpensesEl = document.getElementById('totalExpenses');
     const filterDateInput = document.getElementById('filterDate');
     const expDateInput = document.getElementById('expDate');
+    const monthFilter = document.getElementById('monthFilter');
 
-    // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
+    let allExpenses = [];
+
+    // Set default dates
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     expDateInput.value = today;
-
-    let allExpenses = []; // To be filled from DB
+    filterDateInput.value = today;
+    
+    const currentMonth = new Date().toISOString().split('-').slice(0, 2).join('-');
+    monthFilter.value = currentMonth;
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -23,20 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setLanguage(newLang);
     });
 
-    // Mock Database Fetch
+    // Load Data
     async function loadExpenses() {
-        // Mock data
-        allExpenses = [
-            { id: 1, date: '2026-06-16', description: 'Shop rent', category: 'Rent', amount: 3500.00 },
-            { id: 2, date: '2026-06-16', description: 'Electricity bill', category: 'Utilities', amount: 420.00 },
-            { id: 3, date: '2026-06-10', description: 'Brake pads stock', category: 'Parts', amount: 1200.00 }
-        ];
-
+        allExpenses = db.getExpenses();
         applyFilters();
     }
 
     function renderExpenses(data) {
         expensesTableBody.innerHTML = '';
+        let total = 0;
         data.forEach(exp => {
             const tr = document.createElement('tr');
             const lang = getCurrentLanguage();
@@ -46,45 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td>${exp.date}</td>
                 <td>${exp.description}</td>
-                <td><span class="badge" style="background: #f1f5f9; color: #475569;">${categoryText}</span></td>
-                <td class="font-bold">$${exp.amount.toFixed(2)}</td>
-                <td><button class="btn btn-outline small remove-exp-btn" style="color: #ef4444; border-color: #fee2e2; padding: 2px 8px;">×</button></td>
+                <td><span class="badge" style="background: #e2e8f0; color: #475569;">${categoryText}</span></td>
+                <td class="font-bold text-red-500">$${parseFloat(exp.amount).toFixed(2)}</td>
             `;
             expensesTableBody.appendChild(tr);
+            total += exp.amount;
         });
-        
-        const total = data.reduce((sum, exp) => sum + exp.amount, 0);
         totalExpensesEl.textContent = `$${total.toFixed(2)}`;
     }
 
-    // Form Submission
+    // Save Expense
     expenseForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const newExp = {
-            id: Date.now(),
-            date: document.getElementById('expDate').value,
-            description: document.getElementById('expDesc').value,
-            category: document.getElementById('expCategory').value,
-            amount: parseFloat(document.getElementById('expAmount').value)
-        };
+        const description = document.getElementById('expDesc').value;
+        const amount = parseFloat(document.getElementById('expAmount').value);
+        const category = document.getElementById('expCategory').value;
+        const date = document.getElementById('expDate').value;
 
-        allExpenses.push(newExp);
-        // In real app: await db.saveExpense(newExp);
+        if (!description || isNaN(amount)) return;
+
+        db.addExpense({ description, amount, category, date });
         
         expenseForm.reset();
         expDateInput.value = today;
-        applyFilters();
-    });
-
-    // Remove Expense
-    expensesTableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-exp-btn')) {
-            const row = e.target.closest('tr');
-            const index = Array.from(expensesTableBody.children).indexOf(row);
-            // This is naive indexing, in real app use ID
-            allExpenses.splice(index, 1);
-            applyFilters();
-        }
+        loadExpenses();
     });
 
     // Filter Logic
@@ -99,10 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
         renderExpenses(filtered);
     }
 
-    [filterDateInput].forEach(input => {
-        input.addEventListener('input', applyFilters);
-    });
+    filterDateInput.addEventListener('input', applyFilters);
 
-    // Initialize
+    // Initial Load
     loadExpenses();
 });

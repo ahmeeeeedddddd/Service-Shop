@@ -415,15 +415,20 @@ tbody tr:hover {
 
 /* Print Specific */
 @media print {
-    body * { visibility: hidden; }
-    .print-area, .print-area * { visibility: visible; }
-    .print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+    body > *:not(.modal.active):not(.print-area) { display: none !important; }
+    .modal.active { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
+    .modal-content { 
+        box-shadow: none !important; 
+        border: none !important; 
+        padding: 0 !important; 
+        width: 100% !important; 
+        max-width: none !important; 
+        max-height: none !important; 
+        overflow: visible !important; 
     }
+    table { width: 100% !important; border-collapse: collapse !important; }
     .no-print { display: none !important; }
+    .print-area { display: block !important; width: 100% !important; }
 }
 
 /* Custom Scrollbar */

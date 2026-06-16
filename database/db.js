@@ -25,6 +25,8 @@ function initDB() {
       date TEXT,
       total_amount REAL,
       payment_method TEXT,
+      odometer TEXT,
+      notes TEXT,
       FOREIGN KEY(customer_id) REFERENCES customers(id)
     );
 
@@ -63,17 +65,26 @@ function initDB() {
       date TEXT
     );
   `);
+
+  // Run migrations
+  try {
+    db.exec("ALTER TABLE repairs ADD COLUMN odometer TEXT");
+  } catch (e) { /* Ignore if exists */ }
+  
+  try {
+    db.exec("ALTER TABLE repairs ADD COLUMN notes TEXT");
+  } catch (e) { /* Ignore if exists */ }
 }
 
 initDB();
 
 // --- Customers CRUD ---
 function getCustomers() {
-  return db.prepare('SELECT * FROM customers ORDER BY id DESC').all();
+  return db.prepare('SELECT * FROM customers ORDER BY name COLLATE NOCASE ASC').all();
 }
 
 function searchCustomers(term) {
-  const stmt = db.prepare('SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY id DESC');
+  const stmt = db.prepare('SELECT * FROM customers WHERE name LIKE ? OR phone LIKE ? ORDER BY name COLLATE NOCASE ASC');
   return stmt.all(`%${term}%`, `%${term}%`);
 }
 
@@ -83,16 +94,63 @@ function addCustomer(customer) {
   return info.lastInsertRowid;
 }
 
+function deleteCustomer(id) {
+  db.prepare('DELETE FROM customers WHERE id = ?').run(id);
+  // Also delete their repairs? Or keep for history? 
+  // Usually delete means everything, but for safety let's just delete the customer.
+  // repairs has FK but not ON DELETE CASCADE by default in my schema.
+}
+
+function getCustomerByPhone(phone) {
+  return db.prepare('SELECT * FROM customers WHERE phone = ?').get(phone);
+}
+
 // --- Repairs & Repair Items CRUD ---
 function addRepair(repair) {
-  const stmt = db.prepare('INSERT INTO repairs (customer_id, description, date, total_amount, payment_method) VALUES (?, ?, ?, ?, ?)');
-  const info = stmt.run(repair.customer_id, repair.description, repair.date, repair.total_amount, repair.payment_method);
+  const stmt = db.prepare('INSERT INTO repairs (customer_id, description, date, total_amount, payment_method, odometer, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(repair.customer_id, repair.description, repair.date, repair.total_amount, repair.payment_method, repair.odometer, repair.notes);
   return info.lastInsertRowid;
 }
 
 function addRepairItem(item) {
   const stmt = db.prepare('INSERT INTO repair_items (repair_id, item_name, quantity, unit_price) VALUES (?, ?, ?, ?)');
   stmt.run(item.repair_id, item.item_name, item.quantity, item.unit_price);
+}
+
+function getRepairs() {
+  return db.prepare(`
+    SELECT repairs.*, customers.name as customer_name 
+    FROM repairs 
+    JOIN customers ON repairs.customer_id = customers.id 
+    ORDER BY repairs.date DESC
+  `).all();
+}
+
+function getRepairItems(repairId) {
+  return db.prepare('SELECT * FROM repair_items WHERE repair_id = ?').all(repairId);
+}
+
+function getRepairById(id) {
+  return db.prepare(`
+    SELECT repairs.*, customers.name as customer_name 
+    FROM repairs 
+    JOIN customers ON repairs.customer_id = customers.id 
+    WHERE repairs.id = ?
+  `).get(id);
+}
+
+function getRepairsByDate(date) {
+  return db.prepare(`
+    SELECT repairs.*, customers.name as customer_name 
+    FROM repairs 
+    JOIN customers ON repairs.customer_id = customers.id 
+    WHERE date = ? 
+    ORDER BY repairs.id DESC
+  `).all(date);
+}
+
+function getExpensesByDate(date) {
+  return db.prepare('SELECT * FROM expenses WHERE date = ?').all(date);
 }
 
 function getRepairsByCustomer(customerId) {
@@ -120,7 +178,7 @@ function getParts() {
     SELECT parts.*, suppliers.name as supplier_name 
     FROM parts 
     LEFT JOIN suppliers ON parts.supplier_id = suppliers.id
-    ORDER BY parts.id DESC
+    ORDER BY parts.name COLLATE NOCASE ASC
   `).all();
 }
 
@@ -130,8 +188,25 @@ function addPart(part) {
   return info.lastInsertRowid;
 }
 
-function updatePart(id, quantity, price) {
-  db.prepare('UPDATE parts SET quantity_in_stock = ?, unit_price = ? WHERE id = ?').run(quantity, price, id);
+function updatePart(id, quantity, price, name, category, supplier_id) {
+  db.prepare('UPDATE parts SET quantity_in_stock = ?, unit_price = ?, name = ?, category = ?, supplier_id = ? WHERE id = ?').run(quantity, price, name, category, supplier_id, id);
+}
+
+function deleteRepairItems(repairId) {
+  db.prepare('DELETE FROM repair_items WHERE repair_id = ?').run(repairId);
+}
+
+function updateRepair(id, total, method) {
+  return db.prepare('UPDATE repairs SET total_amount = ?, payment_method = ? WHERE id = ?').run(total, method, id);
+}
+
+function updateRepairFull(id, total, description) {
+  return db.prepare('UPDATE repairs SET total_amount = ?, description = ? WHERE id = ?').run(total, description, id);
+}
+
+function updateCustomer(id, data) {
+  return db.prepare('UPDATE customers SET name = ?, phone = ?, car_name = ?, plate_number = ? WHERE id = ?')
+    .run(data.name, data.phone, data.car_name, data.plate_number, id);
 }
 
 // --- Expenses CRUD ---
@@ -149,6 +224,10 @@ module.exports = {
   getCustomers,
   searchCustomers,
   addCustomer,
+  getRepairs,
+  getRepairItems,
+  getRepairsByDate,
+  getExpensesByDate,
   addRepair,
   addRepairItem,
   getRepairsByCustomer,
@@ -159,5 +238,11 @@ module.exports = {
   addPart,
   updatePart,
   getExpenses,
-  addExpense
+  getExpenses,
+  addExpense,
+  deleteCustomer,
+  getCustomerByPhone,
+  deleteRepairItems,
+  updateRepair,
+  updateRepairFull
 };

@@ -76,7 +76,51 @@ const translations = {
 
         // Daily Report
         summaryFor: "Summary for",
-        printReport: "Print Report"
+        printReport: "Print Report",
+
+        // Customers Page
+        customersSubtitle: "Manage customer records and service history",
+        addCustomer: "Add customer",
+        saveCustomer: "Save customer",
+        customerNameLabel: "Customer name",
+        egJohnSmith: "e.g. John Smith",
+        carName: "Car name",
+        licensePlate: "License plate",
+        serviceHistory: "Service History",
+        search: "Search",
+
+        // Parts Page
+        partsSubtitle: "Manage inventory, prices, and stock levels",
+        inventory: "Inventory",
+        partName: "Part Name",
+        qtyInStock: "Qty",
+        unitPrice: "Unit Price",
+        addPart: "Add New Part",
+        savePart: "Save Part",
+
+        // Suppliers Page
+        suppliersSubtitle: "Manage your suppliers and contacts",
+        allSuppliers: "All Suppliers",
+        contactNumber: "Contact Number",
+        suppliesWhat: "Supplies What",
+        addSupplier: "Add New Supplier",
+        saveSupplier: "Save Supplier",
+        noParts: "No parts in inventory.",
+        noSuppliers: "No suppliers found.",
+        confirmPayment: "Confirm Payment",
+        billProcessed: "Successfully processed",
+        billAlreadyProcessed: "Bill is already processed",
+        confirmDeleteCustomer: "Are you sure you want to delete this customer?",
+        duplicateCustomerError: "Customer with this phone number already exists!",
+        edit: "Edit",
+        delete: "Delete",
+        searchPlaceholder: "Search for customer using name or number",
+        actions: "Actions",
+        allCustomers: "All Customers",
+        customerHistory: "Customer History",
+        printInventory: "Print Inventory",
+        odometer: "Odometer",
+        odometerOptional: "Odometer (Optional)"
     },
     ar: {
         // Sidebar & General
@@ -155,7 +199,51 @@ const translations = {
 
         // Daily Report
         summaryFor: "ملخص تاريخ",
-        printReport: "طباعة التقرير"
+        printReport: "طباعة التقرير",
+
+        // Customers Page
+        customersSubtitle: "إدارة سجلات العملاء وتاريخ الخدمة",
+        addCustomer: "إضافة عميل",
+        saveCustomer: "حفظ العميل",
+        customerNameLabel: "اسم العميل",
+        egJohnSmith: "مثال: أحمد محمود",
+        carName: "اسم السيارة",
+        licensePlate: "رقم اللوحة",
+        serviceHistory: "سجل الخدمة",
+        search: "بحث",
+
+        // Parts Page
+        partsSubtitle: "إدارة المخزون والأسعار ومستويات المخزون",
+        inventory: "المخزون",
+        partName: "اسم القطعة",
+        qtyInStock: "الكمية",
+        unitPrice: "سعر الوحدة",
+        addPart: "إضافة قطعة جديدة",
+        savePart: "حفظ القطعة",
+
+        // Suppliers Page
+        suppliersSubtitle: "إدارة الموردين وجهات الاتصال الخاصة بك",
+        allSuppliers: "كل الموردين",
+        contactNumber: "رقم الاتصال",
+        suppliesWhat: "ماذا يورّد",
+        addSupplier: "إضافة مورد جديد",
+        saveSupplier: "حفظ المورد",
+        noParts: "لا توجد قطع في المخزون.",
+        noSuppliers: "لا يوجد موردين.",
+        confirmPayment: "تأكيد الدفع",
+        billProcessed: "تمت المعالجة بنجاح",
+        billAlreadyProcessed: "الفاتورة معالجة بالفعل",
+        confirmDeleteCustomer: "هل أنت متأكد من حذف هذا العميل؟",
+        duplicateCustomerError: "هذا العميل موجود بالفعل بنفس رقم الهاتف!",
+        edit: "تعديل",
+        delete: "حذف",
+        searchPlaceholder: "البحث عن عميل بالاسم أو الرقم",
+        actions: "إجراءات",
+        allCustomers: "كل العملاء",
+        customerHistory: "تاريخ العميل",
+        printInventory: "طباعة المخزون",
+        odometer: "عداد المسافات",
+        odometerOptional: "عداد المسافات (اختياري)"
     }
 };
 
@@ -172,7 +260,8 @@ function setLanguage(lang) {
 
 function translatePage() {
     const lang = getCurrentLanguage();
-    const t = translations[lang];
+    const t = translations[lang] || translations['en'];
+    if (!t) return;
     
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -197,6 +286,12 @@ function translatePage() {
     document.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
 }
+
+// Global error handler for easier debugging
+window.onerror = function(message, source, lineno, colno, error) {
+    alert(`Error: ${message}\nAt: ${source}:${lineno}`);
+    return false;
+};
 
 // Export for use in other files
 if (typeof module !== 'undefined') {

@@ -1,4 +1,11 @@
-// daily_report.js
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize i18n
     translatePage();
@@ -8,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterDateInput = document.getElementById('filterDate');
     const displayDate = document.getElementById('displayDate');
     const printReportBtn = document.getElementById('printReportBtn');
+    const previewModal = document.getElementById('previewModal');
+    const previewArea = document.getElementById('previewArea');
+    const closePreviewBtn = document.getElementById('closePreviewBtn');
+    const confirmPrintReportBtn = document.getElementById('confirmPrintReportBtn');
 
     const dayIncomeEl = document.getElementById('dayIncome');
     const dayExpensesEl = document.getElementById('dayExpenses');
@@ -18,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportExpensesBody = document.getElementById('reportExpensesBody');
 
     // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     filterDateInput.value = today;
     displayDate.textContent = today;
 
@@ -31,26 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load Data
     async function updateReport() {
         const date = filterDateInput.value;
+        if (!date) return;
         displayDate.textContent = date;
 
-        // Mock data fetch filtered by date
-        // In real app: [income, expenses, bills] = await Promise.all([db.getIncome(date), db.getExpenses(date), db.getBills(date)]);
-        
-        const mockIncome = [
-            { id: 1, date: '2026-06-16', customer: 'Ahmed Mahmoud', payment: 'Cash', amount: 195.00 },
-            { id: 2, date: '2026-06-16', customer: 'Sara Allen', payment: 'ATM / Card', amount: 380.00 }
-        ].filter(i => i.date === date);
+        const income = db.getRepairsByDate(date);
+        const expenses = db.getExpensesByDate(date);
 
-        const mockExpenses = [
-            { id: 1, date: '2026-06-16', description: 'Shop rent', amount: 3500.00 },
-            { id: 2, date: '2026-06-16', description: 'Electricity', amount: 420.00 }
-        ].filter(e => e.date === date);
-
-        renderReport(mockIncome, mockExpenses);
+        renderReport(income, expenses);
     }
 
     function renderReport(income, expenses) {
-        const totalIncome = income.reduce((sum, i) => sum + i.amount, 0);
+        const totalIncome = income.reduce((sum, i) => sum + i.total_amount, 0);
         const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
         const net = totalIncome - totalExpenses;
 
@@ -62,20 +65,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bills (Customer name and amount only)
         reportBillsBody.innerHTML = income.map(i => `
             <tr>
-                <td>${i.customer}</td>
-                <td class="font-bold">$${i.amount.toFixed(2)}</td>
+                <td>${i.customer_name}</td>
+                <td class="font-bold">$${i.total_amount.toFixed(2)}</td>
             </tr>
         `).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
 
-        // Income
+        // Income Breakdown
         reportIncomeBody.innerHTML = income.map(i => `
             <tr>
-                <td>${i.payment}</td>
-                <td class="font-bold">$${i.amount.toFixed(2)}</td>
+                <td>${i.payment_method}</td>
+                <td class="font-bold">$${i.total_amount.toFixed(2)}</td>
             </tr>
         `).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
 
-        // Expenses
+        // Expenses Breakdown
         reportExpensesBody.innerHTML = expenses.map(e => `
             <tr>
                 <td>${e.description}</td>
@@ -85,7 +88,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     filterDateInput.addEventListener('input', updateReport);
-    printReportBtn.addEventListener('click', () => window.print());
+    
+    printReportBtn.addEventListener('click', () => {
+        previewArea.innerHTML = document.getElementById('reportArea').innerHTML;
+        previewModal.classList.add('active');
+    });
+
+    closePreviewBtn.addEventListener('click', () => previewModal.classList.remove('active'));
+    confirmPrintReportBtn.addEventListener('click', async () => {
+        const { ipcRenderer } = require('electron');
+        const dateStr = filterDateInput.value || new Date().toISOString().split('T')[0];
+        const fileName = `DailyReport_${dateStr}.pdf`;
+
+        const result = await ipcRenderer.invoke('print-to-pdf', {
+            folder: 'reports',
+            name: fileName
+        });
+
+        if (result.success) {
+            alert('Report saved to: ' + result.path);
+        } else {
+            alert('Saving failed: ' + result.error);
+        }
+    });
 
     // Initialize
     updateReport();

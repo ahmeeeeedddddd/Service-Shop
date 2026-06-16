@@ -1,4 +1,10 @@
-const db = require('../database/db.js');
+let db;
+try {
+    db = require('../database/db.js');
+} catch (e) {
+    console.error('Failed to load database:', e);
+    alert('Database Error: Could not connect to the database.');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     translatePage();
@@ -19,7 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const suppliers = db.getSuppliers();
         
         if (suppliers.length === 0) {
-            suppliersTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No suppliers found.</td></tr>';
+            const lang = getCurrentLanguage();
+            const t = translations[lang];
+            suppliersTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${t.noSuppliers}</td></tr>`;
             return;
         }
 

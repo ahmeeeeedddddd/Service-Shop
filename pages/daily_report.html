@@ -145,6 +145,19 @@
         </div>
     </main>
 
+    <!-- Print Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div id="previewArea" class="print-area">
+                <!-- Copied content goes here -->
+            </div>
+            <div class="flex justify-between mt-6 no-print">
+                <button class="btn btn-outline" id="closePreviewBtn" data-i18n="close">Close</button>
+                <button class="btn btn-primary" id="confirmPrintReportBtn" data-i18n="print">Print</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/i18n.js"></script>
     <script src="../js/daily_report.js"></script>
 </body>

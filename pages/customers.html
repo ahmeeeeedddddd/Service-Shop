@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="customers">Customers - Motor Garage</title>
+    <title data-i18n="customers">Customers - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -60,6 +60,8 @@
             <div class="flex gap-2 mb-4">
                 <button class="btn btn-primary" id="tabAddCustomer" data-i18n="addCustomer">Add customer</button>
                 <button class="btn btn-outline" id="tabSearchCustomer" data-i18n="searchCustomer">Search customer</button>
+                <button class="btn btn-outline" id="tabAllCustomers" data-i18n="allCustomers">All customers</button>
+                <button class="btn btn-outline" id="tabCustomerHistory" data-i18n="customerHistory">Customer History</button>
             </div>
 
             <!-- View: Add Customer -->
@@ -136,6 +138,57 @@
                     </div>
                 </div>
 
+            </div>
+
+            <!-- View: All Customers -->
+            <div id="viewAllCustomers" style="display: none;">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="customer">Name</th>
+                                <th data-i18n="phone">Phone</th>
+                                <th data-i18n="carName">Car</th>
+                                <th data-i18n="plateNumber">Plate</th>
+                                <th data-i18n="actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="allCustomersTableBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- View: Customer History -->
+            <div id="viewCustomerHistory" style="display: none;">
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="historySearch" class="form-control" data-i18n-placeholder="searchPlaceholder" placeholder="Search for customer...">
+                </div>
+                <div id="historyCustomerList">
+                    <!-- List of customers to click on -->
+                </div>
+                <div id="historyDetails" style="display: none;" class="mt-4 border-t pt-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="card-title text-teal" id="historyCustomerName">Customer Name</h3>
+                        <button class="btn btn-outline" id="backToHistoryList">&larr; Back to List</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-i18n="date">Date</th>
+                                    <th data-i18n="description">Description</th>
+                                    <th data-i18n="total">Total</th>
+                                    <th data-i18n="paymentMethod">Payment Method</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyRepairsTableBody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
