@@ -1,0 +1,204 @@
+const translations = {
+    en: {
+        // Sidebar & General
+        appName: "El Ansary",
+        customers: "Customers",
+        billing: "Billing",
+        parts: "Parts & Stock",
+        suppliers: "Suppliers",
+        income: "Income",
+        expenses: "Expenses",
+        billsHistory: "Bills History",
+        dailyReport: "Daily Report",
+        langToggle: "العربية",
+        version: "Version 1.0 — Works offline",
+        
+        // Billing Page
+        billingTitle: "Billing",
+        billingSubtitle: "Create a new invoice for a customer",
+        selectCustomer: "Select customer...",
+        carModel: "Car Model",
+        plateNumber: "Plate Number",
+        phone: "Phone",
+        odometer: "Odometer",
+        notes: "Notes (Optional)",
+        lineItems: "Line items",
+        addItem: "Add item",
+        serviceName: "Service / Part name",
+        qty: "Qty",
+        price: "Price",
+        subtotal: "Subtotal",
+        total: "Total",
+        paymentMethod: "Payment method",
+        cash: "Cash",
+        card: "ATM / Card",
+        confirmPrint: "Confirm & Print",
+        
+        // Income/Expenses/History General
+        incomeTitle: "Income",
+        incomeSubtitle: "Summary of confirmed invoices",
+        thisMonth: "This month",
+        invoices: "Invoices",
+        allInvoices: "All invoices",
+        searchCustomer: "Search by customer name...",
+        date: "Date",
+        customer: "Customer",
+        payment: "Payment",
+        amount: "Amount",
+        
+        // Expenses Page
+        expensesTitle: "Expenses",
+        expensesSubtitle: "Log and review all shop expenses",
+        logExpense: "Log expense",
+        description: "Description",
+        category: "Category",
+        saveExpense: "Save expense",
+        totalLogged: "Total logged expenses",
+        
+        // Categories
+        rent: "Rent",
+        partsCat: "Parts",
+        utilities: "Utilities",
+        salaries: "Salaries",
+        other: "Other",
+
+        // Filters
+        filterByDate: "Filter by date",
+        today: "Today",
+        allTime: "All Time",
+        selectDate: "Select Date",
+
+        // Modal/Receipt
+        receiptTitle: "Sales Receipt",
+        print: "Print",
+        close: "Close",
+        billDetails: "Bill Details",
+
+        // Daily Report
+        summaryFor: "Summary for",
+        printReport: "Print Report"
+    },
+    ar: {
+        // Sidebar & General
+        appName: "الأنصاري",
+        customers: "العملاء",
+        billing: "الفواتير",
+        parts: "القطع والمخزون",
+        suppliers: "الموردين",
+        income: "الدخل",
+        expenses: "المصاريف",
+        billsHistory: "سجل الفواتير",
+        dailyReport: "التقرير اليومي",
+        langToggle: "English",
+        version: "الإصدار 1.0 — يعمل بدون إنترنت",
+        
+        // Billing Page
+        billingTitle: "الفواتير",
+        billingSubtitle: "إنشاء فاتورة جديدة للعميل",
+        selectCustomer: "اختر العميل...",
+        carModel: "موديل السيارة",
+        plateNumber: "رقم اللوحة",
+        phone: "الهاتف",
+        odometer: "عداد المسافة",
+        notes: "ملاحظات (اختياري)",
+        lineItems: "البنود",
+        addItem: "إضافة بند",
+        serviceName: "الخدمة / اسم القطعة",
+        qty: "الكمية",
+        price: "السعر",
+        subtotal: "المجموع الفرعي",
+        total: "المجموع الكلي",
+        paymentMethod: "طريقة الدفع",
+        cash: "نقدي",
+        card: "بطاقة / صراف",
+        confirmPrint: "تأكيد وطباعة",
+        
+        // Income/Expenses/History General
+        incomeTitle: "الدخل",
+        incomeSubtitle: "ملخص الفواتير المؤكدة",
+        thisMonth: "هذا الشهر",
+        invoices: "الفواتير",
+        allInvoices: "كل الفواتير",
+        searchCustomer: "البحث باسم العميل...",
+        date: "التاريخ",
+        customer: "العميل",
+        payment: "الدفع",
+        amount: "المبلغ",
+        
+        // Expenses Page
+        expensesTitle: "المصاريف",
+        expensesSubtitle: "تسجيل ومراجعة كافة مصاريف المحل",
+        logExpense: "تسجيل مصروف",
+        description: "الوصف",
+        category: "الفئة",
+        saveExpense: "حفظ المصروف",
+        totalLogged: "إجمالي المصاريف المسجلة",
+        
+        // Categories
+        rent: "إيجار",
+        partsCat: "قطع غيار",
+        utilities: "خدمات",
+        salaries: "رواتب",
+        other: "أخرى",
+
+        // Filters
+        filterByDate: "تصفية حسب التاريخ",
+        today: "اليوم",
+        allTime: "الكل",
+        selectDate: "اختر التاريخ",
+
+        // Modal/Receipt
+        receiptTitle: "إيصال مبيعات",
+        print: "طباعة",
+        close: "إغلاق",
+        billDetails: "تفاصيل الفاتورة",
+
+        // Daily Report
+        summaryFor: "ملخص تاريخ",
+        printReport: "طباعة التقرير"
+    }
+};
+
+function getCurrentLanguage() {
+    return localStorage.getItem('appLang') || 'en';
+}
+
+function setLanguage(lang) {
+    localStorage.setItem('appLang', lang);
+    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    translatePage();
+}
+
+function translatePage() {
+    const lang = getCurrentLanguage();
+    const t = translations[lang];
+    
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) {
+            if (el.tagName === 'INPUT' && el.getAttribute('placeholder')) {
+                el.placeholder = t[key];
+            } else if (el.tagName === 'SELECT' && el.options[0] && el.options[0].hasAttribute('data-i18n')) {
+                 // Skip translating select options here if they have their own i18n
+            } else {
+                el.innerText = t[key];
+            }
+        }
+    });
+
+    // Translate placeholder and title attributes specifically
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) el.placeholder = t[key];
+    });
+
+    // Handle direction-specific styles if needed
+    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+}
+
+// Export for use in other files
+if (typeof module !== 'undefined') {
+    module.exports = { translations, getCurrentLanguage, setLanguage, translatePage };
+}

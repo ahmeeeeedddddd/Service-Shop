@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="billsHistory">Bills History - El Ansary</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            </div>
+            <div class="shop-name">
+                <h1 data-i18n="appName">El Ansary</h1>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="customers.html" class="nav-item">
+                <span data-i18n="customers">Customers</span>
+            </a>
+            <a href="billing.html" class="nav-item">
+                <span data-i18n="billing">Billing</span>
+            </a>
+            <a href="parts.html" class="nav-item">
+                <span data-i18n="parts">Parts & Stock</span>
+            </a>
+            <a href="suppliers.html" class="nav-item">
+                <span data-i18n="suppliers">Suppliers</span>
+            </a>
+            <a href="income.html" class="nav-item">
+                <span data-i18n="income">Income</span>
+            </a>
+            <a href="expenses.html" class="nav-item">
+                <span data-i18n="expenses">Expenses</span>
+            </a>
+            <a href="bills_history.html" class="nav-item active">
+                <span data-i18n="billsHistory">Bills History</span>
+            </a>
+            <a href="daily_report.html" class="nav-item">
+                <span data-i18n="dailyReport">Daily Report</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
+            <div class="version-info" data-i18n="version">Version 1.0 — Works offline</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <h2 data-i18n="billsHistory">Bills History</h2>
+            <p data-i18n="incomeSubtitle">View and manage past invoices</p>
+        </header>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-2" style="align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label data-i18n="selectDate">Select Date</label>
+                        <input type="date" id="filterDate" class="form-control">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="searchCustomer" style="width: 250px;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-i18n="date">Date</th>
+                            <th data-i18n="customer">Customer</th>
+                            <th data-i18n="payment">Payment</th>
+                            <th data-i18n="amount">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="modal" id="billModal">
+        <div class="modal-content">
+            <h3 class="card-title" data-i18n="billDetails">Bill Details</h3>
+            <div id="billDetailContent">
+                <!-- Detailed content populated by JS -->
+            </div>
+            <div class="flex justify-between mt-4">
+                <button class="btn btn-outline" id="closeModalBtn" data-i18n="close">Close</button>
+                <button class="btn btn-primary" id="printBillBtn" data-i18n="print">Print</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/i18n.js"></script>
+    <script src="../js/bills_history.js"></script>
+</body>
+</html>
