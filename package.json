@@ -8,6 +8,30 @@
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
+  "build": {
+    "appId": "com.elansary.shopmanager",
+    "productName": "El Ansary Shop Manager",
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "files": [
+      "**/*",
+      "!node_modules/electron-rebuild/**",
+      "!node_modules/electron-builder/**"
+    ],
+    "extraResources": [
+      { "from": "database/", "to": "database/" }
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ahmeeeeedddddd/Service-Shop.git"

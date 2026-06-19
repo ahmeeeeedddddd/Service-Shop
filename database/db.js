@@ -64,6 +64,19 @@ function initDB() {
       category TEXT,
       date TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS pending_bills (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER,
+      description TEXT,
+      date_created TEXT,
+      total_amount REAL,
+      payment_method TEXT,
+      odometer TEXT,
+      notes TEXT,
+      line_items_json TEXT,
+      FOREIGN KEY(customer_id) REFERENCES customers(id)
+    );
   `);
 
   // Run migrations
@@ -220,6 +233,37 @@ function addExpense(expense) {
   return info.lastInsertRowid;
 }
 
+// --- Pending Bills CRUD ---
+function getPendingBills() {
+  return db.prepare(`
+    SELECT pending_bills.*, customers.name as customer_name, customers.phone as customer_phone,
+           customers.car_name, customers.plate_number
+    FROM pending_bills
+    JOIN customers ON pending_bills.customer_id = customers.id
+    ORDER BY pending_bills.date_created DESC
+  `).all();
+}
+
+function addPendingBill(bill) {
+  const stmt = db.prepare('INSERT INTO pending_bills (customer_id, description, date_created, total_amount, payment_method, odometer, notes, line_items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(bill.customer_id, bill.description, bill.date_created, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json);
+  return info.lastInsertRowid;
+}
+
+function deletePendingBill(id) {
+  db.prepare('DELETE FROM pending_bills WHERE id = ?').run(id);
+}
+
+function getPendingBillById(id) {
+  return db.prepare(`
+    SELECT pending_bills.*, customers.name as customer_name, customers.phone as customer_phone,
+           customers.car_name, customers.plate_number
+    FROM pending_bills
+    JOIN customers ON pending_bills.customer_id = customers.id
+    WHERE pending_bills.id = ?
+  `).get(id);
+}
+
 module.exports = {
   getCustomers,
   searchCustomers,
@@ -238,11 +282,16 @@ module.exports = {
   addPart,
   updatePart,
   getExpenses,
-  getExpenses,
   addExpense,
   deleteCustomer,
   getCustomerByPhone,
   deleteRepairItems,
   updateRepair,
-  updateRepairFull
+  updateRepairFull,
+  updateCustomer,
+  getRepairById,
+  getPendingBills,
+  addPendingBill,
+  deletePendingBill,
+  getPendingBillById
 };

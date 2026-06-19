@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let isCurrentBillProcessed = false;
     let currentBillData = null;
 
+    const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    const savePendingBtn = document.getElementById('savePendingBtn');
+
     // Language Toggle
     langToggle.addEventListener('click', () => {
         const newLang = getCurrentLanguage() === 'en' ? 'ar' : 'en';
@@ -146,21 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
         grandTotalEl.textContent = `$${total.toFixed(2)}`;
     }
 
-    // Payment Toggle
-    payCashBtn.addEventListener('click', () => {
-        paymentMethod = 'Cash';
-        payCashBtn.classList.add('btn-primary');
-        payCashBtn.classList.remove('btn-outline');
-        payCardBtn.classList.add('btn-outline');
-        payCardBtn.classList.remove('btn-primary');
-    });
-
-    payCardBtn.addEventListener('click', () => {
-        paymentMethod = 'ATM / Card';
-        payCardBtn.classList.add('btn-primary');
-        payCardBtn.classList.remove('btn-outline');
-        payCashBtn.classList.add('btn-outline');
-        payCashBtn.classList.remove('btn-primary');
+    // Payment Method Select
+    paymentMethodSelect.addEventListener('change', () => {
+        paymentMethod = paymentMethodSelect.value;
     });
 
     // Confirm & Print
@@ -196,11 +187,12 @@ document.addEventListener('DOMContentLoaded', () => {
             customer_id: selectedCustomer.id,
             lines: lines,
             total_amount: grandTotal,
-            payment_method: paymentMethod,
+            payment_method: paymentMethodSelect.value,
             date: todayStr,
             odometer: document.getElementById('odometer').value,
             notes: document.getElementById('notes').value
         };
+        paymentMethod = paymentMethodSelect.value;
 
         isCurrentBillProcessed = false;
         confirmPaymentBtn.style.opacity = '1';
@@ -289,7 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         receiptContent.innerHTML = `
             <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
-                <h1 style="color: #0d9488;">${t.appName}</h1>
+                <img src="../assets/logo.png" style="max-height: 80px; max-width: 220px; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <h1 style="display:none; color: #f59e0b;">${t.appName}</h1>
                 <p>${t.receiptTitle}</p>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
@@ -325,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </tbody>
             </table>
-            <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #0d9488;">
+            <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #f59e0b;">
                 ${t.total}: ${total}
             </div>
 
@@ -375,6 +368,49 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             alert('Printing/Saving failed: ' + result.error);
         }
+    });
+
+    savePendingBtn.addEventListener('click', () => {
+        if (!selectedCustomer) {
+            alert('Please select a customer first');
+            return;
+        }
+
+        const lines = [];
+        document.querySelectorAll('#lineItemsBody tr').forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs[0].value) {
+                lines.push({
+                    name: inputs[0].value,
+                    qty: parseFloat(inputs[1].value) || 1,
+                    price: parseFloat(inputs[2].value) || 0,
+                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0)
+                });
+            }
+        });
+
+        if (lines.length === 0) {
+            alert('Please add at least one item');
+            return;
+        }
+
+        const now = new Date();
+        const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+        const grandTotal = lines.reduce((sum, l) => sum + l.total, 0);
+
+        db.addPendingBill({
+            customer_id: selectedCustomer.id,
+            description: lines.map(l => l.name).join(', '),
+            date_created: todayStr,
+            total_amount: grandTotal,
+            payment_method: paymentMethodSelect.value,
+            odometer: document.getElementById('odometer').value,
+            notes: document.getElementById('notes').value,
+            line_items_json: JSON.stringify(lines)
+        });
+
+        alert('Bill saved as pending successfully!');
+        resetForm();
     });
 
 });

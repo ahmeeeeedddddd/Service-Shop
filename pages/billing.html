@@ -24,6 +24,9 @@
             <a href="billing.html" class="nav-item active">
                 <span data-i18n="billing">Billing</span>
             </a>
+            <a href="pending_bills.html" class="nav-item">
+                <span>Pending Bills</span>
+            </a>
             <a href="parts.html" class="nav-item">
                 <span data-i18n="parts">Parts & Stock</span>
             </a>
@@ -142,15 +145,21 @@
 
                     <div class="form-group">
                         <label data-i18n="paymentMethod">Payment method</label>
-                        <div class="flex gap-2">
-                            <button class="btn btn-primary w-full" id="payCash" data-i18n="cash">Cash</button>
-                            <button class="btn btn-outline w-full" id="payCard" data-i18n="card">ATM / Card</button>
-                        </div>
+                        <select id="paymentMethodSelect" class="form-control">
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Alahly">Bank Alahly</option>
+                            <option value="Bank Masr">Bank Masr</option>
+                            <option value="Instapay">Instapay</option>
+                        </select>
                     </div>
 
                     <button class="btn btn-primary w-full mt-4" id="confirmPrintBtn" style="padding: 1rem;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span data-i18n="confirmPrint">Confirm & Print</span>
+                        <span data-i18n="confirmPrint">Confirm &amp; Print</span>
+                    </button>
+                    <button class="btn btn-outline w-full mt-4" id="savePendingBtn" style="padding: 1rem; color: #f59e0b; border-color: #f59e0b;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>Save as Pending</span>
                     </button>
                 </div>
             </div>
