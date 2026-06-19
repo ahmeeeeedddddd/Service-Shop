@@ -415,6 +415,7 @@ tbody tr:hover {
 
 /* Print Specific */
 @media print {
+    body { background-color: white !important; }
     body > *:not(.modal.active):not(.print-area) { display: none !important; }
     .modal.active { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
     .modal-content { 

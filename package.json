@@ -13,8 +13,18 @@
     "productName": "El Ansary Shop Manager",
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "assets/logo.png"
     },
@@ -28,8 +38,15 @@
       "!node_modules/electron-rebuild/**",
       "!node_modules/electron-builder/**"
     ],
+    "asarUnpack": [
+      "**/better-sqlite3/**",
+      "**/node_modules/better-sqlite3/**"
+    ],
     "extraResources": [
-      { "from": "database/", "to": "database/" }
+      {
+        "from": "database/",
+        "to": "database/"
+      }
     ]
   },
   "repository": {
@@ -45,7 +62,8 @@
   },
   "homepage": "https://github.com/ahmeeeeedddddd/Service-Shop#readme",
   "dependencies": {
-    "better-sqlite3": "^12.11.1"
+    "better-sqlite3": "^12.11.1",
+    "csv-parse": "^7.0.0"
   },
   "devDependencies": {
     "electron": "^31.0.0",

@@ -44,10 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(bill => {
             const tr = document.createElement('tr');
             tr.className = 'clickable-row';
-            const badgeClass = bill.payment_method === 'Cash' ? 'badge-cash' : 'badge-card';
-            const lang = getCurrentLanguage();
-            const t = translations[lang];
-            const paymentText = bill.payment_method === 'Cash' ? t.cash : t.card;
+            const badgeClass = bill.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card';
+            const paymentText = bill.payment_method;
 
             tr.innerHTML = `
                 <td>${bill.date}</td>
@@ -99,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </tbody>
             </table>
-            <div style="text-align: right; margin-top: 1.5rem; font-size: 1.25rem; font-weight: 700; color: #0d9488;">
+            <div style="text-align: right; margin-top: 1.5rem; font-size: 1.25rem; font-weight: 700; color: #eab308;">
                 ${t.total}: $${parseFloat(bill.total_amount).toFixed(2)}
             </div>
         `;

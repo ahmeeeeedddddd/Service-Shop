@@ -2,9 +2,16 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure the database directory exists
-const dbPath = path.join(__dirname, 'shop.db');
-const db = new Database(dbPath, { verbose: console.log });
+// Resolve db path: in packaged app use resourcesPath, in dev use __dirname
+const isPackaged = process.resourcesPath && !process.resourcesPath.includes('node_modules');
+const dbDir = isPackaged
+  ? path.join(process.resourcesPath, 'database')
+  : path.join(__dirname);
+
+if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+
+const dbPath = path.join(dbDir, 'shop.db');
+const db = new Database(dbPath);
 
 // Initialize database schema
 function initDB() {
@@ -254,6 +261,11 @@ function deletePendingBill(id) {
   db.prepare('DELETE FROM pending_bills WHERE id = ?').run(id);
 }
 
+function updatePendingBill(id, bill) {
+  db.prepare('UPDATE pending_bills SET description=?, total_amount=?, payment_method=?, odometer=?, notes=?, line_items_json=? WHERE id=?')
+    .run(bill.description, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, id);
+}
+
 function getPendingBillById(id) {
   return db.prepare(`
     SELECT pending_bills.*, customers.name as customer_name, customers.phone as customer_phone,
@@ -293,5 +305,6 @@ module.exports = {
   getPendingBills,
   addPendingBill,
   deletePendingBill,
+  updatePendingBill,
   getPendingBillById
 };

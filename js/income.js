@@ -15,7 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const incomeTableBody = document.getElementById('incomeTableBody');
     const totalIncomeEl = document.getElementById('totalIncome');
     const cashIncomeEl = document.getElementById('cashIncome');
-    const cardIncomeEl = document.getElementById('cardIncome');
+    const instapayIncomeEl = document.getElementById('instapayIncome');
+    const alahlyIncomeEl = document.getElementById('alahlyIncome');
+    const masrIncomeEl = document.getElementById('masrIncome');
     const invoiceCountEl = document.getElementById('invoiceCount');
     
     const searchInput = document.getElementById('searchInput');
@@ -228,13 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(inv => {
             const tr = document.createElement('tr');
             const lang = getCurrentLanguage();
-            const t = translations[lang];
-            const paymentText = inv.payment_method === 'Cash' ? t.cash : t.card;
+            const paymentText = inv.payment_method;
+            const badgeClass = inv.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card';
 
             tr.innerHTML = `
                 <td>${inv.date}</td>
                 <td><span class="font-bold text-teal" style="cursor: pointer;" onclick="viewBillDetails(${inv.id})">${inv.customer_name}</span></td>
-                <td><span class="badge ${inv.payment_method === 'Cash' ? 'badge-cash' : 'badge-card'}">${paymentText}</span></td>
+                <td><span class="badge ${badgeClass}">${paymentText}</span></td>
                 <td class="font-bold">$${parseFloat(inv.total_amount).toFixed(2)}</td>
                 <td>
                     ${inv.date === today ? `
@@ -250,12 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateStats(data) {
         const total = data.reduce((sum, inv) => sum + inv.total_amount, 0);
-        const cash = data.filter(i => i.payment_method === 'Cash').reduce((sum, inv) => sum + inv.total_amount, 0);
-        const card = data.filter(i => i.payment_method === 'ATM / Card').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const cash = data.filter(i => i.payment_method.toLowerCase() === 'cash').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const instapay = data.filter(i => i.payment_method.toLowerCase() === 'instapay').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const alahly = data.filter(i => i.payment_method.toLowerCase() === 'bank alahly').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const masr = data.filter(i => i.payment_method.toLowerCase() === 'bank masr').reduce((sum, inv) => sum + inv.total_amount, 0);
 
         totalIncomeEl.textContent = `$${total.toFixed(2)}`;
         cashIncomeEl.textContent = `$${cash.toFixed(2)}`;
-        cardIncomeEl.textContent = `$${card.toFixed(2)}`;
+        if (instapayIncomeEl) instapayIncomeEl.textContent = `$${instapay.toFixed(2)}`;
+        if (alahlyIncomeEl) alahlyIncomeEl.textContent = `$${alahly.toFixed(2)}`;
+        if (masrIncomeEl) masrIncomeEl.textContent = `$${masr.toFixed(2)}`;
         if (invoiceCountEl) invoiceCountEl.textContent = data.length;
     }
 

@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </tbody>
             </table>
-            <div style="text-align:right;margin-top:1rem;font-size:1.25rem;font-weight:700;color:#f59e0b;">
+            <div style="text-align:right;margin-top:1rem;font-size:1.25rem;font-weight:700;color:#eab308;">
                 Total: $${parseFloat(bill.total_amount).toFixed(2)}
             </div>
             ${bill.notes ? `<div style="margin-top:1rem;padding:0.75rem;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;"><strong>Notes:</strong><br>${bill.notes}</div>` : ''}
@@ -174,6 +174,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     processFromModalBtn.addEventListener('click', () => {
         if (currentBillId) window.processBill(currentBillId);
+    });
+
+    // --- Edit Modal ---
+    const editModal = document.getElementById('editModal');
+    const editPaymentMethod = document.getElementById('editPaymentMethod');
+    const editOdometer = document.getElementById('editOdometer');
+    const editNotes = document.getElementById('editNotes');
+    const editLineItemsBody = document.getElementById('editLineItemsBody');
+    const addEditLineBtn = document.getElementById('addEditLineBtn');
+    const closeEditBtn = document.getElementById('closeEditBtn');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+    const editFromModalBtn = document.getElementById('editFromModalBtn');
+
+    function addEditLineRow(name = '', qty = 1, price = 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:0.25rem;"><input type="text" class="form-control" value="${name}" placeholder="Service / Part name"></td>
+            <td style="padding:0.25rem;"><input type="number" class="form-control" value="${qty}" min="1" style="width:70px;"></td>
+            <td style="padding:0.25rem;"><input type="number" class="form-control" value="${price}" min="0" step="0.01" style="width:100px;"></td>
+            <td style="padding:0.25rem;"><button class="btn btn-outline" style="color:#ef4444;padding:0.2rem 0.5rem;" onclick="this.closest('tr').remove()">×</button></td>
+        `;
+        editLineItemsBody.appendChild(tr);
+    }
+
+    editFromModalBtn.addEventListener('click', () => {
+        const bill = allBills.find(b => b.id === currentBillId);
+        if (!bill) return;
+
+        // Populate fields
+        editPaymentMethod.value = bill.payment_method;
+        editOdometer.value = bill.odometer || '';
+        editNotes.value = bill.notes || '';
+        editLineItemsBody.innerHTML = '';
+
+        const lines = JSON.parse(bill.line_items_json || '[]');
+        lines.forEach(l => addEditLineRow(l.name, l.qty, l.price));
+        if (lines.length === 0) addEditLineRow();
+
+        detailModal.classList.remove('active');
+        editModal.classList.add('active');
+    });
+
+    addEditLineBtn.addEventListener('click', () => addEditLineRow());
+    closeEditBtn.addEventListener('click', () => editModal.classList.remove('active'));
+
+    saveEditBtn.addEventListener('click', () => {
+        const rows = editLineItemsBody.querySelectorAll('tr');
+        const lines = [];
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const name = inputs[0].value.trim();
+            const qty = parseFloat(inputs[1].value) || 1;
+            const price = parseFloat(inputs[2].value) || 0;
+            if (name) lines.push({ name, qty, price, total: qty * price });
+        });
+
+        if (lines.length === 0) {
+            alert('Please add at least one line item.');
+            return;
+        }
+
+        const total = lines.reduce((s, l) => s + l.total, 0);
+        const description = lines.map(l => l.name).join(', ');
+
+        db.updatePendingBill(currentBillId, {
+            description,
+            total_amount: total,
+            payment_method: editPaymentMethod.value,
+            odometer: editOdometer.value,
+            notes: editNotes.value,
+            line_items_json: JSON.stringify(lines)
+        });
+
+        editModal.classList.remove('active');
+        currentBillId = null;
+        loadBills();
+        alert('Pending bill updated!');
     });
 
     searchInput.addEventListener('input', applyFilter);

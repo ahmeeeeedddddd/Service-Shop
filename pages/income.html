@@ -60,7 +60,7 @@
         </header>
 
         <!-- Stats -->
-        <div class="stat-grid">
+        <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-card accent">
                 <span class="stat-label" data-i18n="thisMonth">This month</span>
                 <div class="stat-value" id="totalIncome">$0.00</div>
@@ -74,8 +74,16 @@
                 <div class="stat-value" id="cashIncome">$0.00</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label" data-i18n="card">Card</span>
-                <div class="stat-value" id="cardIncome">$0.00</div>
+                <span class="stat-label">Instapay</span>
+                <div class="stat-value" id="instapayIncome">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Bank Alahly</span>
+                <div class="stat-value" id="alahlyIncome">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Bank Masr</span>
+                <div class="stat-value" id="masrIncome">$0.00</div>
             </div>
         </div>
 
@@ -98,7 +106,9 @@
                     <select id="paymentFilter" class="form-control">
                         <option value="all" data-i18n="allTime">All</option>
                         <option value="Cash" data-i18n="cash">Cash</option>
-                        <option value="ATM / Card" data-i18n="card">Card</option>
+                        <option value="Instapay">Instapay</option>
+                        <option value="Bank alahly">Bank Alahly</option>
+                        <option value="Bank masr">Bank Masr</option>
                     </select>
                 </div>
                 <button class="btn btn-outline" id="resetFiltersBtn" data-i18n="reset">Reset</button>

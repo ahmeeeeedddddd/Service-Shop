@@ -281,9 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         receiptContent.innerHTML = `
             <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
-                <img src="../assets/logo.png" style="max-height: 80px; max-width: 220px; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <h1 style="display:none; color: #f59e0b;">${t.appName}</h1>
-                <p>${t.receiptTitle}</p>
+                <img src="../assets/logo.png" style="max-height: 140px; max-width: 350px; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <h1 style="display:none; color: #eab308;">${t.appName}</h1>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
@@ -318,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </tbody>
             </table>
-            <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #f59e0b;">
+            <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #eab308;">
                 ${t.total}: ${total}
             </div>
 

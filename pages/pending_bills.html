@@ -91,8 +91,53 @@
                 <button class="btn btn-outline" id="closeDetailBtn">Close</button>
                 <div class="flex gap-2">
                     <button class="btn btn-outline" id="deleteFromModalBtn" style="color:#ef4444;border-color:#fee2e2;">Delete</button>
+                    <button class="btn btn-outline" id="editFromModalBtn">✏️ Edit</button>
                     <button class="btn btn-primary" id="processFromModalBtn">✓ Process Bill</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3 class="card-title">Edit Pending Bill</h3>
+            <div class="mt-4">
+                <div class="flex gap-4 mb-4">
+                    <div class="form-group" style="flex:1;margin-bottom:0;">
+                        <label>Payment Method</label>
+                        <select id="editPaymentMethod" class="form-control">
+                            <option value="Cash">Cash</option>
+                            <option value="Instapay">Instapay</option>
+                            <option value="Bank alahly">Bank Alahly</option>
+                            <option value="Bank masr">Bank Masr</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1;margin-bottom:0;">
+                        <label>Odometer</label>
+                        <input type="text" id="editOdometer" class="form-control" placeholder="e.g. 120,000">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" id="editNotes" class="form-control" placeholder="Optional notes">
+                </div>
+                <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
+                    <thead>
+                        <tr style="background:#f8fafc;border-bottom:2px solid #eee;">
+                            <th style="padding:0.5rem;text-align:left;">Service / Part</th>
+                            <th style="padding:0.5rem;text-align:center;width:70px;">Qty</th>
+                            <th style="padding:0.5rem;text-align:right;width:100px;">Price</th>
+                            <th style="padding:0.5rem;width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="editLineItemsBody"></tbody>
+                </table>
+                <button class="btn btn-outline mt-4" id="addEditLineBtn" style="font-size:0.85rem;">+ Add Line</button>
+            </div>
+            <div class="flex justify-between mt-6">
+                <button class="btn btn-outline" id="closeEditBtn">Cancel</button>
+                <button class="btn btn-primary" id="saveEditBtn">💾 Save Changes</button>
             </div>
         </div>
     </div>
