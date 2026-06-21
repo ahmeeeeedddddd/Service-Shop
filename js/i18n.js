@@ -21,7 +21,7 @@ const translations = {
         plateNumber: "Plate Number",
         phone: "Phone",
         odometer: "Odometer",
-        notes: "Notes (Optional)",
+        notes: "Notes",
         lineItems: "Line items",
         addItem: "Add item",
         serviceName: "Service / Part name",
