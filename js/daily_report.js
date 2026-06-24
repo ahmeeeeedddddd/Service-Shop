@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderReport(income, expenses) {
-        const totalIncome = income.reduce((sum, i) => sum + i.total_amount, 0);
+        const getPaid = (inv) => (inv.paid_amount !== null && inv.paid_amount !== undefined) ? inv.paid_amount : (inv.total_amount - (inv.discount || 0));
+
+        const totalIncome = income.reduce((sum, i) => sum + getPaid(i), 0);
         const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
         const net = totalIncome - totalExpenses;
 
@@ -63,20 +65,26 @@ document.addEventListener('DOMContentLoaded', () => {
         dayNetEl.style.color = net >= 0 ? '#0d9488' : '#ef4444';
 
         // Bills (Customer name and amount only)
-        reportBillsBody.innerHTML = income.map(i => `
-            <tr>
-                <td>${i.customer_name}</td>
-                <td class="font-bold">$${i.total_amount.toFixed(2)}</td>
-            </tr>
-        `).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
+        reportBillsBody.innerHTML = income.map(i => {
+            const actualPaid = getPaid(i);
+            return `
+                <tr>
+                    <td>${i.customer_name}</td>
+                    <td class="font-bold">$${actualPaid.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
 
         // Income Breakdown
-        reportIncomeBody.innerHTML = income.map(i => `
-            <tr>
-                <td>${i.payment_method}</td>
-                <td class="font-bold">$${i.total_amount.toFixed(2)}</td>
-            </tr>
-        `).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
+        reportIncomeBody.innerHTML = income.map(i => {
+            const actualPaid = getPaid(i);
+            return `
+                <tr>
+                    <td>${window.getTranslatedPaymentMethod(i.payment_method)}</td>
+                    <td class="font-bold">$${actualPaid.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
 
         // Expenses Breakdown
         reportExpensesBody.innerHTML = expenses.map(e => `

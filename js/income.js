@@ -230,14 +230,16 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(inv => {
             const tr = document.createElement('tr');
             const lang = getCurrentLanguage();
-            const paymentText = inv.payment_method;
+            const paymentText = window.getTranslatedPaymentMethod(inv.payment_method);
             const badgeClass = inv.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card';
+            
+            const actualPaid = (inv.paid_amount !== null && inv.paid_amount !== undefined) ? inv.paid_amount : (inv.total_amount - (inv.discount || 0));
 
             tr.innerHTML = `
                 <td>${inv.date}</td>
                 <td><span class="font-bold text-teal" style="cursor: pointer;" onclick="viewBillDetails(${inv.id})">${inv.customer_name}</span></td>
                 <td><span class="badge ${badgeClass}">${paymentText}</span></td>
-                <td class="font-bold">$${parseFloat(inv.total_amount).toFixed(2)}</td>
+                <td class="font-bold">$${parseFloat(actualPaid).toFixed(2)}</td>
                 <td>
                     ${inv.date === today ? `
                         <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editBill(${JSON.stringify(inv).replace(/"/g, '&quot;')})">
@@ -251,11 +253,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateStats(data) {
-        const total = data.reduce((sum, inv) => sum + inv.total_amount, 0);
-        const cash = data.filter(i => i.payment_method.toLowerCase() === 'cash').reduce((sum, inv) => sum + inv.total_amount, 0);
-        const instapay = data.filter(i => i.payment_method.toLowerCase() === 'instapay').reduce((sum, inv) => sum + inv.total_amount, 0);
-        const alahly = data.filter(i => i.payment_method.toLowerCase() === 'bank alahly').reduce((sum, inv) => sum + inv.total_amount, 0);
-        const masr = data.filter(i => i.payment_method.toLowerCase() === 'bank masr').reduce((sum, inv) => sum + inv.total_amount, 0);
+        const getPaid = (inv) => (inv.paid_amount !== null && inv.paid_amount !== undefined) ? inv.paid_amount : (inv.total_amount - (inv.discount || 0));
+        
+        const total = data.reduce((sum, inv) => sum + getPaid(inv), 0);
+        const cash = data.filter(i => i.payment_method.toLowerCase() === 'cash').reduce((sum, inv) => sum + getPaid(inv), 0);
+        const instapay = data.filter(i => i.payment_method.toLowerCase() === 'instapay').reduce((sum, inv) => sum + getPaid(inv), 0);
+        const alahly = data.filter(i => i.payment_method.toLowerCase() === 'bank alahly').reduce((sum, inv) => sum + getPaid(inv), 0);
+        const masr = data.filter(i => i.payment_method.toLowerCase() === 'bank masr').reduce((sum, inv) => sum + getPaid(inv), 0);
 
         totalIncomeEl.textContent = `$${total.toFixed(2)}`;
         cashIncomeEl.textContent = `$${cash.toFixed(2)}`;

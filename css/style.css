@@ -457,3 +457,66 @@ tbody tr:hover {
 .w-full { width: 100%; }
 .mt-4 { margin-top: 1rem; }
 .mb-4 { margin-bottom: 1rem; }
+
+/* Responsive Layout Classes */
+.billing-layout, .two-col-layout {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.billing-form-col, .table-col {
+    flex: 2;
+}
+
+.billing-summary-col, .form-col {
+    flex: 1;
+}
+
+@media (max-width: 1400px) {
+    :root {
+        --sidebar-width: 220px;
+    }
+    .main-content {
+        padding: 1.5rem;
+    }
+    .card {
+        padding: 1.25rem;
+    }
+    th, td {
+        padding: 0.75rem;
+    }
+    .stat-grid {
+        gap: 1rem;
+    }
+    .stat-card {
+        padding: 1.25rem;
+    }
+}
+
+@media (max-width: 1250px) {
+    .billing-layout, .two-col-layout {
+        flex-direction: column;
+    }
+    .billing-form-col, .billing-summary-col, .table-col, .form-col {
+        width: 100%;
+        flex: none;
+    }
+    :root {
+        --sidebar-width: 200px;
+    }
+}
+
+@media (max-width: 700px) {
+    .sidebar {
+        display: none;
+    }
+    .main-content {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 1rem;
+    }
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
+}

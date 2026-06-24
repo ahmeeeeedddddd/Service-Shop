@@ -31,6 +31,9 @@ function initDB() {
       description TEXT,
       date TEXT,
       total_amount REAL,
+      paid_amount REAL,
+      pending_amount REAL DEFAULT 0,
+      discount REAL DEFAULT 0,
       payment_method TEXT,
       odometer TEXT,
       notes TEXT,
@@ -51,7 +54,8 @@ function initDB() {
       name TEXT NOT NULL,
       contact_number TEXT,
       supplies_what TEXT,
-      notes TEXT
+      notes TEXT,
+      pending_amount REAL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS parts (
@@ -94,6 +98,11 @@ function initDB() {
   try {
     db.exec("ALTER TABLE repairs ADD COLUMN notes TEXT");
   } catch (e) { /* Ignore if exists */ }
+
+  try { db.exec(`ALTER TABLE repairs ADD COLUMN paid_amount REAL`); } catch(e) {}
+  try { db.exec(`ALTER TABLE repairs ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
+  try { db.exec(`ALTER TABLE repairs ADD COLUMN discount REAL DEFAULT 0`); } catch(e) {}
+  try { db.exec(`ALTER TABLE suppliers ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
 }
 
 initDB();
@@ -127,8 +136,8 @@ function getCustomerByPhone(phone) {
 
 // --- Repairs & Repair Items CRUD ---
 function addRepair(repair) {
-  const stmt = db.prepare('INSERT INTO repairs (customer_id, description, date, total_amount, payment_method, odometer, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(repair.customer_id, repair.description, repair.date, repair.total_amount, repair.payment_method, repair.odometer, repair.notes);
+  const stmt = db.prepare('INSERT INTO repairs (customer_id, description, date, total_amount, paid_amount, pending_amount, discount, payment_method, odometer, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(repair.customer_id, repair.description, repair.date, repair.total_amount, repair.paid_amount, repair.pending_amount, repair.discount, repair.payment_method, repair.odometer, repair.notes);
   return info.lastInsertRowid;
 }
 
@@ -139,7 +148,8 @@ function addRepairItem(item) {
 
 function getRepairs() {
   return db.prepare(`
-    SELECT repairs.*, customers.name as customer_name 
+    SELECT repairs.*, customers.name as customer_name,
+           customers.phone as customer_phone, customers.car_name, customers.plate_number 
     FROM repairs 
     JOIN customers ON repairs.customer_id = customers.id 
     ORDER BY repairs.date DESC
@@ -152,7 +162,8 @@ function getRepairItems(repairId) {
 
 function getRepairById(id) {
   return db.prepare(`
-    SELECT repairs.*, customers.name as customer_name 
+    SELECT repairs.*, customers.name as customer_name,
+           customers.phone as customer_phone, customers.car_name, customers.plate_number 
     FROM repairs 
     JOIN customers ON repairs.customer_id = customers.id 
     WHERE repairs.id = ?
@@ -183,9 +194,13 @@ function getSuppliers() {
 }
 
 function addSupplier(supplier) {
-  const stmt = db.prepare('INSERT INTO suppliers (name, contact_number, supplies_what, notes) VALUES (?, ?, ?, ?)');
-  const info = stmt.run(supplier.name, supplier.contact_number, supplier.supplies_what, supplier.notes);
+  const stmt = db.prepare('INSERT INTO suppliers (name, contact_number, supplies_what, notes, pending_amount) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(supplier.name, supplier.contact_number, supplier.supplies_what, supplier.notes, supplier.pending_amount || 0);
   return info.lastInsertRowid;
+}
+
+function updateSupplierPending(id, pending_amount) {
+  db.prepare('UPDATE suppliers SET pending_amount = ? WHERE id = ?').run(pending_amount, id);
 }
 
 function deleteSupplier(id) {
@@ -289,6 +304,7 @@ module.exports = {
   getRepairsByCustomer,
   getSuppliers,
   addSupplier,
+  updateSupplierPending,
   deleteSupplier,
   getParts,
   addPart,

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Bills - El Ansary</title>
+    <title data-i18n="pendingBills">Pending Bills - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -13,44 +13,62 @@
             <div class="logo-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
             </div>
-            <div class="shop-name"><h1>El Ansary</h1></div>
+            <div class="shop-name"><h1 data-i18n="appName">El Ansary</h1></div>
         </div>
         <nav class="sidebar-nav">
-            <a href="customers.html" class="nav-item"><span>Customers</span></a>
-            <a href="billing.html" class="nav-item"><span>Billing</span></a>
-            <a href="pending_bills.html" class="nav-item active"><span>Pending Bills</span></a>
-            <a href="parts.html" class="nav-item"><span>Parts &amp; Stock</span></a>
-            <a href="suppliers.html" class="nav-item"><span>Suppliers</span></a>
-            <a href="income.html" class="nav-item"><span>Income</span></a>
-            <a href="expenses.html" class="nav-item"><span>Expenses</span></a>
-            <a href="bills_history.html" class="nav-item"><span>Bills History</span></a>
-            <a href="daily_report.html" class="nav-item"><span>Daily Report</span></a>
+            <a href="customers.html" class="nav-item">
+                <span data-i18n="customers">Customers</span>
+            </a>
+            <a href="billing.html" class="nav-item">
+                <span data-i18n="billing">Billing</span>
+            </a>
+            <a href="pending_bills.html" class="nav-item active">
+                <span data-i18n="pendingBills">Pending Bills</span>
+            </a>
+            <a href="parts.html" class="nav-item">
+                <span data-i18n="parts">Parts &amp; Stock</span>
+            </a>
+            <a href="suppliers.html" class="nav-item">
+                <span data-i18n="suppliers">Suppliers</span>
+            </a>
+            <a href="income.html" class="nav-item">
+                <span data-i18n="income">Income</span>
+            </a>
+            <a href="expenses.html" class="nav-item">
+                <span data-i18n="expenses">Expenses</span>
+            </a>
+            <a href="bills_history.html" class="nav-item">
+                <span data-i18n="billsHistory">Bills History</span>
+            </a>
+            <a href="daily_report.html" class="nav-item">
+                <span data-i18n="dailyReport">Daily Report</span>
+            </a>
         </nav>
         <div class="sidebar-footer">
-            <button class="lang-btn" id="langToggle">العربية</button>
-            <div class="version-info">Version 1.0 — Works offline</div>
+            <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
+            <div class="version-info" data-i18n="version">Version 1.0 — Works offline</div>
         </div>
     </aside>
 
     <!-- Main Content -->
     <main class="main-content">
         <header class="page-header">
-            <h2>Pending Bills</h2>
-            <p>Bills waiting to be processed and confirmed</p>
+            <h2 data-i18n="pendingBills">Pending Bills</h2>
+            <p data-i18n="pendingBillsSubtitle">Bills waiting to be processed and confirmed</p>
         </header>
 
         <!-- Stats -->
         <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="stat-card accent">
-                <span class="stat-label">Pending Count</span>
+                <span class="stat-label" data-i18n="pendingCount">Pending Count</span>
                 <div class="stat-value" id="pendingCount">0</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Total Value</span>
+                <span class="stat-label" data-i18n="totalValue">Total Value</span>
                 <div class="stat-value" id="pendingTotal">$0.00</div>
             </div>
             <div class="stat-card">
-                <span class="stat-label">Today's Pending</span>
+                <span class="stat-label" data-i18n="todayPending">Today's Pending</span>
                 <div class="stat-value" id="todayPending">0</div>
             </div>
         </div>
@@ -58,20 +76,20 @@
         <!-- Bills List -->
         <div class="card">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="card-title" style="margin-bottom: 0;">All Pending Bills</h3>
-                <input type="text" id="searchInput" class="form-control" placeholder="Search by customer name..." style="width: 250px;">
+                <h3 class="card-title" style="margin-bottom: 0;" data-i18n="allPendingBills">All Pending Bills</h3>
+                <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="searchCustomer" placeholder="Search by customer name..." style="width: 250px;">
             </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Date Created</th>
-                            <th>Customer</th>
-                            <th>Car</th>
-                            <th>Description</th>
-                            <th>Payment</th>
-                            <th>Total</th>
-                            <th>Actions</th>
+                            <th data-i18n="dateCreated">Date Created</th>
+                            <th data-i18n="customer">Customer</th>
+                            <th data-i18n="car">Car</th>
+                            <th data-i18n="description">Description</th>
+                            <th data-i18n="payment">Payment</th>
+                            <th data-i18n="total">Total</th>
+                            <th data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="pendingBillsBody">
@@ -85,14 +103,14 @@
     <!-- Detail Modal -->
     <div class="modal" id="detailModal">
         <div class="modal-content" style="max-width: 700px;">
-            <h3 class="card-title" id="detailTitle">Bill Details</h3>
+            <h3 class="card-title" id="detailTitle" data-i18n="billDetails">Bill Details</h3>
             <div id="detailContent" class="mt-4"></div>
             <div class="flex justify-between mt-6">
-                <button class="btn btn-outline" id="closeDetailBtn">Close</button>
+                <button class="btn btn-outline" id="closeDetailBtn" data-i18n="close">Close</button>
                 <div class="flex gap-2">
-                    <button class="btn btn-outline" id="deleteFromModalBtn" style="color:#ef4444;border-color:#fee2e2;">Delete</button>
-                    <button class="btn btn-outline" id="editFromModalBtn">✏️ Edit</button>
-                    <button class="btn btn-primary" id="processFromModalBtn">✓ Process Bill</button>
+                    <button class="btn btn-outline" id="deleteFromModalBtn" style="color:#ef4444;border-color:#fee2e2;" data-i18n="delete">Delete</button>
+                    <button class="btn btn-outline" id="editFromModalBtn" data-i18n="edit">✏️ Edit</button>
+                    <button class="btn btn-primary" id="processFromModalBtn" data-i18n="processBill">✓ Process Bill</button>
                 </div>
             </div>
         </div>
@@ -101,43 +119,43 @@
     <!-- Edit Modal -->
     <div class="modal" id="editModal">
         <div class="modal-content" style="max-width: 700px;">
-            <h3 class="card-title">Edit Pending Bill</h3>
+            <h3 class="card-title" data-i18n="editPendingBill">Edit Pending Bill</h3>
             <div class="mt-4">
                 <div class="flex gap-4 mb-4">
                     <div class="form-group" style="flex:1;margin-bottom:0;">
-                        <label>Payment Method</label>
+                        <label data-i18n="paymentMethod">Payment Method</label>
                         <select id="editPaymentMethod" class="form-control">
-                            <option value="Cash">Cash</option>
-                            <option value="Instapay">Instapay</option>
-                            <option value="Bank alahly">Bank Alahly</option>
-                            <option value="Bank masr">Bank Masr</option>
+                            <option value="Cash" data-i18n="cash">Cash</option>
+                            <option value="Instapay" data-i18n="instapay">Instapay</option>
+                            <option value="Bank Alahly" data-i18n="bankAlahly">Bank Alahly</option>
+                            <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;margin-bottom:0;">
-                        <label>Odometer</label>
+                        <label data-i18n="odometer">Odometer</label>
                         <input type="text" id="editOdometer" class="form-control" placeholder="e.g. 120,000">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Notes</label>
-                    <input type="text" id="editNotes" class="form-control" placeholder="Optional notes">
+                    <label data-i18n="notes">Notes</label>
+                    <input type="text" id="editNotes" class="form-control" data-i18n-placeholder="notes" placeholder="Optional notes">
                 </div>
                 <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
                     <thead>
                         <tr style="background:#f8fafc;border-bottom:2px solid #eee;">
-                            <th style="padding:0.5rem;text-align:left;">Service / Part</th>
-                            <th style="padding:0.5rem;text-align:center;width:70px;">Qty</th>
-                            <th style="padding:0.5rem;text-align:right;width:100px;">Price</th>
+                            <th style="padding:0.5rem;text-align:left;" data-i18n="serviceName">Service / Part</th>
+                            <th style="padding:0.5rem;text-align:center;width:70px;" data-i18n="qty">Qty</th>
+                            <th style="padding:0.5rem;text-align:right;width:100px;" data-i18n="price">Price</th>
                             <th style="padding:0.5rem;width:40px;"></th>
                         </tr>
                     </thead>
                     <tbody id="editLineItemsBody"></tbody>
                 </table>
-                <button class="btn btn-outline mt-4" id="addEditLineBtn" style="font-size:0.85rem;">+ Add Line</button>
+                <button class="btn btn-outline mt-4" id="addEditLineBtn" style="font-size:0.85rem;" data-i18n="addItem">+ Add Line</button>
             </div>
             <div class="flex justify-between mt-6">
-                <button class="btn btn-outline" id="closeEditBtn">Cancel</button>
-                <button class="btn btn-primary" id="saveEditBtn">💾 Save Changes</button>
+                <button class="btn btn-outline" id="closeEditBtn" data-i18n="close">Cancel</button>
+                <button class="btn btn-primary" id="saveEditBtn" data-i18n="save">💾 Save Changes</button>
             </div>
         </div>
     </div>

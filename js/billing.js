@@ -41,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const paymentMethodSelect = document.getElementById('paymentMethodSelect');
     const savePendingBtn = document.getElementById('savePendingBtn');
+    const discountInput = document.getElementById('discountInput');
+    const netTotalEl = document.getElementById('netTotal');
+    const payByPartsSection = document.getElementById('payByPartsSection');
+    const amountPaidInput = document.getElementById('amountPaidInput');
+    const pendingDisplay = document.getElementById('pendingDisplay');
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -146,12 +151,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.line-subtotal').forEach(el => {
             total += parseFloat(el.textContent.replace('$', '')) || 0;
         });
-        grandTotalEl.textContent = `$${total.toFixed(2)}`;
+        if(grandTotalEl) grandTotalEl.textContent = `$${total.toFixed(2)}`;
+        
+        let discount = 0;
+        if(discountInput) discount = parseFloat(discountInput.value) || 0;
+        const netTotal = Math.max(0, total - discount);
+        if(netTotalEl) netTotalEl.textContent = `$${netTotal.toFixed(2)}`;
+
+        if(amountPaidInput && pendingDisplay) {
+            const amountPaid = parseFloat(amountPaidInput.value) || 0;
+            const pending = Math.max(0, netTotal - amountPaid);
+            pendingDisplay.textContent = pending.toFixed(2);
+        }
     }
+
+    if(discountInput) discountInput.addEventListener('input', updateGrandTotal);
+    if(amountPaidInput) amountPaidInput.addEventListener('input', updateGrandTotal);
 
     // Payment Method Select
     paymentMethodSelect.addEventListener('change', () => {
         paymentMethod = paymentMethodSelect.value;
+        if (paymentMethod === 'PayByParts') {
+            payByPartsSection.style.display = 'block';
+        } else {
+            payByPartsSection.style.display = 'none';
+        }
     });
 
     // Confirm & Print
@@ -182,11 +206,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const now = new Date();
         const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         const grandTotal = lines.reduce((sum, l) => sum + l.total, 0);
+        const discount = parseFloat(discountInput.value) || 0;
+        const netTotal = Math.max(0, grandTotal - discount);
+        let paidAmt = netTotal;
+        let pendingAmt = 0;
+        
+        if (paymentMethodSelect.value === 'PayByParts') {
+            paidAmt = parseFloat(amountPaidInput.value) || 0;
+            pendingAmt = Math.max(0, netTotal - paidAmt);
+        }
 
         currentBillData = {
             customer_id: selectedCustomer.id,
             lines: lines,
             total_amount: grandTotal,
+            paid_amount: paidAmt,
+            pending_amount: pendingAmt,
+            discount: discount,
             payment_method: paymentMethodSelect.value,
             date: todayStr,
             odometer: document.getElementById('odometer').value,
@@ -217,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
             description: currentBillData.lines.map(l => l.name).join(', '),
             date: currentBillData.date,
             total_amount: currentBillData.total_amount,
+            paid_amount: currentBillData.paid_amount,
+            pending_amount: currentBillData.pending_amount,
+            discount: currentBillData.discount,
             payment_method: currentBillData.payment_method,
             odometer: currentBillData.odometer,
             notes: currentBillData.notes
@@ -263,6 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
             </tr>
         `;
+        if (discountInput) discountInput.value = '0';
+        if (amountPaidInput) amountPaidInput.value = '0';
+        if (paymentMethodSelect) paymentMethodSelect.value = 'Cash';
+        if (payByPartsSection) payByPartsSection.style.display = 'none';
+        
         attachRowListeners(lineItemsBody.querySelector('tr'));
         updateGrandTotal();
         
@@ -280,9 +324,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const total = grandTotalEl.textContent;
 
         receiptContent.innerHTML = `
-            <div style="text-align: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;">
-                <img src="../assets/logo.png" style="max-height: 140px; max-width: 350px; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <h1 style="display:none; color: #eab308;">${t.appName}</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; direction: ltr;">
+                <div style="flex: 1; text-align: left; font-weight: bold; color: #475569; font-size: 0.85rem; line-height: 1.6; padding-top: 10px; direction: rtl;">
+                    سمكرة - دهان - عفشة - دوكو<br>
+                    ميكانيكة - كهرباء - تكيف
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <img src="../assets/logo.png" style="max-height: 140px; max-width: 100%; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                    <h1 style="display:none; color: #eab308; margin:0;">${t.appName}</h1>
+                </div>
+                <div style="flex: 1; text-align: right; font-weight: bold; color: #475569; font-size: 1.1rem; padding-top: 10px; direction: rtl;">
+                    مركز صيانة متكامل
+                </div>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
                 <div>
@@ -293,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="text-align: right;">
                     <p><strong>${t.date}:</strong> ${date}</p>
-                    <p><strong>${t.payment}:</strong> ${paymentMethod}</p>
+                    <p><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(paymentMethod)}</p>
                     ${currentBillData && currentBillData.odometer ? `<p><strong>${t.odometer}:</strong> ${currentBillData.odometer}</p>` : ''}
                 </div>
             </div>
@@ -317,8 +370,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     `).join('')}
                 </tbody>
             </table>
-            <div style="text-align: right; margin-top: 2rem; font-size: 1.5rem; font-weight: 700; color: #eab308;">
-                ${t.total}: ${total}
+            </table>
+            
+            <div style="margin-top: 1rem; width: 300px; margin-left: auto; margin-right: 0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.1rem;">
+                    <span>${t.total}:</span>
+                    <span>${total}</span>
+                </div>
+                ${currentBillData && currentBillData.discount > 0 ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.1rem; color: #ef4444;">
+                    <span>${t.discount || 'Discount'}:</span>
+                    <span>-$${currentBillData.discount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: bold; color: #10b981; border-top: 1px solid #eee; padding-top: 0.5rem;">
+                    <span>${t.netTotal || 'Net Total'}:</span>
+                    <span>$${(currentBillData.total_amount - currentBillData.discount).toFixed(2)}</span>
+                </div>
+                ` : ''}
+                
+                ${currentBillData && currentBillData.payment_method === 'PayByParts' ? `
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.1rem; color: #3b82f6;">
+                    <span>${t.amountPaidNow || 'Amount Paid'}:</span>
+                    <span>$${currentBillData.paid_amount.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.1rem; color: #ef4444;">
+                    <span>${t.pendingAmount || 'Pending'}:</span>
+                    <span>$${currentBillData.pending_amount.toFixed(2)}</span>
+                </div>
+                ` : ''}
             </div>
 
             ${currentBillData && currentBillData.notes ? `

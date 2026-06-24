@@ -25,7 +25,7 @@
                 <span data-i18n="billing">Billing</span>
             </a>
             <a href="pending_bills.html" class="nav-item">
-                <span>Pending Bills</span>
+                <span data-i18n="pendingBills">Pending Bills</span>
             </a>
             <a href="parts.html" class="nav-item">
                 <span data-i18n="parts">Parts & Stock</span>
@@ -59,16 +59,15 @@
             <p data-i18n="billingSubtitle">Create a new invoice for a customer</p>
         </header>
 
-        <div class="flex gap-2" style="align-items: flex-start;">
+        <div class="billing-layout">
             <!-- Billing Form -->
-            <div style="flex: 2;">
+            <div class="billing-form-col">
                 <div class="card">
                     <div class="form-group" style="position: relative;">
                         <label data-i18n="customer">Customer</label>
                         <input type="text" id="customerSearch" class="form-control" data-i18n-placeholder="searchPlaceholder" placeholder="Search for customer using name or number">
                         <div id="searchResults" class="search-results-container"></div>
                         <div id="selectedCustomerDisplay" style="display: none;"></div>
-                    </div>
                     </div>
                     
                     <div class="stat-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
@@ -138,19 +137,42 @@
             </div>
 
             <!-- Summary Card -->
-            <div style="flex: 1;">
+            <div class="billing-summary-col">
                 <div class="card">
                     <div class="stat-label" data-i18n="total">Total</div>
                     <div class="stat-value text-teal" id="grandTotal" style="margin-bottom: 1.5rem;">$0.00</div>
 
+                    <!-- Discount -->
+                    <div class="form-group">
+                        <label data-i18n="discount">Discount</label>
+                        <input type="number" id="discountInput" class="form-control" value="0" min="0" placeholder="0">
+                    </div>
+
+                    <!-- Net Total -->
+                    <div class="stat-label" data-i18n="netTotal">Net Total</div>
+                    <div class="stat-value text-teal" id="netTotal" style="margin-bottom:1rem;">$0.00</div>
+
                     <div class="form-group">
                         <label data-i18n="paymentMethod">Payment method</label>
                         <select id="paymentMethodSelect" class="form-control">
-                            <option value="Cash">Cash</option>
-                            <option value="Bank Alahly">Bank Alahly</option>
-                            <option value="Bank Masr">Bank Masr</option>
-                            <option value="Instapay">Instapay</option>
+                            <option value="Cash" data-i18n="cash">Cash</option>
+                            <option value="Bank Alahly" data-i18n="bankAlahly">Bank Alahly</option>
+                            <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
+                            <option value="Instapay" data-i18n="instapay">Instapay</option>
+                            <option value="PayByParts" data-i18n="payByParts">Pay By Parts</option>
                         </select>
+                    </div>
+
+                    <!-- Pay By Parts Section (hidden by default) -->
+                    <div id="payByPartsSection" style="display:none; background:#f8fafc; border-radius:8px; padding:0.75rem; margin-bottom:1rem;">
+                        <div class="form-group" style="margin-bottom:0.75rem;">
+                            <label data-i18n="amountPaidNow">Amount Paid Now</label>
+                            <input type="number" id="amountPaidInput" class="form-control" value="0" min="0">
+                        </div>
+                        <div class="flex justify-between items-center" style="font-size:0.9rem;">
+                            <span data-i18n="pendingAmount" style="color:#64748b;">Pending Amount</span>
+                            <span id="pendingDisplay" class="font-bold" style="color:#ef4444;">0.00</span>
+                        </div>
                     </div>
 
                     <button class="btn btn-primary w-full mt-4" id="confirmPrintBtn" style="padding: 1rem;">

@@ -33,6 +33,11 @@ const translations = {
         cash: "Cash",
         card: "ATM / Card",
         confirmPrint: "Confirm & Print",
+        discount: "Discount",
+        netTotal: "Net Total",
+        payByParts: "Pay By Parts",
+        amountPaidNow: "Amount Paid Now",
+        pendingAmount: "Pending Amount",
         
         // Income/Expenses/History General
         incomeTitle: "Income",
@@ -105,6 +110,9 @@ const translations = {
         suppliesWhat: "Supplies What",
         addSupplier: "Add New Supplier",
         saveSupplier: "Save Supplier",
+        pendingBalance: "Pending Balance",
+        settled: "Settled ✓",
+        egEngineOil: "e.g. Engine Oil, Filters",
         noParts: "No parts in inventory.",
         noSuppliers: "No suppliers found.",
         confirmPayment: "Confirm Payment",
@@ -120,7 +128,23 @@ const translations = {
         customerHistory: "Customer History",
         printInventory: "Print Inventory",
         odometer: "Odometer",
-        odometerOptional: "Odometer (Optional)"
+        odometerOptional: "Odometer (Optional)",
+        pendingBills: "Pending Bills",
+        pendingBillsSubtitle: "Bills waiting to be processed and confirmed",
+        pendingCount: "Pending Count",
+        totalValue: "Total Value",
+        todayPending: "Today's Pending",
+        allPendingBills: "All Pending Bills",
+        dateCreated: "Date Created",
+        processBill: "Process Bill",
+        noPendingBills: "No pending bills",
+        netProfit: "Net Profit",
+        totalSupplierPending: "Total Pending to Suppliers",
+        instapay: "Instapay",
+        bankAlahly: "Bank Alahly",
+        bankMasr: "Bank Masr",
+        view: "View",
+        car: "Car"
     },
     ar: {
         // Sidebar & General
@@ -156,6 +180,11 @@ const translations = {
         cash: "نقدي",
         card: "بطاقة / صراف",
         confirmPrint: "تأكيد وطباعة",
+        discount: "خصم",
+        netTotal: "الصافي",
+        payByParts: "دفع على أجزاء",
+        amountPaidNow: "المبلغ المدفوع الآن",
+        pendingAmount: "المبلغ المتبقي",
         
         // Income/Expenses/History General
         incomeTitle: "الدخل",
@@ -228,6 +257,9 @@ const translations = {
         suppliesWhat: "ماذا يورّد",
         addSupplier: "إضافة مورد جديد",
         saveSupplier: "حفظ المورد",
+        pendingBalance: "الرصيد المستحق",
+        settled: "تم السداد ✓",
+        egEngineOil: "مثال: زيت محرك، فلاتر",
         noParts: "لا توجد قطع في المخزون.",
         noSuppliers: "لا يوجد موردين.",
         confirmPayment: "تأكيد الدفع",
@@ -243,7 +275,23 @@ const translations = {
         customerHistory: "تاريخ العميل",
         printInventory: "طباعة المخزون",
         odometer: "عداد المسافات",
-        odometerOptional: "عداد المسافات (اختياري)"
+        odometerOptional: "عداد المسافات (اختياري)",
+        pendingBills: "الفواتير المعلقة",
+        pendingBillsSubtitle: "الفواتير في انتظار المعالجة والتأكيد",
+        pendingCount: "عدد الفواتير المعلقة",
+        totalValue: "القيمة الإجمالية",
+        todayPending: "معلقات اليوم",
+        allPendingBills: "جميع الفواتير المعلقة",
+        dateCreated: "تاريخ الإنشاء",
+        processBill: "معالجة الفاتورة",
+        noPendingBills: "لا توجد فواتير معلقة",
+        netProfit: "صافي الأرباح",
+        totalSupplierPending: "إجمالي المستحقات للموردين",
+        instapay: "إنستاباي",
+        bankAlahly: "البنك الأهلي",
+        bankMasr: "بنك مصر",
+        view: "عرض",
+        car: "السيارة"
     }
 };
 
@@ -269,9 +317,9 @@ function translatePage() {
             if (el.tagName === 'INPUT' && el.getAttribute('placeholder')) {
                 el.placeholder = t[key];
             } else if (el.tagName === 'SELECT' && el.options[0] && el.options[0].hasAttribute('data-i18n')) {
-                 // Skip translating select options here if they have their own i18n
+                 // Translated explicitly per option if needed, but we can also translate options
             } else {
-                el.innerText = t[key];
+                el.textContent = t[key];
             }
         }
     });
@@ -291,6 +339,20 @@ function translatePage() {
 window.onerror = function(message, source, lineno, colno, error) {
     alert(`Error: ${message}\nAt: ${source}:${lineno}`);
     return false;
+};
+
+window.getTranslatedPaymentMethod = function(method) {
+    const lang = getCurrentLanguage();
+    const t = translations[lang] || translations['en'];
+    if (!method) return '';
+    const key = method.toLowerCase().replace(/\s+/g, '');
+    if (key === 'cash') return t.cash || method;
+    if (key === 'atm/card' || key === 'card') return t.card || method;
+    if (key === 'paybyparts') return t.payByParts || method;
+    if (key === 'instapay') return t.instapay || method;
+    if (key === 'bankalahly') return t.bankAlahly || method;
+    if (key === 'bankmasr') return t.bankMasr || method;
+    return method;
 };
 
 // Export for use in other files

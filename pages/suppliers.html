@@ -25,7 +25,7 @@
                 <span data-i18n="billing">Billing</span>
             </a>
             <a href="pending_bills.html" class="nav-item">
-                <span>Pending Bills</span>
+                <span data-i18n="pendingBills">Pending Bills</span>
             </a>
             <a href="parts.html" class="nav-item">
                 <span data-i18n="parts">Parts & Stock</span>
@@ -59,10 +59,18 @@
             <p data-i18n="suppliersSubtitle">Manage your suppliers and contacts</p>
         </header>
 
-        <div class="flex gap-2" style="align-items: flex-start;">
+        <!-- Stats / Summary Bar -->
+        <div class="stat-grid" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
+            <div class="stat-card accent">
+                <span class="stat-label" data-i18n="totalSupplierPending">Total Pending to Suppliers</span>
+                <div class="stat-value" id="totalSupplierPendingEl">$0.00</div>
+            </div>
+        </div>
+
+        <div class="two-col-layout">
             
             <!-- Left Side: Table of Suppliers -->
-            <div style="flex: 2;">
+            <div class="table-col">
                 <div class="card">
                     <h3 class="card-title" data-i18n="allSuppliers">All Suppliers</h3>
                     <div class="table-container">
@@ -72,6 +80,7 @@
                                     <th data-i18n="name">Name</th>
                                     <th data-i18n="contactNumber">Contact Number</th>
                                     <th data-i18n="suppliesWhat">Supplies What</th>
+                                    <th data-i18n="pendingBalance">Pending Balance</th>
                                     <th data-i18n="notes">Notes</th>
                                     <th style="width: 80px;"></th>
                                 </tr>
@@ -85,7 +94,7 @@
             </div>
 
             <!-- Right Side: Add Supplier Form -->
-            <div style="flex: 1;">
+            <div class="form-col">
                 <div class="card">
                     <h3 class="card-title" data-i18n="addSupplier">Add New Supplier</h3>
                     <div class="form-group">
@@ -98,7 +107,11 @@
                     </div>
                     <div class="form-group">
                         <label data-i18n="suppliesWhat">Supplies What</label>
-                        <input type="text" id="supSupplies" class="form-control" placeholder="e.g. Engine Oil, Filters">
+                        <input type="text" id="supSupplies" class="form-control" data-i18n-placeholder="egEngineOil" placeholder="e.g. Engine Oil, Filters">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="pendingBalance">Pending Balance</label>
+                        <input type="number" id="supPending" class="form-control" value="0" min="0">
                     </div>
                     <div class="form-group">
                         <label data-i18n="notes">Notes</label>
