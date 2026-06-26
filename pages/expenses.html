@@ -90,7 +90,11 @@
                             <label data-i18n="date">Date</label>
                             <input type="date" id="expDate" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-full" data-i18n="saveExpense">Save expense</button>
+                        <input type="hidden" id="editingExpenseId" value="">
+                        <div class="flex gap-2" style="margin-top: 1rem;">
+                            <button type="submit" id="saveExpenseBtn" class="btn btn-primary w-full" data-i18n="saveExpense">Save expense</button>
+                            <button type="button" id="cancelEditBtn" class="btn btn-outline" style="display: none; width: auto;" data-i18n="cancel">Cancel</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -124,7 +128,7 @@
                                     <th data-i18n="description">Description</th>
                                     <th data-i18n="category">Category</th>
                                     <th data-i18n="amount">Amount</th>
-                                    <th style="width: 50px;"></th>
+                                    <th style="width: 140px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="expensesTableBody">

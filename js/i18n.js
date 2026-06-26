@@ -144,7 +144,10 @@ const translations = {
         bankAlahly: "Bank Alahly",
         bankMasr: "Bank Masr",
         view: "View",
-        car: "Car"
+        car: "Car",
+        cancel: "Cancel",
+        updateExpense: "Update Expense",
+        confirmDeleteExpense: "Are you sure you want to delete this expense?"
     },
     ar: {
         // Sidebar & General
@@ -291,7 +294,10 @@ const translations = {
         bankAlahly: "البنك الأهلي",
         bankMasr: "بنك مصر",
         view: "عرض",
-        car: "السيارة"
+        car: "السيارة",
+        cancel: "إلغاء",
+        updateExpense: "تعديل المصروف",
+        confirmDeleteExpense: "هل أنت متأكد من حذف هذا المصروف؟"
     }
 };
 

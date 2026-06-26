@@ -55,11 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Highlight low stock
             if (p.quantity_in_stock < 5) {
-                tr.style.backgroundColor = '#fef2f2'; // light red background for warning
+                tr.style.backgroundColor = '#fef2f2';
             }
 
+            const pJson = encodeURIComponent(JSON.stringify(p));
+
             tr.innerHTML = `
-                <td class="font-bold text-teal" style="cursor: pointer;" onclick="editPart(${JSON.stringify(p).replace(/"/g, '&quot;')})">${p.name}</td>
+                <td class="font-bold text-teal">${p.name}</td>
                 <td>${p.category}</td>
                 <td>${p.supplier_name || '-'}</td>
                 <td>
@@ -67,6 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td>
                     <input type="number" class="form-control edit-price" data-id="${p.id}" value="${p.unit_price}" min="0" step="0.01" style="width: 90px; padding: 0.25rem;">
+                </td>
+                <td>
+                    <div style="display: flex; gap: 0.4rem; justify-content: flex-end;">
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editPart('${pJson}')">
+                            ${getCurrentLanguage() === 'ar' ? 'تعديل' : 'Edit'}
+                        </button>
+                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color: #ef4444; border-color: #fee2e2;" onclick="deletePart(${p.id})">
+                            ${getCurrentLanguage() === 'ar' ? 'حذف' : 'Delete'}
+                        </button>
+                    </div>
                 </td>
             `;
             partsTableBody.appendChild(tr);
@@ -90,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const newQty = parseInt(qtyInput.value) || 0;
         const newPrice = parseFloat(priceInput.value) || 0;
 
-        db.updatePart(id, newQty, newPrice);
+        // Use updatePartInline — only updates qty & price, avoids NOT NULL error on name
+        db.updatePartInline(id, newQty, newPrice);
         
         // Update low stock warning visually
         if (newQty < 5) {
@@ -101,8 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let editingPartId = null;
+    const cancelPartBtn = document.getElementById('cancelPartBtn');
 
-    window.editPart = function(p) {
+    window.editPart = function(jsonStr) {
+        const p = (typeof jsonStr === 'string') ? JSON.parse(decodeURIComponent(jsonStr)) : jsonStr;
         editingPartId = p.id;
         document.getElementById('partName').value = p.name;
         document.getElementById('partCategory').value = p.category;
@@ -111,36 +126,51 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('partPrice').value = p.unit_price;
         
         savePartBtn.textContent = getCurrentLanguage() === 'en' ? 'Update Part' : 'تحديث القطعة';
+        if (cancelPartBtn) cancelPartBtn.style.display = 'inline-block';
     };
+
+    window.deletePart = function(id) {
+        const lang = getCurrentLanguage();
+        const msg = lang === 'ar' ? 'هل أنت متأكد من حذف هذه القطعة؟' : 'Are you sure you want to delete this part?';
+        if (confirm(msg)) {
+            db.deletePart(id);
+            if (editingPartId == id) resetPartForm();
+            loadParts();
+        }
+    };
+
+    function resetPartForm() {
+        editingPartId = null;
+        document.getElementById('partName').value = '';
+        document.getElementById('partQty').value = '0';
+        document.getElementById('partPrice').value = '0';
+        document.getElementById('partSupplier').value = '';
+        savePartBtn.textContent = getCurrentLanguage() === 'en' ? 'Save Part' : 'حفظ القطعة';
+        if (cancelPartBtn) cancelPartBtn.style.display = 'none';
+    }
+
+    if (cancelPartBtn) cancelPartBtn.addEventListener('click', resetPartForm);
 
     // Save/Update Part
     savePartBtn.addEventListener('click', () => {
-        const name = document.getElementById('partName').value;
+        const name = document.getElementById('partName').value.trim();
         const category = document.getElementById('partCategory').value;
         const supplier_id = document.getElementById('partSupplier').value || null;
         const quantity_in_stock = parseInt(document.getElementById('partQty').value) || 0;
         const unit_price = parseFloat(document.getElementById('partPrice').value) || 0;
 
         if (!name) {
-            alert('Part Name is required');
+            alert(getCurrentLanguage() === 'ar' ? 'اسم القطعة مطلوب' : 'Part Name is required');
             return;
         }
 
         if (editingPartId) {
-            // Update existing (extended update in db.js needed or use updatePart)
-            // For now, let's just re-add or implement a full updatePart
             db.updatePart(editingPartId, quantity_in_stock, unit_price, name, category, supplier_id);
-            editingPartId = null;
-            savePartBtn.textContent = getCurrentLanguage() === 'en' ? 'Save Part' : 'حفظ القطعة';
         } else {
             db.addPart({ name, category, supplier_id, quantity_in_stock, unit_price });
         }
-        
-        document.getElementById('partName').value = '';
-        document.getElementById('partQty').value = '0';
-        document.getElementById('partPrice').value = '0';
-        document.getElementById('partSupplier').value = '';
-        
+
+        resetPartForm();
         loadParts();
     });
 

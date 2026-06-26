@@ -75,12 +75,13 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th data-i18n="partName">Part Name</th>
-                                    <th data-i18n="category">Category</th>
-                                    <th data-i18n="supplier">Supplier</th>
-                                    <th style="width: 100px;" data-i18n="qtyInStock">Qty</th>
-                                    <th style="width: 120px;" data-i18n="unitPrice">Unit Price</th>
-                                </tr>
+                                <th data-i18n="partName">Part Name</th>
+                                <th data-i18n="category">Category</th>
+                                <th data-i18n="supplier">Supplier</th>
+                                <th style="width: 100px;" data-i18n="qtyInStock">Qty</th>
+                                <th style="width: 120px;" data-i18n="unitPrice">Unit Price</th>
+                                <th style="width: 150px;"></th>
+                            </tr>
                             </thead>
                             <tbody id="partsTableBody">
                                 <!-- Populated by JS -->
@@ -126,8 +127,10 @@
                             <input type="number" id="partPrice" class="form-control" value="0" min="0" step="0.01">
                         </div>
                     </div>
-                    
-                    <button class="btn btn-primary w-full mt-4" id="savePartBtn" data-i18n="savePart">Save Part</button>
+                    <div class="flex gap-2" style="margin-top: 1rem;">
+                        <button class="btn btn-primary w-full" id="savePartBtn" data-i18n="savePart">Save Part</button>
+                        <button class="btn btn-outline" id="cancelPartBtn" style="display: none; white-space: nowrap;">Cancel</button>
+                    </div>
                 </div>
             </div>
 

@@ -96,54 +96,38 @@
                 </div>
             </div>
 
-            <!-- Bills Section -->
-            <div class="report-section card">
-                <h3 data-i18n="billsHistory">Bills</h3>
+            <!-- Income Section -->
+            <div class="report-section card" style="margin-bottom: 2rem;">
+                <h3 data-i18n="income">Income</h3>
                 <table class="w-full">
                     <thead>
                         <tr>
                             <th data-i18n="customer">Customer</th>
+                            <th data-i18n="carModel">Car Model</th>
+                            <th data-i18n="payment">Payment</th>
                             <th data-i18n="amount">Amount</th>
                         </tr>
                     </thead>
-                    <tbody id="reportBillsBody">
+                    <tbody id="reportIncomeBody">
                         <!-- Dynamic rows -->
                     </tbody>
                 </table>
             </div>
 
-            <div class="flex gap-2">
-                <!-- Income Section -->
-                <div style="flex: 1;" class="report-section card">
-                    <h3 data-i18n="income">Income</h3>
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th data-i18n="payment">Payment</th>
-                                <th data-i18n="amount">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportIncomeBody">
-                            <!-- Dynamic rows -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Expenses Section -->
-                <div style="flex: 1;" class="report-section card">
-                    <h3 data-i18n="expenses">Expenses</h3>
-                    <table class="w-full">
-                        <thead>
-                            <tr>
-                                <th data-i18n="description">Description</th>
-                                <th data-i18n="amount">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reportExpensesBody">
-                            <!-- Dynamic rows -->
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Expenses Section -->
+            <div class="report-section card">
+                <h3 data-i18n="expenses">Expenses</h3>
+                <table class="w-full">
+                    <thead>
+                        <tr>
+                            <th data-i18n="description">Description</th>
+                            <th data-i18n="amount">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportExpensesBody">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>

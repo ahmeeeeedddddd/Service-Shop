@@ -139,16 +139,19 @@
     <!-- Details/Edit Modal -->
     <div class="modal" id="detailsModal">
         <div class="modal-content" style="max-width: 900px;">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4 no-print">
                 <h3 class="card-title" id="modalTitle" data-i18n="serviceHistory">Bill Details</h3>
                 <button class="btn btn-outline" id="addEditItemBtn" style="display: none;">+ Add Item</button>
             </div>
             
             <div id="detailsContent" class="mt-4"></div>
             
-            <div class="flex justify-between mt-6">
+            <div class="flex justify-between mt-6 no-print">
                 <button class="btn btn-outline" id="closeDetailsBtn" data-i18n="close">Close</button>
-                <button class="btn btn-primary" id="saveBillEditBtn" style="display: none;" data-i18n="save">Save Changes</button>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" id="printBillBtn" style="display: none;" data-i18n="print">Print</button>
+                    <button class="btn btn-primary" id="saveBillEditBtn" style="display: none;" data-i18n="save">Save Changes</button>
+                </div>
             </div>
         </div>
     </div>

@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dayExpensesEl = document.getElementById('dayExpenses');
     const dayNetEl = document.getElementById('dayNet');
 
-    const reportBillsBody = document.getElementById('reportBillsBody');
     const reportIncomeBody = document.getElementById('reportIncomeBody');
     const reportExpensesBody = document.getElementById('reportExpensesBody');
 
@@ -64,27 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
         dayNetEl.textContent = `$${net.toFixed(2)}`;
         dayNetEl.style.color = net >= 0 ? '#0d9488' : '#ef4444';
 
-        // Bills (Customer name and amount only)
-        reportBillsBody.innerHTML = income.map(i => {
-            const actualPaid = getPaid(i);
-            return `
-                <tr>
-                    <td>${i.customer_name}</td>
-                    <td class="font-bold">$${actualPaid.toFixed(2)}</td>
-                </tr>
-            `;
-        }).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
-
         // Income Breakdown
         reportIncomeBody.innerHTML = income.map(i => {
             const actualPaid = getPaid(i);
             return `
                 <tr>
+                    <td>${i.customer_name}</td>
+                    <td>${i.car_name || '-'}</td>
                     <td>${window.getTranslatedPaymentMethod(i.payment_method)}</td>
                     <td class="font-bold">$${actualPaid.toFixed(2)}</td>
                 </tr>
             `;
-        }).join('') || '<tr><td colspan="2" style="text-align:center; color:#94a3b8;">No records</td></tr>';
+        }).join('') || '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records</td></tr>';
 
         // Expenses Breakdown
         reportExpensesBody.innerHTML = expenses.map(e => `
