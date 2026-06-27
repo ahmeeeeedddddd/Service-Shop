@@ -3,7 +3,7 @@ try {
     db = require('../database/db.js');
 } catch (e) {
     console.error('Failed to load database:', e);
-    alert('Database Error: Could not connect to the database. Make sure better-sqlite3 is installed correctly.');
+    alert('Database Error: ' + e.message + '\n\n' + e.stack);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -315,6 +315,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <span>• ${i.item_name} (x${i.quantity})</span>
                                     <span class="font-bold">$${(i.quantity * i.unit_price).toFixed(2)}</span>
                                 </li>`).join('')}
+                            </ul>
+                            <div style="margin-top: 0.75rem; border-top: 1px solid #e2e8f0; pt-2;">
+                                ${r.odometer ? `<div style="font-size: 0.8rem; margin-top: 4px;"><strong>Odometer:</strong> ${r.odometer}</div>` : ''}
+                                ${r.notes ? `<div style="font-size: 0.8rem; margin-top: 4px;"><strong>Notes:</strong> ${r.notes}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    detailsHtml = `
+                        <div class="collapsible-details" id="details-${index}" style="display: none; margin-top: 1rem; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px;">
+                                    <span>• ${r.description || 'No description'}</span>
+                                </li>
                             </ul>
                             <div style="margin-top: 0.75rem; border-top: 1px solid #e2e8f0; pt-2;">
                                 ${r.odometer ? `<div style="font-size: 0.8rem; margin-top: 4px;"><strong>Odometer:</strong> ${r.odometer}</div>` : ''}

@@ -19,8 +19,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const billDetailContent = document.getElementById('billDetailContent');
     const closeModalBtn = document.getElementById('closeModalBtn');
     const printBillBtn = document.getElementById('printBillBtn');
+    const deleteBillBtn = document.getElementById('deleteBillBtn');
 
     let allBills = [];
+    let currentBillId = null;
 
     // Set default date to today
     const now = new Date();
@@ -59,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function showBillDetails(bill) {
+        currentBillId = bill.id;
         const lang = getCurrentLanguage();
         const t = translations[lang];
 
@@ -220,8 +223,41 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', applyFilters);
     });
 
-    closeModalBtn.addEventListener('click', () => billModal.classList.remove('active'));
+    closeModalBtn.addEventListener('click', () => {
+        billModal.classList.remove('active');
+        currentBillId = null;
+    });
     printBillBtn.addEventListener('click', () => window.print());
+
+    if (deleteBillBtn) {
+        deleteBillBtn.addEventListener('click', () => {
+            if (!currentBillId) return;
+            const lang = getCurrentLanguage();
+            const confirmMsg = lang === 'ar'
+                ? 'هل أنت متأكد من حذف هذه الفاتورة؟ سيتم تسجيلها كمصروف.'
+                : 'Are you sure you want to delete this bill? It will be recorded as an expense.';
+            
+            if (!confirm(confirmMsg)) return;
+
+            const bill = allBills.find(b => b.id === currentBillId);
+            if (bill) {
+                try {
+                    db.addExpense({
+                        description: `[Deleted Bill] ${bill.customer_name} — ${bill.description || 'Confirmed bill'}`,
+                        amount: parseFloat(bill.total_amount) || 0,
+                        category: 'Deleted Bill',
+                        date: bill.date || filterDateInput.value || new Date().toISOString().split('T')[0]
+                    });
+                    db.deleteRepair(currentBillId);
+                    billModal.classList.remove('active');
+                    currentBillId = null;
+                    loadBills();
+                } catch (e) {
+                    console.error('Failed to record deleted bill as expense:', e);
+                }
+            }
+        });
+    }
 
     // Initialize
     loadBills();

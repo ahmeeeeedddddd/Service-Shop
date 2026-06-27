@@ -42,9 +42,30 @@
             <a href="bills_history.html" class="nav-item">
                 <span data-i18n="billsHistory">Bills History</span>
             </a>
-            <a href="daily_report.html" class="nav-item">
-                <span data-i18n="dailyReport">Daily Report</span>
-            </a>
+            <div class="nav-group">
+                <div class="nav-group-toggle" id="reportsToggle">
+                    <span data-i18n="reports">Reports</span>
+                    <span class="nav-group-arrow">&#9662;</span>
+                </div>
+                <div class="nav-group-items" id="reportsItems">
+                    <a href="daily_report.html" class="nav-item">
+                        <span data-i18n="dailyReport">Daily Report</span>
+                    </a>
+                    <a href="work_order.html" class="nav-item">
+                        <span data-i18n="workOrder">Work Order</span>
+                    </a>
+                    <a href="inspection.html" class="nav-item">
+                        <span data-i18n="inspection">Comprehensive Inspection</span>
+                    </a>
+                    <a href="estimate.html" class="nav-item">
+                        <span data-i18n="estimate">Car Repair Estimate</span>
+                    </a>
+                    <a href="salaries.html" class="nav-item">
+                        <span data-i18n="salaries">Salaries</span>
+                    </a>
+                </div>
+            </div>
+            </div>
         </nav>
         <div class="sidebar-footer">
             <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
@@ -149,6 +170,7 @@
             <div class="flex justify-between mt-6 no-print">
                 <button class="btn btn-outline" id="closeDetailsBtn" data-i18n="close">Close</button>
                 <div class="flex gap-2">
+                    <button class="btn btn-outline" id="deleteBillBtn" style="display: none; color:#ef4444;border-color:#fee2e2;" data-i18n="delete">Delete</button>
                     <button class="btn btn-primary" id="printBillBtn" style="display: none;" data-i18n="print">Print</button>
                     <button class="btn btn-primary" id="saveBillEditBtn" style="display: none;" data-i18n="save">Save Changes</button>
                 </div>

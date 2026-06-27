@@ -113,11 +113,12 @@ function initDB() {
     CREATE TABLE IF NOT EXISTS supplier_transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       supplier_id INTEGER NOT NULL,
+      date TEXT,
       type TEXT NOT NULL,
       amount REAL NOT NULL,
       balance_after REAL NOT NULL,
       note TEXT,
-      date TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(supplier_id) REFERENCES suppliers(id)
     );
   `);
@@ -141,17 +142,73 @@ function initDB() {
     db.exec(`CREATE TABLE IF NOT EXISTS supplier_transactions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       supplier_id INTEGER NOT NULL,
+      date TEXT,
       type TEXT NOT NULL,
       amount REAL NOT NULL,
       balance_after REAL NOT NULL,
       note TEXT,
-      date TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY(supplier_id) REFERENCES suppliers(id)
     )`);
   } catch(e) {}
+
+  try {
+    db.exec("ALTER TABLE supplier_transactions ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+  } catch(e) {}
+
+  // Employees table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS employees (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      employee_id TEXT,
+      name TEXT NOT NULL,
+      role TEXT,
+      daily_rate REAL NOT NULL DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+}
+
+function performAutomaticBackup() {
+  try {
+    const backupDir = path.join(dbDir, 'backup');
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const backupPath = path.join(backupDir, `shop_backup_${todayStr}.db`);
+
+    if (!fs.existsSync(backupPath)) {
+      fs.copyFileSync(dbPath, backupPath);
+      console.log(`Automatic daily backup created at: ${backupPath}`);
+
+      // Clean up backups older than 30 days
+      const files = fs.readdirSync(backupDir);
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      for (const file of files) {
+        if (file.startsWith('shop_backup_') && file.endsWith('.db')) {
+          const filePath = path.join(backupDir, file);
+          const stat = fs.statSync(filePath);
+          if (stat.mtime < thirtyDaysAgo) {
+            try {
+              fs.unlinkSync(filePath);
+            } catch (unlinkErr) {
+              console.error(`Failed to delete old backup ${file}:`, unlinkErr);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to perform automatic database backup:', err);
+  }
 }
 
 initDB();
+performAutomaticBackup();
 
 // --- Customers CRUD ---
 function getCustomers() {
@@ -224,6 +281,11 @@ function getRepairsByDate(date) {
     WHERE date = ? 
     ORDER BY repairs.id DESC
   `).all(date);
+}
+
+function deleteRepair(id) {
+  db.prepare('DELETE FROM repair_items WHERE repair_id = ?').run(id);
+  db.prepare('DELETE FROM repairs WHERE id = ?').run(id);
 }
 
 function getExpensesByDate(date) {
@@ -366,6 +428,26 @@ function getPendingBillById(id) {
   `).get(id);
 }
 
+// --- Employees CRUD ---
+function getEmployees() {
+  return db.prepare('SELECT * FROM employees ORDER BY name COLLATE NOCASE ASC').all();
+}
+
+function addEmployee(emp) {
+  const stmt = db.prepare('INSERT INTO employees (employee_id, name, role, daily_rate) VALUES (?, ?, ?, ?)');
+  const info = stmt.run(emp.employee_id, emp.name, emp.role, emp.daily_rate);
+  return info.lastInsertRowid;
+}
+
+function updateEmployee(id, emp) {
+  db.prepare('UPDATE employees SET employee_id=?, name=?, role=?, daily_rate=? WHERE id=?')
+    .run(emp.employee_id, emp.name, emp.role, emp.daily_rate, id);
+}
+
+function deleteEmployee(id) {
+  db.prepare('DELETE FROM employees WHERE id = ?').run(id);
+}
+
 module.exports = {
   getCustomers,
   searchCustomers,
@@ -399,9 +481,14 @@ module.exports = {
   updateRepairFull,
   updateCustomer,
   getRepairById,
+  deleteRepair,
   getPendingBills,
   addPendingBill,
   deletePendingBill,
   updatePendingBill,
-  getPendingBillById
+  getPendingBillById,
+  getEmployees,
+  addEmployee,
+  updateEmployee,
+  deleteEmployee
 };

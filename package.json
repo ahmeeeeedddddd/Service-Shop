@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "postinstall": "npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=31.7.7 --dist-url=https://electronjs.org/headers",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },

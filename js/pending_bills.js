@@ -198,10 +198,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteBill = (id) => {
         const lang = getCurrentLanguage();
         const confirmMsg = lang === 'ar'
-            ? 'هل أنت متأكد من حذف هذه الفاتورة المعلقة؟'
-            : 'Are you sure you want to delete this pending bill?';
+            ? 'هل أنت متأكد من حذف هذه الفاتورة المعلقة؟ سيتم تسجيلها كمصروف.'
+            : 'Are you sure you want to delete this pending bill? It will be recorded as an expense.';
 
         if (!confirm(confirmMsg)) return;
+
+        // Record the bill as an expense before deleting
+        const bill = allBills.find(b => b.id === id);
+        if (bill) {
+            try {
+                db.addExpense({
+                    description: `[Deleted Bill] ${bill.customer_name} — ${bill.description || 'Pending bill'}`,
+                    amount: parseFloat(bill.total_amount) || 0,
+                    category: 'Deleted Bill',
+                    date: bill.date_created || today
+                });
+            } catch (e) {
+                console.error('Failed to record deleted bill as expense:', e);
+            }
+        }
+
         db.deletePendingBill(id);
         loadBills();
     };
@@ -241,23 +257,25 @@ document.addEventListener('DOMContentLoaded', () => {
         editLineItemsBody.appendChild(tr);
     }
 
-    editFromModalBtn.addEventListener('click', () => {
-        const bill = allBills.find(b => b.id === currentBillId);
-        if (!bill) return;
+    if (editFromModalBtn) {
+        editFromModalBtn.addEventListener('click', () => {
+            const bill = allBills.find(b => b.id === currentBillId);
+            if (!bill) return;
 
-        // Populate fields
-        editPaymentMethod.value = bill.payment_method;
-        editOdometer.value = bill.odometer || '';
-        editNotes.value = bill.notes || '';
-        editLineItemsBody.innerHTML = '';
+            // Populate fields
+            editPaymentMethod.value = bill.payment_method;
+            editOdometer.value = bill.odometer || '';
+            editNotes.value = bill.notes || '';
+            editLineItemsBody.innerHTML = '';
 
-        const lines = JSON.parse(bill.line_items_json || '[]');
-        lines.forEach(l => addEditLineRow(l.name, l.qty, l.price));
-        if (lines.length === 0) addEditLineRow();
+            const lines = JSON.parse(bill.line_items_json || '[]');
+            lines.forEach(l => addEditLineRow(l.name, l.qty, l.price));
+            if (lines.length === 0) addEditLineRow();
 
-        detailModal.classList.remove('active');
-        editModal.classList.add('active');
-    });
+            detailModal.classList.remove('active');
+            editModal.classList.add('active');
+        });
+    }
 
     addEditLineBtn.addEventListener('click', () => addEditLineRow());
     closeEditBtn.addEventListener('click', () => editModal.classList.remove('active'));

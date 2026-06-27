@@ -10,6 +10,10 @@ const translations = {
         expenses: "Expenses",
         billsHistory: "Bills History",
         dailyReport: "Daily Report",
+        reports: "Reports",
+        workOrder: "Work Order",
+        inspection: "Comprehensive Inspection",
+        estimate: "Car Repair Estimate",
         langToggle: "العربية",
         version: "Version 1.0 — Works offline",
         
@@ -120,6 +124,7 @@ const translations = {
         billAlreadyProcessed: "Bill is already processed",
         confirmDeleteCustomer: "Are you sure you want to delete this customer?",
         duplicateCustomerError: "Customer with this phone number already exists!",
+        customerAdded: "Customer saved successfully!",
         edit: "Edit",
         delete: "Delete",
         searchPlaceholder: "Search for customer using name or number",
@@ -147,7 +152,16 @@ const translations = {
         car: "Car",
         cancel: "Cancel",
         updateExpense: "Update Expense",
-        confirmDeleteExpense: "Are you sure you want to delete this expense?"
+        confirmDeleteExpense: "Are you sure you want to delete this expense?",
+        salaries: "Salaries",
+        salariesSubtitle: "Manage employee records and record salaries as expenses",
+        addEmployee: "Add Employee",
+        employeeName: "Name",
+        employeeId: "ID",
+        employeeRole: "Role",
+        dailyRate: "Daily Rate",
+        weeklyTotal: "Weekly Salary (6 days)",
+        employeesList: "Employees List"
     },
     ar: {
         // Sidebar & General
@@ -160,6 +174,10 @@ const translations = {
         expenses: "المصاريف",
         billsHistory: "سجل الفواتير",
         dailyReport: "التقرير اليومي",
+        reports: "التقارير",
+        workOrder: "أمر شغل",
+        inspection: "فحص شامل",
+        estimate: "مقايسة إصلاح",
         langToggle: "English",
         version: "الإصدار 1.0 — يعمل بدون إنترنت",
         
@@ -270,6 +288,7 @@ const translations = {
         billAlreadyProcessed: "الفاتورة معالجة بالفعل",
         confirmDeleteCustomer: "هل أنت متأكد من حذف هذا العميل؟",
         duplicateCustomerError: "هذا العميل موجود بالفعل بنفس رقم الهاتف!",
+        customerAdded: "تم حفظ العميل بنجاح!",
         edit: "تعديل",
         delete: "حذف",
         searchPlaceholder: "البحث عن عميل بالاسم أو الرقم",
@@ -297,7 +316,16 @@ const translations = {
         car: "السيارة",
         cancel: "إلغاء",
         updateExpense: "تعديل المصروف",
-        confirmDeleteExpense: "هل أنت متأكد من حذف هذا المصروف؟"
+        confirmDeleteExpense: "هل أنت متأكد من حذف هذا المصروف؟",
+        salaries: "الرواتب",
+        salariesSubtitle: "إدارة سجلات الموظفين وتسجيل الرواتب في المصاريف",
+        addEmployee: "إضافة موظف",
+        employeeName: "الاسم",
+        employeeId: "الرقم التعريفي",
+        employeeRole: "الوظيفة / الدور",
+        dailyRate: "الأجر اليومي",
+        weeklyTotal: "إجمالي الراتب الأسبوعي (٦ أيام)",
+        employeesList: "قائمة الموظفين"
     }
 };
 
@@ -365,3 +393,79 @@ window.getTranslatedPaymentMethod = function(method) {
 if (typeof module !== 'undefined') {
     module.exports = { translations, getCurrentLanguage, setLanguage, translatePage };
 }
+
+// --- Reports sidebar dropdown toggle (runs on every page) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const toggle = document.getElementById('reportsToggle');
+    const items  = document.getElementById('reportsItems');
+    if (toggle && items) {
+        toggle.addEventListener('click', () => {
+            toggle.classList.toggle('open');
+            items.classList.toggle('open');
+        });
+    }
+});
+
+// --- Global Print Preview Helper ---
+// Call showPrintPreview(prepareFn) instead of window.print() directly.
+// prepareFn() should populate the #printArea content, then returns.
+// After the user clicks "Print" in the preview modal, window.print() is called.
+window.showPrintPreview = function(prepareFn) {
+    // Run the caller's preparation logic first
+    if (typeof prepareFn === 'function') prepareFn();
+
+    const printArea = document.getElementById('printArea');
+    if (!printArea) { window.print(); return; }
+
+    // Remove old overlay if any
+    const existing = document.getElementById('printPreviewOverlay');
+    if (existing) existing.remove();
+
+    // Build preview overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'printPreviewOverlay';
+    overlay.className = 'print-preview-overlay active';
+
+    const lang = getCurrentLanguage();
+    overlay.innerHTML = `
+        <div class="print-preview-bar">
+            <h3>${lang === 'ar' ? '📄 معاينة الطباعة' : '📄 Print Preview'}</h3>
+            <div class="preview-actions">
+                <button id="previewPrintBtn" class="btn btn-primary" style="background:#16a34a;border-color:#16a34a;">
+                    🖨️ ${lang === 'ar' ? 'طباعة' : 'Print'}
+                </button>
+                <button id="previewCloseBtn" class="btn btn-outline" style="color:white;border-color:#64748b;">
+                    ✕ ${lang === 'ar' ? 'إغلاق' : 'Close'}
+                </button>
+            </div>
+        </div>
+        <div class="print-preview-frame" id="printPreviewFrame"></div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Clone printArea content into the frame (without #printArea wrapper)
+    const frame = document.getElementById('printPreviewFrame');
+    frame.innerHTML = printArea.innerHTML;
+
+    // Copy inline styles from printArea's children so the preview looks right
+    // We apply a print-like font style to the frame
+    frame.style.fontFamily = 'Arial, sans-serif';
+    frame.style.direction = 'rtl';
+
+    // Print button: close preview and trigger actual print
+    document.getElementById('previewPrintBtn').addEventListener('click', () => {
+        overlay.remove();
+        setTimeout(() => window.print(), 100);
+    });
+
+    // Close button
+    document.getElementById('previewCloseBtn').addEventListener('click', () => {
+        overlay.remove();
+    });
+
+    // Click outside to close
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+    });
+};

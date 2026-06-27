@@ -38,14 +38,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBillEditBtn = document.getElementById('saveBillEditBtn');
     const printBillBtn = document.getElementById('printBillBtn');
     const printIncomeReportBtn = document.getElementById('printIncomeReportBtn');
+    const deleteBillBtn = document.getElementById('deleteBillBtn');
     
-    let currentEditingBillId = null;
+    let currentBillId = null;
 
     if (printBillBtn) {
         printBillBtn.addEventListener('click', () => window.print());
     }
 
     window.viewBillDetails = function(id) {
+        currentBillId = id;
         const bill = db.getRepairById(id);
         const items = db.getRepairItems(id);
         const lang = getCurrentLanguage();
@@ -187,11 +189,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         modalTitle.textContent = "Bill Details";
-        addEditItemBtn.style.display = 'none';
-        saveBillEditBtn.style.display = 'none';
-        printBillBtn.style.display = 'block';
+        if (addEditItemBtn) addEditItemBtn.style.display = 'none';
+        if (saveBillEditBtn) saveBillEditBtn.style.display = 'none';
+        if (printBillBtn) printBillBtn.style.display = 'block';
+        if (deleteBillBtn) deleteBillBtn.style.display = 'block';
         detailsModal.classList.add('active');
     };
+
+    if (deleteBillBtn) {
+        deleteBillBtn.addEventListener('click', () => {
+            if (!currentBillId) return;
+            const lang = getCurrentLanguage();
+            const confirmMsg = lang === 'ar'
+                ? 'هل أنت متأكد من حذف هذه الفاتورة؟ سيتم تسجيلها كمصروف.'
+                : 'Are you sure you want to delete this bill? It will be recorded as an expense.';
+            
+            if (!confirm(confirmMsg)) return;
+
+            const bill = allInvoices.find(b => b.id === currentBillId);
+            if (bill) {
+                try {
+                    db.addExpense({
+                        description: `[Deleted Bill] ${bill.customer_name} — ${bill.description || 'Confirmed bill'}`,
+                        amount: parseFloat(bill.total_amount) || 0,
+                        category: 'Deleted Bill',
+                        date: bill.date || filterDateInput.value || new Date().toISOString().split('T')[0]
+                    });
+                    db.deleteRepair(currentBillId);
+                    detailsModal.classList.remove('active');
+                    currentBillId = null;
+                    loadInvoices();
+                } catch (e) {
+                    console.error('Failed to record deleted bill as expense:', e);
+                }
+            }
+        });
+    }
 
     window.editBill = function(bill) {
         currentEditingBillId = bill.id;
@@ -308,9 +341,10 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         
         modalTitle.textContent = t.incomeTitle + " Report Preview";
-        addEditItemBtn.style.display = 'none';
-        saveBillEditBtn.style.display = 'none';
+        if (addEditItemBtn) addEditItemBtn.style.display = 'none';
+        if (saveBillEditBtn) saveBillEditBtn.style.display = 'none';
         if (printBillBtn) printBillBtn.style.display = 'none';
+        if (deleteBillBtn) deleteBillBtn.style.display = 'none';
         
         // Add a print button specifically for the report inside the modal? 
         // No, I'll just change saveBillEditBtn to Print if it's report mode.
@@ -364,11 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><span class="badge ${badgeClass}">${paymentText}</span></td>
                 <td class="font-bold">$${parseFloat(actualPaid).toFixed(2)}</td>
                 <td>
-                    ${inv.date === today ? `
-                        <button class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" onclick="editBill(${JSON.stringify(inv).replace(/"/g, '&quot;')})">
-                            <span data-i18n="edit">Edit</span>
-                        </button>
-                    ` : ''}
                 </td>
             `;
             incomeTableBody.appendChild(tr);

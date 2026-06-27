@@ -1,10 +1,59 @@
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
+
+// ── Run inside Electron so better-sqlite3 never needs a rebuild ──────────────
+// When called via `node migrate.js`, re-spawn under Electron and exit.
+if (!process.versions.electron) {
+  const { execSync } = require('child_process');
+  console.log('Re-launching migration under Electron runtime...');
+  try {
+    execSync(
+      `node_modules/.bin/electron --run-migrate "${__filename}"`,
+      { cwd: __dirname, stdio: 'inherit' }
+    );
+  } catch (e) {
+    // non-zero exit from Electron is normal (it exits with 1 on app.exit(0) sometimes)
+  }
+  process.exit(0);
+}
+
+// ── Running inside Electron ───────────────────────────────────────────────────
+const { app } = require('electron');
 const Database = require('better-sqlite3');
 
-const dbPath = path.join(__dirname, 'database', 'shop.db');
+app.whenReady().then(() => {
+
+const dbDir = process.env.APPDATA
+  ? path.join(process.env.APPDATA, 'ElAnsaryServiceShop')
+  : path.join(__dirname, 'database');
+
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, 'shop.db');
 const db = new Database(dbPath);
+
+console.log('Clearing old migration data...');
+db.prepare('DELETE FROM repair_items').run();
+db.prepare('DELETE FROM repairs').run();
+db.prepare('DELETE FROM customers').run();
+try {
+  db.prepare('DELETE FROM supplier_transactions').run();
+} catch (e) {
+  // Ignored if table doesn't exist
+}
+try {
+  db.prepare('DELETE FROM suppliers').run();
+} catch (e) {
+  // Ignored if table doesn't exist
+}
+try {
+  db.prepare('DELETE FROM sqlite_sequence WHERE name IN ("customers", "repairs", "repair_items", "suppliers", "supplier_transactions")').run();
+} catch (e) {
+  // Ignored if sqlite_sequence doesn't exist
+}
 
 console.log('Starting data migration...');
 
@@ -39,7 +88,7 @@ const getCustomerByPhone = db.prepare('SELECT id FROM customers WHERE phone = ?'
 const getCustomerByExactNameAndPhone = db.prepare('SELECT id FROM customers WHERE name = ? AND phone = ?');
 
 for (const row of records) {
-  // cust_code, cust_name, mobile, car_model, car_type, plate_number, repair_id, repair_date, work_description, work_price
+  // cust_code, cust_name, mobile, car_model, car_type, plate_number, repair_id, repair_date, odometer, work_description, work_price
   const [
     cust_code, 
     cust_name, 
@@ -49,6 +98,7 @@ for (const row of records) {
     plate_number, 
     repair_id, 
     repair_date, 
+    odometer,
     work_description, 
     work_price
   ] = row;
@@ -103,8 +153,18 @@ for (const row of records) {
       cust_code: cust_code,
       repair_date: repair_date,
       descriptions: [],
-      total_amount: 0
+      total_amount: 0,
+      odometer: ''
     };
+  }
+
+  if (odometer && odometer.toUpperCase() !== 'NULL') {
+    const odoVal = parseInt(odometer, 10);
+    if (!isNaN(odoVal) && odoVal !== 0) {
+      if (!repairGroups[repair_id].odometer || repairGroups[repair_id].odometer === '') {
+        repairGroups[repair_id].odometer = String(odoVal);
+      }
+    }
   }
 
   if (work_description && work_description.toUpperCase() !== 'NULL') {
@@ -151,7 +211,7 @@ for (const [r_id, group] of Object.entries(repairGroups)) {
       finalDate, 
       group.total_amount, 
       'unknown', // payment_method
-      '', // odometer
+      group.odometer || '', // odometer
       ''  // notes
     );
     repairsImported++;
@@ -160,7 +220,137 @@ for (const [r_id, group] of Object.entries(repairGroups)) {
   }
 }
 
+// --- Supplier & Supplier History Migration ---
+console.log('Starting supplier migration...');
+const suppliersCsvPath = path.join(__dirname, 'suppliers.csv');
+const insertSupplier = db.prepare('INSERT INTO suppliers (name, contact_number, supplies_what, notes, pending_amount) VALUES (?, ?, ?, ?, ?)');
+
+let suppliersImported = 0;
+const compCodeToDbId = {};
+const supplierStartValues = {};
+
+if (fs.existsSync(suppliersCsvPath)) {
+  const suppliersContent = fs.readFileSync(suppliersCsvPath, 'utf8');
+  const suppliersRecords = parse(suppliersContent, {
+    skip_empty_lines: true,
+    trim: true
+  });
+
+  for (const row of suppliersRecords) {
+    const [comp_code, comp_name, start_value] = row;
+    if (!comp_code || !comp_name) continue;
+
+    const startVal = parseFloat(start_value) || 0;
+
+    try {
+      const info = insertSupplier.run(comp_name, '', '', '', startVal);
+      const dbId = info.lastInsertRowid;
+      compCodeToDbId[comp_code] = dbId;
+      supplierStartValues[dbId] = startVal;
+      suppliersImported++;
+    } catch (err) {
+      console.error(`Error inserting supplier ${comp_name}:`, err.message);
+    }
+  }
+}
+
+const historyCsvPath = path.join(__dirname, 'supplierhistory.csv');
+if (fs.existsSync(historyCsvPath)) {
+  const historyContent = fs.readFileSync(historyCsvPath, 'utf8');
+  const historyRecords = parse(historyContent, {
+    skip_empty_lines: true,
+    trim: true
+  });
+
+  // Group history records by comp_code
+  const historyByCompCode = {};
+  for (const row of historyRecords) {
+    const [comp_code, date, credit, debit, note] = row;
+    if (!comp_code) continue;
+
+    if (!historyByCompCode[comp_code]) {
+      historyByCompCode[comp_code] = [];
+    }
+
+    historyByCompCode[comp_code].push({
+      date: date || '',
+      credit: parseFloat(credit) || 0,
+      debit: parseFloat(debit) || 0,
+      note: note || ''
+    });
+  }
+
+  const insertTransaction = db.prepare(`
+    INSERT INTO supplier_transactions (supplier_id, date, type, amount, balance_after, note)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const updateSupplierBalance = db.prepare(`
+    UPDATE suppliers SET pending_amount = ? WHERE id = ?
+  `);
+
+  let transactionsImported = 0;
+
+  for (const [comp_code, transactions] of Object.entries(historyByCompCode)) {
+    const supplierDbId = compCodeToDbId[comp_code];
+    if (!supplierDbId) continue;
+
+    // Sort chronologically by date
+    transactions.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date.replace(/-/g, '/')) : new Date(0);
+      const dateB = b.date ? new Date(b.date.replace(/-/g, '/')) : new Date(0);
+      return dateA - dateB;
+    });
+
+    let runningBalance = supplierStartValues[supplierDbId] || 0;
+
+    for (const tx of transactions) {
+      let type = 'purchase';
+      let amount = 0;
+
+      if (tx.debit > 0) {
+        type = 'purchase';
+        amount = tx.debit;
+        runningBalance += tx.debit;
+      } else if (tx.credit > 0) {
+        type = 'payment';
+        amount = tx.credit;
+        runningBalance -= tx.credit;
+      } else {
+        type = 'purchase';
+        amount = 0;
+      }
+
+      try {
+        insertTransaction.run(
+          supplierDbId,
+          tx.date,
+          type,
+          amount,
+          runningBalance,
+          tx.note
+        );
+        transactionsImported++;
+      } catch (err) {
+        console.error(`Error inserting transaction for supplier ID ${supplierDbId}:`, err.message);
+      }
+    }
+
+    // Update supplier's pending_amount to the final running balance
+    try {
+      updateSupplierBalance.run(runningBalance, supplierDbId);
+    } catch (err) {
+      console.error(`Error updating balance for supplier ID ${supplierDbId}:`, err.message);
+    }
+  }
+
+  console.log(`Total new suppliers imported: ${suppliersImported}`);
+  console.log(`Total supplier transactions imported: ${transactionsImported}`);
+}
+
 console.log('--- Migration Completed ---');
 console.log(`Total new customers imported: ${customersImported}`);
 console.log(`Total repair visits imported: ${repairsImported}`);
-process.exit(0);
+
+app.exit(0);
+}); // end app.whenReady

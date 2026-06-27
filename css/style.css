@@ -148,6 +148,22 @@ body {
 .sidebar-nav {
     flex: 1;
     padding: 1rem 0.75rem;
+    overflow-y: auto;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 2px;
+}
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+    background: #475569;
 }
 
 .nav-item {
@@ -171,6 +187,115 @@ body {
 .nav-item.active {
     background-color: var(--primary-color);
     color: white;
+}
+
+/* --- Sidebar Dropdown Group --- */
+.nav-group {
+    margin-bottom: 0.25rem;
+}
+
+.nav-group-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0.75rem 1rem;
+    color: var(--sidebar-text);
+    cursor: pointer;
+    border-radius: var(--radius);
+    font-weight: 500;
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.nav-group-toggle:hover {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+}
+
+.nav-group-toggle.open {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+}
+
+.nav-group-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.nav-group-toggle.open .nav-group-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-group-items {
+    display: none;
+    padding-left: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.nav-group-items.open {
+    display: block;
+}
+
+.nav-group-items .nav-item {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+}
+
+/* --- Print Preview Modal --- */
+.print-preview-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem;
+    overflow-y: auto;
+}
+.print-preview-overlay.active {
+    display: flex;
+}
+.print-preview-bar {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    color: white;
+    flex-shrink: 0;
+}
+.print-preview-bar h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+}
+.print-preview-bar .preview-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+.print-preview-frame {
+    background: white;
+    width: 100%;
+    max-width: 900px;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    padding: 2rem;
+    min-height: 400px;
+    direction: rtl;
+    font-family: 'Arial', sans-serif;
+    color: black;
+}
+@media print {
+    .print-preview-overlay { display: none !important; }
 }
 
 .sidebar-footer {

@@ -2,6 +2,11 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// When launched by migrate.js as a runner — do nothing here, migrate.js handles everything
+if (process.argv.includes('--run-migrate')) {
+  // migrate.js will require itself and use app.whenReady — just don't create windows
+} else {
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -37,29 +42,10 @@ app.whenReady().then(() => {
       
       fs.writeFileSync(filePath, data);
       
-      // Attempt silent print only if a physical printer is available
-      let hasRealPrinter = false;
-      try {
-          // In some Electron versions it's getPrinters(), in others getPrintersAsync()
-          const printers = win.webContents.getPrinters ? win.webContents.getPrinters() : [];
-          hasRealPrinter = printers.some(p => 
-              !p.name.toLowerCase().includes('pdf') && 
-              !p.name.toLowerCase().includes('xps') && 
-              !p.name.toLowerCase().includes('onenote') &&
-              !p.name.toLowerCase().includes('fax')
-          );
-      } catch (e) {
-          console.log('Printer detection failed, skipping silent print:', e.message);
-      }
-
-      if (hasRealPrinter) {
-          win.webContents.print({ 
-              silent: true, 
-              printBackground: true 
-          }, (success, errorType) => {
-              if (!success) console.log('Silent print note:', errorType);
-          });
-      }
+      // Always trigger print dialog after saving PDF
+      win.webContents.print({ silent: false, printBackground: true }, (success, errorType) => {
+        if (!success) console.log('Print note:', errorType);
+      });
 
       return { success: true, path: filePath };
     } catch (error) {
@@ -76,3 +62,5 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+
+} // end else (not --run-migrate)
