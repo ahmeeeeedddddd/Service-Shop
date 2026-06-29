@@ -112,7 +112,6 @@ function buildCompTable() {
         tr.innerHTML = `
             <td class="left-align">${item}</td>
             <td><input type="text" class="form-control comp-note" data-index="${index}"></td>
-            <td><input type="text" class="form-control comp-opt" data-index="${index}"></td>
         `;
         tbody.appendChild(tr);
     });
@@ -193,9 +192,8 @@ function renderPrintCompTable() {
     table.innerHTML = `
         <thead>
             <tr>
-                <th style="width:35%;">البند</th>
-                <th style="width:35%;">ملاحظات</th>
-                <th style="width:30%;">اختياري بتكلفة إضافية</th>
+                <th style="width:40%;">البند</th>
+                <th style="width:60%;">ملاحظات</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -206,13 +204,11 @@ function renderPrintCompTable() {
     compItems.forEach((item, index) => {
         const row = screenRows[index];
         const note = row.querySelector('.comp-note').value;
-        const opt = row.querySelector('.comp-opt').value;
         
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td class="item-name">${item}</td>
             <td style="text-align:right;">${note}</td>
-            <td style="text-align:right;">${opt}</td>
         `;
         tbody.appendChild(tr);
     });

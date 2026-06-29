@@ -51,23 +51,14 @@ function printWorkOrder() {
     showPrintPreview(() => {
         // Populate print fields
         document.getElementById('p_customer_name').innerText = document.getElementById('wo_customer_name').value;
-        document.getElementById('p_customer_name2').innerText = document.getElementById('wo_customer_name').value;
         document.getElementById('p_customer_phone').innerText = document.getElementById('wo_customer_phone').value;
-        document.getElementById('p_customer_phone2').innerText = document.getElementById('wo_customer_phone').value;
         document.getElementById('p_vehicle_brand').innerText = document.getElementById('wo_vehicle_brand').value;
-        document.getElementById('p_vehicle_brand2').innerText = document.getElementById('wo_vehicle_brand').value;
         document.getElementById('p_odometer').innerText = document.getElementById('wo_odometer').value;
-        document.getElementById('p_odometer2').innerText = document.getElementById('wo_odometer').value;
         document.getElementById('p_plate').innerText = document.getElementById('wo_plate').value;
-        document.getElementById('p_plate2').innerText = document.getElementById('wo_plate').value;
         document.getElementById('p_vin').innerText = document.getElementById('wo_vin').value;
-        document.getElementById('p_vin2').innerText = document.getElementById('wo_vin').value;
         document.getElementById('p_engine').innerText = document.getElementById('wo_engine').value;
-        document.getElementById('p_engine2').innerText = document.getElementById('wo_engine').value;
         document.getElementById('p_time_in').innerText = document.getElementById('wo_time_in').value;
-        document.getElementById('p_time_in2').innerText = document.getElementById('wo_time_in').value;
         document.getElementById('p_time_out').innerText = document.getElementById('wo_time_out').value;
-        document.getElementById('p_time_out2').innerText = document.getElementById('wo_time_out').value;
 
         const printTbody = document.getElementById('p_woRows');
         printTbody.innerHTML = '';

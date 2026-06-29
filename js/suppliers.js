@@ -74,10 +74,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalNoteInput = document.getElementById('modalNote');
     const paymentModalTitle = document.getElementById('paymentModalTitle');
     const paymentCurrentBalance = document.getElementById('paymentCurrentBalance');
+    const modalActionType = document.getElementById('modalActionType');
+    const modalAmountLabel = document.getElementById('modalAmountLabel');
 
     let activeSupplierId = null;
     let activeSupplierCurrentAmount = 0;
     let activeSupplierName = '';
+
+    if (modalActionType) {
+        modalActionType.addEventListener('change', () => {
+            const val = modalActionType.value;
+            const lang = getCurrentLanguage();
+            if (val === 'payment') {
+                modalAmountLabel.textContent = lang === 'ar' ? 'المبلغ المدفوع ($)' : 'Amount Paid ($)';
+                modalAmountInput.placeholder = 'e.g. 2000';
+            } else if (val === 'purchase') {
+                modalAmountLabel.textContent = lang === 'ar' ? 'مبلغ الإضافة ($)' : 'Amount to Add ($)';
+                modalAmountInput.placeholder = 'e.g. 1500';
+            } else if (val === 'override') {
+                modalAmountLabel.textContent = lang === 'ar' ? 'الرصيد المستحق الجديد ($)' : 'New Owed Balance ($)';
+                modalAmountInput.placeholder = 'e.g. 5000';
+            }
+        });
+    }
 
     window.openPaymentModal = function(id, currentAmount, supplierName) {
         activeSupplierId = id;
@@ -87,18 +106,39 @@ document.addEventListener('DOMContentLoaded', () => {
         modalAmountInput.value = '';
         if (modalNoteInput) modalNoteInput.value = '';
 
-        paymentModalTitle.textContent = `Record Payment — ${supplierName}`;
+        if (modalActionType) {
+            modalActionType.value = 'payment';
+        }
+
+        const lang = getCurrentLanguage();
+        
+        const optPay = modalActionType ? modalActionType.querySelector('option[value="payment"]') : null;
+        const optPur = modalActionType ? modalActionType.querySelector('option[value="purchase"]') : null;
+        const optOvr = modalActionType ? modalActionType.querySelector('option[value="override"]') : null;
+        if (optPay) optPay.textContent = lang === 'ar' ? '💸 تسجيل دفعة (تقليل الرصيد المستحق)' : '💸 Record Payment (Reduces Balance)';
+        if (optPur) optPur.textContent = lang === 'ar' ? '📦 شراء بالآجل (زيادة الرصيد المستحق)' : '📦 Purchase on Credit (Increases Balance)';
+        if (optOvr) optOvr.textContent = lang === 'ar' ? '✏️ تعديل الرصيد يدوياً (تحديد القيمة)' : '✏️ Manually Override Balance (Sets Balance)';
+
+        const lblType = document.getElementById('lblModalActionType');
+        if (lblType) lblType.textContent = lang === 'ar' ? 'نوع المعاملة' : 'Action Type';
+
+        const lblNote = document.getElementById('modalNoteLabel');
+        if (lblNote) lblNote.innerHTML = lang === 'ar' ? 'ملاحظات <span style="color:#94a3b8; font-weight:400;">(اختياري)</span>' : 'Note / Reason <span style="color:#94a3b8; font-weight:400;">(optional)</span>';
+
+        paymentModalTitle.textContent = lang === 'ar' ? `تعديل رصيد المورد — ${supplierName}` : `Adjust Supplier Balance — ${supplierName}`;
+        modalAmountLabel.textContent = lang === 'ar' ? 'المبلغ المدفوع ($)' : 'Amount Paid ($)';
+        modalAmountInput.placeholder = 'e.g. 2000';
+
         if (paymentCurrentBalance) {
             paymentCurrentBalance.textContent = currentAmount > 0
-                ? `Current balance owed: $${currentAmount.toFixed(2)}`
-                : 'Current balance: Settled ($0.00)';
+                ? (lang === 'ar' ? `الرصيد المستحق الحالي: $${currentAmount.toFixed(2)}` : `Current balance owed: $${currentAmount.toFixed(2)}`)
+                : (lang === 'ar' ? 'الرصيد الحالي: تم التسوية ($0.00)' : 'Current balance: Settled ($0.00)');
         }
 
         paymentModal.classList.add('active');
         setTimeout(() => modalAmountInput.focus(), 100);
     };
 
-    // Keep old name working too
     window.editPending = window.openPaymentModal;
 
     if (closePaymentModalBtn) {
@@ -109,30 +149,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (savePaymentBtn) {
         savePaymentBtn.addEventListener('click', () => {
+            const action = modalActionType ? modalActionType.value : 'payment';
             const amount = parseFloat(modalAmountInput.value);
             const note = modalNoteInput ? modalNoteInput.value.trim() : '';
             const lang = getCurrentLanguage();
 
-            if (isNaN(amount) || amount <= 0) {
-                alert(lang === 'ar' ? 'الرجاء إدخال مبلغ أكبر من صفر' : 'Please enter an amount greater than 0');
+            if (isNaN(amount) || amount < 0) {
+                alert(lang === 'ar' ? 'الرجاء إدخال مبلغ صحيح' : 'Please enter a valid amount');
                 return;
             }
 
-            const newPending = Math.max(0, activeSupplierCurrentAmount - amount);
+            let newPending = activeSupplierCurrentAmount;
+            let type = 'payment';
+
+            if (action === 'payment') {
+                newPending = Math.max(0, activeSupplierCurrentAmount - amount);
+                type = 'payment';
+            } else if (action === 'purchase') {
+                newPending = activeSupplierCurrentAmount + amount;
+                type = 'purchase';
+            } else if (action === 'override') {
+                newPending = amount;
+                type = 'override';
+            }
+
             db.updateSupplierPending(activeSupplierId, newPending);
 
             const now = new Date();
             const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
 
-            // Log to daily expenses
-            const expDesc = note
-                ? `Payment to Supplier: ${activeSupplierName} — ${note}`
-                : `Payment to Supplier: ${activeSupplierName}`;
-            db.addExpense({ description: expDesc, amount, category: 'Parts', date: today });
+            if (action === 'payment' && amount > 0) {
+                const expDesc = note
+                    ? `Payment to Supplier: ${activeSupplierName} — ${note}`
+                    : `Payment to Supplier: ${activeSupplierName}`;
+                db.addExpense({ description: expDesc, amount, category: 'Parts', date: today });
+            }
 
-            // Log to supplier transaction history
             if (db.addSupplierTransaction) {
-                db.addSupplierTransaction(activeSupplierId, 'payment', amount, newPending, note, today);
+                db.addSupplierTransaction(activeSupplierId, type, amount, newPending, note, today);
             }
 
             paymentModal.classList.remove('active');
@@ -148,13 +202,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const historyContent = document.getElementById('supplierHistoryContent');
 
     window.viewHistory = function(id, supplierName, currentBalance) {
-        historyModalTitle.textContent = `History — ${supplierName}`;
+        const lang = getCurrentLanguage();
+        historyModalTitle.textContent = lang === 'ar' ? `سجل المورد — ${supplierName}` : `History — ${supplierName}`;
 
         if (historyCurrentBalance) {
             const bal = parseFloat(currentBalance) || 0;
             historyCurrentBalance.innerHTML = bal > 0
-                ? `<span style="color:#ef4444; font-weight:600;">Current Balance Owed: $${bal.toFixed(2)}</span>`
-                : `<span style="color:#10b981; font-weight:600;">Current Balance: Settled ✓</span>`;
+                ? `<span style="color:#ef4444; font-weight:600;">${lang === 'ar' ? 'الرصيد الحالي المستحق للمورد: ' : 'Current Balance Owed: '}$${bal.toFixed(2)}</span>`
+                : `<span style="color:#10b981; font-weight:600;">${lang === 'ar' ? 'الرصيد الحالي: تم التسوية ✓' : 'Current Balance: Settled ✓'}</span>`;
         }
 
         const transactions = db.getSupplierTransactions ? db.getSupplierTransactions(id) : [];
@@ -163,35 +218,54 @@ document.addEventListener('DOMContentLoaded', () => {
             historyContent.innerHTML = `
                 <div style="text-align:center; padding:2rem; color:#94a3b8;">
                     <p style="font-size:2rem; margin-bottom:0.5rem;">📋</p>
-                    <p>No payment history yet for this supplier.</p>
-                    <p style="font-size:0.85rem;">Payments recorded will appear here.</p>
+                    <p>${lang === 'ar' ? 'لا يوجد سجل معاملات لهذا المورد بعد.' : 'No payment history yet for this supplier.'}</p>
+                    <p style="font-size:0.85rem;">${lang === 'ar' ? 'المعاملات التي يتم تسجيلها ستظهر هنا.' : 'Payments recorded will appear here.'}</p>
                 </div>`;
         } else {
             historyContent.innerHTML = `
                 <table style="width:100%; border-collapse:collapse;">
                     <thead>
                         <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                            <th style="padding:0.6rem 0.75rem; text-align:left; font-size:0.85rem; color:#64748b;">Date</th>
-                            <th style="padding:0.6rem 0.75rem; text-align:left; font-size:0.85rem; color:#64748b;">Type</th>
-                            <th style="padding:0.6rem 0.75rem; text-align:right; font-size:0.85rem; color:#64748b;">Amount</th>
-                            <th style="padding:0.6rem 0.75rem; text-align:right; font-size:0.85rem; color:#64748b;">Balance After</th>
-                            <th style="padding:0.6rem 0.75rem; text-align:left; font-size:0.85rem; color:#64748b;">Note</th>
+                            <th style="padding:0.6rem 0.75rem; text-align:right; font-size:0.85rem; color:#64748b;">${lang === 'ar' ? 'التاريخ' : 'Date'}</th>
+                            <th style="padding:0.6rem 0.75rem; text-align:right; font-size:0.85rem; color:#64748b;">${lang === 'ar' ? 'النوع' : 'Type'}</th>
+                            <th style="padding:0.6rem 0.75rem; text-align:left; font-size:0.85rem; color:#64748b;">${lang === 'ar' ? 'المبلغ' : 'Amount'}</th>
+                            <th style="padding:0.6rem 0.75rem; text-align:left; font-size:0.85rem; color:#64748b;">${lang === 'ar' ? 'الرصيد بعد المعاملة' : 'Balance After'}</th>
+                            <th style="padding:0.6rem 0.75rem; text-align:right; font-size:0.85rem; color:#64748b;">${lang === 'ar' ? 'ملاحظات' : 'Note'}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${transactions.map(tx => `
-                            <tr style="border-bottom:1px solid #f1f5f9;">
-                                <td style="padding:0.6rem 0.75rem; font-size:0.9rem;">${tx.date}</td>
-                                <td style="padding:0.6rem 0.75rem;">
-                                    <span style="background:#dcfce7; color:#10b981; border-radius:8px; padding:0.2rem 0.5rem; font-size:0.8rem; font-weight:600;">
-                                        💸 Payment
-                                    </span>
-                                </td>
-                                <td style="padding:0.6rem 0.75rem; text-align:right; font-weight:700; color:#10b981;">-$${parseFloat(tx.amount).toFixed(2)}</td>
-                                <td style="padding:0.6rem 0.75rem; text-align:right; font-weight:600; color:${tx.balance_after > 0 ? '#ef4444' : '#10b981'};">$${parseFloat(tx.balance_after).toFixed(2)}</td>
-                                <td style="padding:0.6rem 0.75rem; font-size:0.85rem; color:#64748b;">${tx.note || '<span style="color:#cbd5e1;">—</span>'}</td>
-                            </tr>
-                        `).join('')}
+                        ${transactions.map(tx => {
+                            const isPayment = tx.type === 'payment';
+                            const isPurchase = tx.type === 'purchase';
+                            const isInitial = tx.type === 'initial_balance';
+                            
+                            let typeBadge = '';
+                            let amountHtml = '';
+                            
+                            if (isPayment) {
+                                typeBadge = `<span style="background:#dcfce7; color:#10b981; border-radius:8px; padding:0.2rem 0.5rem; font-size:0.8rem; font-weight:600;">💸 ${lang === 'ar' ? 'سداد' : 'Payment'}</span>`;
+                                amountHtml = `<td style="padding:0.6rem 0.75rem; text-align:left; font-weight:700; color:#10b981;">-$${parseFloat(tx.amount).toFixed(2)}</td>`;
+                            } else if (isPurchase) {
+                                typeBadge = `<span style="background:#fee2e2; color:#ef4444; border-radius:8px; padding:0.2rem 0.5rem; font-size:0.8rem; font-weight:600;">📦 ${lang === 'ar' ? 'شراء بالآجل' : 'Purchase'}</span>`;
+                                amountHtml = `<td style="padding:0.6rem 0.75rem; text-align:left; font-weight:700; color:#ef4444;">+$${parseFloat(tx.amount).toFixed(2)}</td>`;
+                            } else if (isInitial) {
+                                typeBadge = `<span style="background:#f1f5f9; color:#64748b; border-radius:8px; padding:0.2rem 0.5rem; font-size:0.8rem; font-weight:600;">⚙️ ${lang === 'ar' ? 'رصيد افتتاحي' : 'Initial'}</span>`;
+                                amountHtml = `<td style="padding:0.6rem 0.75rem; text-align:left; font-weight:700; color:#64748b;">$${parseFloat(tx.amount).toFixed(2)}</td>`;
+                            } else {
+                                typeBadge = `<span style="background:#e0f2fe; color:#0284c7; border-radius:8px; padding:0.2rem 0.5rem; font-size:0.8rem; font-weight:600;">✏️ ${lang === 'ar' ? 'تعديل يدوياً' : 'Adjustment'}</span>`;
+                                amountHtml = `<td style="padding:0.6rem 0.75rem; text-align:left; font-weight:700; color:#0284c7;">$${parseFloat(tx.amount).toFixed(2)}</td>`;
+                            }
+
+                            return `
+                                <tr style="border-bottom:1px solid #f1f5f9;">
+                                    <td style="padding:0.6rem 0.75rem; font-size:0.9rem;">${tx.date}</td>
+                                    <td style="padding:0.6rem 0.75rem;">${typeBadge}</td>
+                                    ${amountHtml}
+                                    <td style="padding:0.6rem 0.75rem; text-align:left; font-weight:600; color:${tx.balance_after > 0 ? '#ef4444' : '#10b981'};">$${parseFloat(tx.balance_after).toFixed(2)}</td>
+                                    <td style="padding:0.6rem 0.75rem; font-size:0.85rem; color:#64748b;">${tx.note || '<span style="color:#cbd5e1;">—</span>'}</td>
+                                </tr>
+                            `;
+                        }).join('')}
                     </tbody>
                 </table>`;
         }

@@ -352,5 +352,14 @@ console.log('--- Migration Completed ---');
 console.log(`Total new customers imported: ${customersImported}`);
 console.log(`Total repair visits imported: ${repairsImported}`);
 
+// Sync migrated database back to the project folder for packaging
+try {
+  const destPath = path.join(__dirname, 'database', 'shop.db');
+  fs.copyFileSync(dbPath, destPath);
+  console.log(`Successfully synced database to project folder at: ${destPath}`);
+} catch (e) {
+  console.error('Failed to sync database back to project folder:', e);
+}
+
 app.exit(0);
 }); // end app.whenReady

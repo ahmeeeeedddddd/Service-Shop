@@ -16,54 +16,53 @@
         }
         .wo-rows-table th { background: #f1f5f9; font-weight: 600; }
 
-        /* ── Print styles ── */
+        /* ── Print styles (shared with preview) ── */
+        #printArea { display: none; }
+        .print-header {
+            display: flex;
+            flex-direction: row-reverse;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6mm;
+            border-bottom: 2px solid black;
+            padding-bottom: 4mm;
+        }
+        .print-logo img { height: 130px; display: block; }
+        .print-phones { font-size: 12pt; font-weight: bold; text-align: right; line-height: 1.5; }
+        .print-title { font-size: 28pt; font-weight: bold; text-align: center; flex: 1; }
+
+        .print-fields-table { width: 100%; border-collapse: collapse; margin-bottom: 6mm; }
+        .print-fields-table td { padding: 8px 10px; font-size: 12.5pt; border-bottom: 1px dashed #ddd; }
+        .print-field-line { font-weight: bold; margin-left: 5px; color: black; }
+
+        .print-job-table { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+        .print-job-table th, .print-job-table td {
+            border: 1px solid black;
+            padding: 10px 12px;
+            font-size: 12.5pt;
+            text-align: center;
+        }
+        .print-job-table th { background: #f0f0f0; font-weight: bold; }
+        .print-job-table td { height: 65px; vertical-align: middle; }
+
+        .print-footer { margin-top: 25mm; display: flex; justify-content: space-between; font-size: 13pt; font-weight: bold; padding: 0 10px; }
+
         @media print {
             * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Arial', sans-serif; direction: rtl; background: white; color: black; font-size: 11pt; }
+            body { font-family: 'Arial', sans-serif; direction: rtl; background: white; color: black; font-size: 12pt; }
             .no-print { display: none !important; }
             .sidebar, .page-header { display: none !important; }
             .main-content { margin: 0 !important; padding: 0 !important; }
-            .card { box-shadow: none; border: none; padding: 0; }
-
+            .card { box-shadow: none !important; border: none !important; padding: 0 !important; }
             #printArea {
                 display: block !important;
                 width: 210mm;
                 min-height: 297mm;
-                padding: 8mm 10mm;
+                padding: 12mm 15mm;
                 margin: 0 auto;
                 direction: rtl;
             }
-
-            .print-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 4mm;
-                border-bottom: 2px solid black;
-                padding-bottom: 3mm;
-            }
-            .print-logo img { height: 55px; }
-            .print-phones { font-size: 10pt; font-weight: bold; text-align: left; }
-            .print-title { font-size: 22pt; font-weight: bold; text-align: center; flex: 1; }
-
-            .print-fields-table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; }
-            .print-fields-table td { padding: 3px 5px; font-size: 10.5pt; }
-            .print-field-line { display: inline-block; border-bottom: 1px solid black; min-width: 80px; }
-
-            .print-job-table { width: 100%; border-collapse: collapse; margin-top: 4mm; }
-            .print-job-table th, .print-job-table td {
-                border: 1px solid black;
-                padding: 4px 6px;
-                font-size: 10.5pt;
-                text-align: center;
-            }
-            .print-job-table th { background: #f0f0f0; font-weight: bold; }
-            .print-job-table td { height: 28px; vertical-align: top; }
-
-            .print-footer { margin-top: 8mm; display: flex; justify-content: space-between; font-size: 10.5pt; font-weight: bold; }
         }
-
-        #printArea { display: none; }
     </style>
 </head>
 <body>
@@ -203,24 +202,24 @@
 
         <table class="print-fields-table">
             <tr>
-                <td style="width:50%">أسم العميل : <span class="print-field-line" id="p_customer_name" style="min-width:180px;"></span></td>
-                <td>Customer Name : <span class="print-field-line" id="p_customer_name2" style="min-width:130px;"></span></td>
+                <td style="width:50%">Customer Name (اسم العميل): <span class="print-field-line" id="p_customer_name"></span></td>
+                <td>Customer Phone (تليفون العميل): <span class="print-field-line" id="p_customer_phone"></span></td>
             </tr>
             <tr>
-                <td>تليفون العميل : <span class="print-field-line" id="p_customer_phone" style="min-width:180px;"></span></td>
-                <td>Customer Phone : <span class="print-field-line" id="p_customer_phone2" style="min-width:130px;"></span></td>
+                <td>Vehicle Brand (ماركة السيارة): <span class="print-field-line" id="p_vehicle_brand"></span></td>
+                <td>Odometer (قراءة العداد): <span class="print-field-line" id="p_odometer"></span></td>
             </tr>
             <tr>
-                <td>ماركة السيارة : <span class="print-field-line" id="p_vehicle_brand" style="min-width:100px;"></span>&nbsp; قراءة العداد : <span class="print-field-line" id="p_odometer" style="min-width:80px;"></span></td>
-                <td>Vehicle Brand : <span class="print-field-line" id="p_vehicle_brand2" style="min-width:80px;"></span>&nbsp; Odometer : <span class="print-field-line" id="p_odometer2" style="min-width:60px;"></span></td>
+                <td>Plate No (رقم اللوحة): <span class="print-field-line" id="p_plate"></span></td>
+                <td>VIN (رقم الشاسيه): <span class="print-field-line" id="p_vin"></span></td>
             </tr>
             <tr>
-                <td>رقم اللوحة : <span class="print-field-line" id="p_plate" style="min-width:80px;"></span>&nbsp; رقم الشاسيه : <span class="print-field-line" id="p_vin" style="min-width:80px;"></span>&nbsp; رقم المحرك : <span class="print-field-line" id="p_engine" style="min-width:70px;"></span></td>
-                <td>Plate No : <span class="print-field-line" id="p_plate2" style="min-width:60px;"></span>&nbsp; VIN : <span class="print-field-line" id="p_vin2" style="min-width:60px;"></span>&nbsp; Engine No : <span class="print-field-line" id="p_engine2" style="min-width:50px;"></span></td>
+                <td>Engine No (رقم المحرك): <span class="print-field-line" id="p_engine"></span></td>
+                <td>&nbsp;</td>
             </tr>
             <tr>
-                <td>وقت دخول السيارة : <span class="print-field-line" id="p_time_in" style="min-width:100px;"></span>&nbsp; وقت انتهاء الاصلاح : <span class="print-field-line" id="p_time_out" style="min-width:100px;"></span></td>
-                <td>Time in : <span class="print-field-line" id="p_time_in2" style="min-width:80px;"></span>&nbsp; Time out : <span class="print-field-line" id="p_time_out2" style="min-width:80px;"></span></td>
+                <td>Time in (وقت الدخول): <span class="print-field-line" id="p_time_in"></span></td>
+                <td>Time out (وقت الخروج): <span class="print-field-line" id="p_time_out"></span></td>
             </tr>
         </table>
 

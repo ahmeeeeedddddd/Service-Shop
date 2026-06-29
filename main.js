@@ -2,6 +2,9 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Disable hardware acceleration to prevent UI lag/freezes
+app.disableHardwareAcceleration();
+
 // When launched by migrate.js as a runner — do nothing here, migrate.js handles everything
 if (process.argv.includes('--run-migrate')) {
   // migrate.js will require itself and use app.whenReady — just don't create windows

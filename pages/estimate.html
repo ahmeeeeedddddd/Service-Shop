@@ -21,9 +21,9 @@
         .print-logo-box { font-size: 9.5pt; line-height: 1.4; text-align: center; }
         .print-logo-box h2 { font-size: 14pt; font-weight: bold; margin: 0 0 4px 0; }
         .print-logo-right img { height: 140px; }
+        .print-logo-right { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
         .print-title-box { text-align: center; flex: 1; }
-        .print-title-box h1 { font-size: 18pt; font-weight: bold; margin: 5px 0; }
-        .print-title-box p { font-size: 13pt; font-weight: bold; color: red; margin: 0; }
+        .print-title-box h1 { font-size: 24pt; font-weight: bold; margin: 10px 0 6px 0; }
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 6px; margin-bottom: 4mm; font-size: 10pt; }
         .info-grid div { border-bottom: 1px dashed black; padding: 3px; }
         .agree-text { font-weight: bold; margin: 5px 0 10px 0; font-size: 11pt; }
@@ -140,26 +140,32 @@
 
             <div class="grid-2" style="margin-top: 1.5rem;">
                 <div>
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;">الإصلاحات المطلوبة</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <h3 style="font-weight:700;margin:0;">الإصلاحات المطلوبة</h3>
+                        <button class="btn btn-outline" style="font-size:0.85rem;padding:0.3rem 0.75rem;" onclick="addRepairRow()">+ إضافة صف</button>
+                    </div>
                     <table class="est-table" id="repairsTable">
                         <thead>
                             <tr>
-                                <th style="width:8%">م</th>
+                                <th style="width:5%"></th>
                                 <th>الإصلاحات المطلوبة</th>
-                                <th style="width:20%">المصنعية (جنيه)</th>
+                                <th style="width:22%">المصنعية (جنيه)</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
                 <div>
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;">قطع الغيار (حسب السعر الحالي في السوق)</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                        <h3 style="font-weight:700;margin:0;">قطع الغيار (حسب السعر الحالي في السوق)</h3>
+                        <button class="btn btn-outline" style="font-size:0.85rem;padding:0.3rem 0.75rem;" onclick="addPartRow()">+ إضافة صف</button>
+                    </div>
                     <table class="est-table" id="partsTable">
                         <thead>
                             <tr>
-                                <th style="width:8%">م</th>
+                                <th style="width:5%"></th>
                                 <th>قطع الغيار</th>
-                                <th style="width:20%">السعر (جنيه)</th>
+                                <th style="width:22%">السعر (جنيه)</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -185,10 +191,9 @@
             </div>
             <div class="print-title-box">
                 <h1>مقايسة إصلاح سيارة</h1>
-                <p>Nº <span id="p_est_no"></span></p>
             </div>
-            <div class="print-logo-box" style="text-align:left;">
-                <img src="../assets/logo.png" alt="Logo" style="height:55px;">
+            <div class="print-logo-right">
+                <img src="../assets/logo.png" alt="Logo" style="height:120px;">
             </div>
         </div>
 
@@ -240,6 +245,13 @@
                         </tr>
                     </thead>
                     <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="font-weight:bold;text-align:right;">الإجمالي</td>
+                            <td id="p_parts_total_pt">00</td>
+                            <td id="p_parts_total_gp" style="font-weight:bold;">0</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>

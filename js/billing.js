@@ -130,17 +130,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function attachRowListeners(row) {
+        const nameInput = row.querySelector('input[type="text"]');
         const qtyInput = row.querySelector('.qty-input');
         const priceInput = row.querySelector('.price-input');
-        
-        [qtyInput, priceInput].forEach(input => {
-            input.addEventListener('input', () => {
-                const qty = parseFloat(qtyInput.value) || 0;
-                const price = parseFloat(priceInput.value) || 0;
-                const subtotal = qty * price;
-                row.querySelector('.line-subtotal').textContent = `$${subtotal.toFixed(2)}`;
-                updateGrandTotal();
+
+        const tryAutoAdd = () => {
+            const rows = Array.from(lineItemsBody.querySelectorAll('tr'));
+            const isLast = rows[rows.length - 1] === row;
+            if (isLast && !row.dataset.autoAdded) {
+                const nameVal = nameInput ? nameInput.value.trim() : "";
+                if (nameVal !== "") {
+                    row.dataset.autoAdded = "true";
+                    addItemBtn.click();
+                }
+            }
+        };
+
+        if (nameInput) {
+            nameInput.addEventListener('input', tryAutoAdd);
+            nameInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (qtyInput) qtyInput.focus();
+                }
             });
+        }
+
+        if (qtyInput) {
+            qtyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (priceInput) priceInput.focus();
+                }
+            });
+        }
+
+        if (priceInput) {
+            priceInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === 'Tab') {
+                    const rows = Array.from(lineItemsBody.querySelectorAll('tr'));
+                    const isLast = rows[rows.length - 1] === row;
+                    const nameVal = nameInput ? nameInput.value.trim() : "";
+                    if (isLast && nameVal !== "") {
+                        if (!row.dataset.autoAdded) {
+                            row.dataset.autoAdded = "true";
+                            addItemBtn.click();
+                        }
+                        // Focus next row's name input
+                        setTimeout(() => {
+                            const newRows = lineItemsBody.querySelectorAll('tr');
+                            const newLastRow = newRows[newRows.length - 1];
+                            if (newLastRow) {
+                                const nextName = newLastRow.querySelector('input[type="text"]');
+                                if (nextName) nextName.focus();
+                            }
+                        }, 50);
+                        if (e.key === 'Enter') e.preventDefault();
+                    } else if (e.key === 'Enter') {
+                        // Move focus to next row if it exists
+                        const nextRow = row.nextElementSibling;
+                        if (nextRow) {
+                            const nextName = nextRow.querySelector('input[type="text"]');
+                            if (nextName) nextName.focus();
+                        }
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+
+        [qtyInput, priceInput].forEach(input => {
+            if (input) {
+                input.addEventListener('input', () => {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    const price = parseFloat(priceInput.value) || 0;
+                    const subtotal = qty * price;
+                    row.querySelector('.line-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                    updateGrandTotal();
+                    if (input === priceInput && price > 0) {
+                        tryAutoAdd();
+                    }
+                });
+            }
         });
     }
 

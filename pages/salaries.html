@@ -110,6 +110,37 @@
         </div>
     </main>
 
+    <!-- Record Salary Modal -->
+    <div id="salaryModal" class="print-preview-overlay" style="display:none; justify-content:center; align-items:center;">
+        <div class="card" style="width: 100%; max-width: 500px; background: white; color: black; border-radius: 8px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 class="card-title" style="margin-bottom: 1.5rem;" id="modalEmpTitle">Record Salary</h3>
+            
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label id="lblDaysWorked">Days Worked</label>
+                <input type="number" id="modalDaysWorked" class="form-control" value="6" min="0" max="7" step="1">
+            </div>
+            
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label id="lblDeductions">Deductions</label>
+                <input type="number" id="modalDeductions" class="form-control" value="0" min="0" step="0.5">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label id="lblDeductionReason">Deduction Reason (Optional)</label>
+                <input type="text" id="modalDeductionReason" class="form-control" placeholder="e.g. Absence, Penalty">
+            </div>
+
+            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1.5rem; color: #0d9488;">
+                <span id="lblNetSalary">Net Salary:</span> <span id="modalNetSalary">$0.00</span>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="btn btn-primary" id="modalConfirmBtn">Record Expense</button>
+                <button class="btn btn-outline" id="modalCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../js/i18n.js"></script>
     <script src="../js/salaries.js"></script>
 </body>

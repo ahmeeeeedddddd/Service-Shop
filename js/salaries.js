@@ -7,6 +7,7 @@ try {
 }
 
 let editingEmployeeId = null;
+let currentRecordEmp = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     translatePage();
@@ -57,6 +58,64 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelEditBtn.style.display = 'none';
         clearForm();
     });
+
+    // Record Salary Modal interaction
+    const salaryModal = document.getElementById('salaryModal');
+    const modalDaysWorked = document.getElementById('modalDaysWorked');
+    const modalDeductions = document.getElementById('modalDeductions');
+    const modalDeductionReason = document.getElementById('modalDeductionReason');
+    const modalNetSalary = document.getElementById('modalNetSalary');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+    function calculateNetSalary() {
+        if (!currentRecordEmp) return;
+        const days = parseFloat(modalDaysWorked.value) || 0;
+        const deductions = parseFloat(modalDeductions.value) || 0;
+        const net = (currentRecordEmp.dailyRate * days) - deductions;
+        modalNetSalary.textContent = `$${Math.max(0, net).toFixed(2)}`;
+    }
+
+    if (modalDaysWorked) modalDaysWorked.addEventListener('input', calculateNetSalary);
+    if (modalDeductions) modalDeductions.addEventListener('input', calculateNetSalary);
+
+    if (modalConfirmBtn) {
+        modalConfirmBtn.addEventListener('click', () => {
+            if (!currentRecordEmp) return;
+            const days = parseFloat(modalDaysWorked.value) || 0;
+            const deductions = parseFloat(modalDeductions.value) || 0;
+            const reason = modalDeductionReason.value.trim();
+            const net = Math.max(0, (currentRecordEmp.dailyRate * days) - deductions);
+            
+            const today = new Date().toISOString().split('T')[0];
+            let description = `Salary: ${currentRecordEmp.name} (${currentRecordEmp.role}) - ${days} days worked`;
+            if (deductions > 0) {
+                description += ` (Deduction: $${deductions.toFixed(2)}${reason ? ' - ' + reason : ''})`;
+            }
+
+            db.addExpense({
+                description: description,
+                amount: net,
+                category: 'Salaries',
+                date: today
+            });
+
+            const successMsg = getCurrentLanguage() === 'en' 
+                ? `Successfully recorded salary ($${net.toFixed(2)}) for ${currentRecordEmp.name}!`
+                : `تم تسجيل راتب الموظف ${currentRecordEmp.name} بقيمة (${net.toFixed(2)} ج.م) بنجاح!`;
+
+            alert(successMsg);
+            if (salaryModal) salaryModal.style.display = 'none';
+            currentRecordEmp = null;
+        });
+    }
+
+    if (modalCancelBtn) {
+        modalCancelBtn.addEventListener('click', () => {
+            if (salaryModal) salaryModal.style.display = 'none';
+            currentRecordEmp = null;
+        });
+    }
 });
 
 function clearForm() {
@@ -126,19 +185,40 @@ window.deleteEmployee = function(id) {
 };
 
 window.addWeeklySalaryToExpenses = function(id, name, role, dailyRate) {
-    const weeklyAmount = dailyRate * 6;
-    const today = new Date().toISOString().split('T')[0];
+    currentRecordEmp = { id, name, role, dailyRate };
+    
+    const lang = getCurrentLanguage();
+    
+    const modalEmpTitle = document.getElementById('modalEmpTitle');
+    const lblDaysWorked = document.getElementById('lblDaysWorked');
+    const lblDeductions = document.getElementById('lblDeductions');
+    const lblDeductionReason = document.getElementById('lblDeductionReason');
+    const lblNetSalary = document.getElementById('lblNetSalary');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
 
-    db.addExpense({
-        description: `Weekly Salary: ${name} (${role})`,
-        amount: weeklyAmount,
-        category: 'Salaries',
-        date: today
-    });
+    if (modalEmpTitle) {
+        modalEmpTitle.textContent = lang === 'en' 
+            ? `Record Salary for ${name}` 
+            : `تسجيل راتب الموظف ${name}`;
+    }
+    if (lblDaysWorked) lblDaysWorked.textContent = lang === 'en' ? 'Days Worked' : 'الأيام الفعلية للعمل';
+    if (lblDeductions) lblDeductions.textContent = lang === 'en' ? 'Deductions' : 'الاستقطاعات / الخصومات';
+    if (lblDeductionReason) lblDeductionReason.textContent = lang === 'en' ? 'Deduction Reason (Optional)' : 'سبب الخصم (اختياري)';
+    if (lblNetSalary) lblNetSalary.textContent = lang === 'en' ? 'Net Salary:' : 'صافي الراتب:';
+    if (modalConfirmBtn) modalConfirmBtn.textContent = lang === 'en' ? 'Record Expense' : 'تسجيل في المصروفات';
+    if (modalCancelBtn) modalCancelBtn.textContent = lang === 'en' ? 'Cancel' : 'إلغاء';
+    
+    const modalDaysWorked = document.getElementById('modalDaysWorked');
+    const modalDeductions = document.getElementById('modalDeductions');
+    const modalDeductionReason = document.getElementById('modalDeductionReason');
+    const modalNetSalary = document.getElementById('modalNetSalary');
 
-    const successMsg = getCurrentLanguage() === 'en' 
-        ? `Successfully added weekly salary ($${weeklyAmount.toFixed(2)}) for ${name} to expenses!`
-        : `تم إضافة الراتب الأسبوعي (${weeklyAmount.toFixed(2)} ج.م) للموظف ${name} إلى المصاريف بنجاح!`;
-
-    alert(successMsg);
+    if (modalDaysWorked) modalDaysWorked.value = 6;
+    if (modalDeductions) modalDeductions.value = 0;
+    if (modalDeductionReason) modalDeductionReason.value = '';
+    if (modalNetSalary) modalNetSalary.textContent = `$${(dailyRate * 6).toFixed(2)}`;
+    
+    const salaryModal = document.getElementById('salaryModal');
+    if (salaryModal) salaryModal.style.display = 'flex';
 };
