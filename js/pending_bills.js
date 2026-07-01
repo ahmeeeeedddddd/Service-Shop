@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (result.success) {
             console.log('Bill saved to:', result.path);
-            receiptModal.classList.remove('active');
+            // Don't close modal here — print dialog renders the page async, modal must stay visible
         } else {
             alert('Printing/Saving failed: ' + result.error);
         }

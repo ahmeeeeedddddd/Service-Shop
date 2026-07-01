@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pendingBills">Pending Bills - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        @media print {
+            /* Kill everything on the page */
+            body > * { display: none !important; }
+
+            /* Then show ONLY the active receipt modal */
+            #receiptModal.active {
+                display: block !important;
+                position: fixed !important;
+                top: 0 !important; left: 0 !important;
+                width: 100vw !important; height: auto !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                z-index: 9999;
+            }
+
+            /* Make modal-content stretch full width */
+            #receiptModal.active .modal-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: none !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+
+            /* Stretch receipt content itself */
+            #receiptContent {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Hide print/close buttons */
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -63,7 +103,6 @@
                     </a>
                 </div>
             </div>
-            </div>
         </nav>
         <div class="sidebar-footer">
             <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
@@ -120,7 +159,11 @@
             </div>
         </div>
     </main>
-    <!-- Detail Modal -->
+
+    <!-- Hidden print container — only shown when printing -->
+    <div id="printReceiptContainer"></div>
+
+    <!-- Detail Modal -->
     <div class="modal" id="detailModal">
         <div class="modal-content" style="max-width: 700px;">
             <h3 class="card-title" id="detailTitle" data-i18n="billDetails">Bill Details</h3>
