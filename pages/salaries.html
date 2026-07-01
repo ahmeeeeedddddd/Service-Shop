@@ -100,7 +100,7 @@
                             <th data-i18n="employeeId">ID</th>
                             <th data-i18n="employeeRole">Role</th>
                             <th data-i18n="dailyRate">Daily Rate</th>
-                            <th data-i18n="weeklyTotal">Weekly Salary (6 days)</th>
+                            <th data-i18n="weeklyTotal">Weekly Salary (7 days)</th>
                             <th data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
@@ -117,12 +117,17 @@
             
             <div class="form-group" style="margin-bottom:1rem;">
                 <label id="lblDaysWorked">Days Worked</label>
-                <input type="number" id="modalDaysWorked" class="form-control" value="6" min="0" max="7" step="1">
+                <input type="number" id="modalDaysWorked" class="form-control" value="7" min="0" max="7" step="1">
             </div>
             
             <div class="form-group" style="margin-bottom:1rem;">
                 <label id="lblDeductions">Deductions</label>
                 <input type="number" id="modalDeductions" class="form-control" value="0" min="0" step="0.5">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label id="lblRaise">Bonus / Raise</label>
+                <input type="number" id="modalRaise" class="form-control" value="0" min="0" step="0.5">
             </div>
 
             <div class="form-group" style="margin-bottom:1.5rem;">

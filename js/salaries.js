@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const salaryModal = document.getElementById('salaryModal');
     const modalDaysWorked = document.getElementById('modalDaysWorked');
     const modalDeductions = document.getElementById('modalDeductions');
+    const modalRaise = document.getElementById('modalRaise');
     const modalDeductionReason = document.getElementById('modalDeductionReason');
     const modalNetSalary = document.getElementById('modalNetSalary');
     const modalConfirmBtn = document.getElementById('modalConfirmBtn');
@@ -72,25 +73,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentRecordEmp) return;
         const days = parseFloat(modalDaysWorked.value) || 0;
         const deductions = parseFloat(modalDeductions.value) || 0;
-        const net = (currentRecordEmp.dailyRate * days) - deductions;
+        const raise = parseFloat(modalRaise.value) || 0;
+        const net = (currentRecordEmp.dailyRate * days) - deductions + raise;
         modalNetSalary.textContent = `$${Math.max(0, net).toFixed(2)}`;
     }
 
     if (modalDaysWorked) modalDaysWorked.addEventListener('input', calculateNetSalary);
     if (modalDeductions) modalDeductions.addEventListener('input', calculateNetSalary);
+    if (modalRaise) modalRaise.addEventListener('input', calculateNetSalary);
 
     if (modalConfirmBtn) {
         modalConfirmBtn.addEventListener('click', () => {
             if (!currentRecordEmp) return;
             const days = parseFloat(modalDaysWorked.value) || 0;
             const deductions = parseFloat(modalDeductions.value) || 0;
+            const raise = parseFloat(modalRaise.value) || 0;
             const reason = modalDeductionReason.value.trim();
-            const net = Math.max(0, (currentRecordEmp.dailyRate * days) - deductions);
+            const net = Math.max(0, (currentRecordEmp.dailyRate * days) - deductions + raise);
             
             const today = new Date().toISOString().split('T')[0];
             let description = `Salary: ${currentRecordEmp.name} (${currentRecordEmp.role}) - ${days} days worked`;
             if (deductions > 0) {
                 description += ` (Deduction: $${deductions.toFixed(2)}${reason ? ' - ' + reason : ''})`;
+            }
+            if (raise > 0) {
+                description += ` (Bonus: $${raise.toFixed(2)})`;
             }
 
             db.addExpense({
@@ -134,7 +141,7 @@ function loadEmployees() {
 
     list.forEach(emp => {
         const tr = document.createElement('tr');
-        const weekly = (emp.daily_rate * 6).toFixed(2);
+        const weekly = (emp.daily_rate * 7).toFixed(2);
         
         tr.innerHTML = `
             <td>${emp.name}</td>
@@ -192,6 +199,7 @@ window.addWeeklySalaryToExpenses = function(id, name, role, dailyRate) {
     const modalEmpTitle = document.getElementById('modalEmpTitle');
     const lblDaysWorked = document.getElementById('lblDaysWorked');
     const lblDeductions = document.getElementById('lblDeductions');
+    const lblRaise = document.getElementById('lblRaise');
     const lblDeductionReason = document.getElementById('lblDeductionReason');
     const lblNetSalary = document.getElementById('lblNetSalary');
     const modalConfirmBtn = document.getElementById('modalConfirmBtn');
@@ -204,6 +212,7 @@ window.addWeeklySalaryToExpenses = function(id, name, role, dailyRate) {
     }
     if (lblDaysWorked) lblDaysWorked.textContent = lang === 'en' ? 'Days Worked' : 'الأيام الفعلية للعمل';
     if (lblDeductions) lblDeductions.textContent = lang === 'en' ? 'Deductions' : 'الاستقطاعات / الخصومات';
+    if (lblRaise) lblRaise.textContent = lang === 'en' ? 'Bonus / Raise' : 'حافز / زيادة';
     if (lblDeductionReason) lblDeductionReason.textContent = lang === 'en' ? 'Deduction Reason (Optional)' : 'سبب الخصم (اختياري)';
     if (lblNetSalary) lblNetSalary.textContent = lang === 'en' ? 'Net Salary:' : 'صافي الراتب:';
     if (modalConfirmBtn) modalConfirmBtn.textContent = lang === 'en' ? 'Record Expense' : 'تسجيل في المصروفات';
@@ -211,13 +220,15 @@ window.addWeeklySalaryToExpenses = function(id, name, role, dailyRate) {
     
     const modalDaysWorked = document.getElementById('modalDaysWorked');
     const modalDeductions = document.getElementById('modalDeductions');
+    const modalRaise = document.getElementById('modalRaise');
     const modalDeductionReason = document.getElementById('modalDeductionReason');
     const modalNetSalary = document.getElementById('modalNetSalary');
 
-    if (modalDaysWorked) modalDaysWorked.value = 6;
+    if (modalDaysWorked) modalDaysWorked.value = 7;
     if (modalDeductions) modalDeductions.value = 0;
+    if (modalRaise) modalRaise.value = 0;
     if (modalDeductionReason) modalDeductionReason.value = '';
-    if (modalNetSalary) modalNetSalary.textContent = `$${(dailyRate * 6).toFixed(2)}`;
+    if (modalNetSalary) modalNetSalary.textContent = `$${(dailyRate * 7).toFixed(2)}`;
     
     const salaryModal = document.getElementById('salaryModal');
     if (salaryModal) salaryModal.style.display = 'flex';

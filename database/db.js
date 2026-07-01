@@ -136,6 +136,7 @@ function initDB() {
   try { db.exec(`ALTER TABLE repairs ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
   try { db.exec(`ALTER TABLE repairs ADD COLUMN discount REAL DEFAULT 0`); } catch(e) {}
   try { db.exec(`ALTER TABLE suppliers ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
+  try { db.exec(`ALTER TABLE pending_bills ADD COLUMN discount REAL DEFAULT 0`); } catch(e) {}
 
   // Create supplier_transactions if it was created before this migration
   try {
@@ -404,8 +405,8 @@ function getPendingBills() {
 }
 
 function addPendingBill(bill) {
-  const stmt = db.prepare('INSERT INTO pending_bills (customer_id, description, date_created, total_amount, payment_method, odometer, notes, line_items_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-  const info = stmt.run(bill.customer_id, bill.description, bill.date_created, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json);
+  const stmt = db.prepare('INSERT INTO pending_bills (customer_id, description, date_created, total_amount, payment_method, odometer, notes, line_items_json, discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(bill.customer_id, bill.description, bill.date_created, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, bill.discount || 0);
   return info.lastInsertRowid;
 }
 
@@ -414,8 +415,8 @@ function deletePendingBill(id) {
 }
 
 function updatePendingBill(id, bill) {
-  db.prepare('UPDATE pending_bills SET description=?, total_amount=?, payment_method=?, odometer=?, notes=?, line_items_json=? WHERE id=?')
-    .run(bill.description, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, id);
+  db.prepare('UPDATE pending_bills SET description=?, total_amount=?, payment_method=?, odometer=?, notes=?, line_items_json=?, discount=? WHERE id=?')
+    .run(bill.description, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, bill.discount || 0, id);
 }
 
 function getPendingBillById(id) {

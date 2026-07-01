@@ -4,6 +4,8 @@ const fs = require('fs');
 
 // Disable hardware acceleration to prevent UI lag/freezes
 app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu-compositing');
+app.commandLine.appendSwitch('disable-software-rasterizer');
 
 // When launched by migrate.js as a runner — do nothing here, migrate.js handles everything
 if (process.argv.includes('--run-migrate')) {
@@ -16,7 +18,8 @@ function createWindow() {
     height: 800,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      backgroundThrottling: false
     }
   });
 

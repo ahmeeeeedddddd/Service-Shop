@@ -582,6 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
             description: lines.map(l => l.name).join(', '),
             date_created: todayStr,
             total_amount: grandTotal,
+            discount: parseFloat(discountInput.value) || 0,
             payment_method: paymentMethodSelect.value,
             odometer: document.getElementById('odometer').value,
             notes: document.getElementById('notes').value,
