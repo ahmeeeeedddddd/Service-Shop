@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function loadParts() {
+    function loadParts(term) {
         partsTableBody.innerHTML = '';
-        const parts = db.getParts();
+        const parts = term ? db.searchParts(term) : db.getParts();
         
         if (parts.length === 0) {
             const lang = getCurrentLanguage();
             const t = translations[lang];
-            partsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${t.noParts}</td></tr>`;
+            partsTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">${t.noParts || 'No parts found'}</td></tr>`;
             return;
         }
 
@@ -225,6 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (closePrintBtn) closePrintBtn.onclick = () => printModal.classList.remove('active');
     if (confirmPrintBtn) confirmPrintBtn.onclick = () => window.print();
+
+    // Search
+    const partsSearchInput = document.getElementById('partsSearchInput');
+    if (partsSearchInput) {
+        partsSearchInput.addEventListener('input', () => {
+            loadParts(partsSearchInput.value.trim());
+        });
+    }
 
     loadSuppliers();
     loadParts();

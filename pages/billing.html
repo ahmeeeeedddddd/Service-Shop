@@ -125,9 +125,15 @@
                     <div class="mt-4">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="card-title" style="margin-bottom: 0;" data-i18n="lineItems">Line items</h3>
-                            <button class="btn btn-outline" id="addItemBtn">
-                                <span>+</span> <span data-i18n="addItem">Add item</span>
-                            </button>
+                            <div class="flex gap-2">
+                                <button class="btn btn-outline" id="addFromStockBtn" style="color: #0d9488; border-color: #0d9488;">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+                                    <span data-i18n="addFromStock">Add from Stock</span>
+                                </button>
+                                <button class="btn btn-outline" id="addItemBtn">
+                                    <span>+</span> <span data-i18n="addItem">Add item</span>
+                                </button>
+                            </div>
                         </div>
                         
                         <div class="table-container">
@@ -226,6 +232,34 @@
                     </button>
                 </div>
             </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Parts Search Modal -->
+    <div class="modal" id="partsSearchModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3 class="card-title" style="margin-bottom: 1rem;" data-i18n="selectPart">Select Part from Stock</h3>
+            <div class="form-group">
+                <input type="text" id="partSearchInputModal" class="form-control" placeholder="Search parts by name..." autocomplete="off">
+            </div>
+            <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                <table id="partsSearchResultsTable">
+                    <thead>
+                        <tr>
+                            <th data-i18n="partName">Part Name</th>
+                            <th style="width: 80px;" data-i18n="qtyInStock">Stock</th>
+                            <th style="width: 100px;" data-i18n="unitPrice">Price</th>
+                            <th style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="partsSearchBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-end mt-4">
+                <button class="btn btn-outline" id="closePartsModalBtn" data-i18n="close">Close</button>
             </div>
         </div>
     </div>

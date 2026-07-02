@@ -259,12 +259,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = [];
         document.querySelectorAll('#lineItemsBody tr').forEach(row => {
             const inputs = row.querySelectorAll('input');
-            if (inputs[0].value) {
+            if (inputs[0] && inputs[0].value) {
                 lines.push({
                     name: inputs[0].value,
                     qty: parseFloat(inputs[1].value) || 1,
                     price: parseFloat(inputs[2].value) || 0,
-                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0)
+                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0),
+                    part_id: row.dataset.partId || null
                 });
             }
         });
@@ -339,6 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: l.qty,
                 unit_price: l.price
             });
+            if (l.part_id) {
+                db.deductPartStock(l.part_id, l.qty);
+            }
         });
 
         isCurrentBillProcessed = true;
@@ -558,12 +562,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = [];
         document.querySelectorAll('#lineItemsBody tr').forEach(row => {
             const inputs = row.querySelectorAll('input');
-            if (inputs[0].value) {
+            if (inputs[0] && inputs[0].value) {
                 lines.push({
                     name: inputs[0].value,
                     qty: parseFloat(inputs[1].value) || 1,
                     price: parseFloat(inputs[2].value) || 0,
-                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0)
+                    total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0),
+                    part_id: row.dataset.partId || null
                 });
             }
         });
@@ -592,5 +597,83 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Bill saved as pending successfully!');
         resetForm();
     });
+
+    // --- Parts Search Logic ---
+    const addFromStockBtn = document.getElementById('addFromStockBtn');
+    const partsSearchModal = document.getElementById('partsSearchModal');
+    const closePartsModalBtn = document.getElementById('closePartsModalBtn');
+    const partSearchInputModal = document.getElementById('partSearchInputModal');
+    const partsSearchBody = document.getElementById('partsSearchBody');
+
+    if (addFromStockBtn) {
+        addFromStockBtn.addEventListener('click', () => {
+            partsSearchModal.classList.add('active');
+            loadPartsModal('');
+            if (partSearchInputModal) {
+                partSearchInputModal.value = '';
+                setTimeout(() => partSearchInputModal.focus(), 100);
+            }
+        });
+    }
+
+    if (closePartsModalBtn) {
+        closePartsModalBtn.addEventListener('click', () => {
+            partsSearchModal.classList.remove('active');
+        });
+    }
+
+    if (partSearchInputModal) {
+        partSearchInputModal.addEventListener('input', (e) => {
+            loadPartsModal(e.target.value.trim());
+        });
+    }
+
+    function loadPartsModal(term) {
+        if (!partsSearchBody) return;
+        partsSearchBody.innerHTML = '';
+        const parts = term ? db.searchParts(term) : db.getParts();
+        
+        if (parts.length === 0) {
+            partsSearchBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 1rem;">No parts found</td></tr>`;
+            return;
+        }
+
+        parts.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="font-bold text-teal">${p.name}</td>
+                <td>${p.quantity_in_stock}</td>
+                <td>$${parseFloat(p.unit_price).toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" ${p.quantity_in_stock <= 0 ? 'disabled' : ''}>
+                        Add
+                    </button>
+                </td>
+            `;
+            const addBtn = tr.querySelector('button');
+            if (addBtn && !addBtn.disabled) {
+                addBtn.addEventListener('click', () => {
+                    addPartToLineItems(p);
+                    partsSearchModal.classList.remove('active');
+                });
+            }
+            partsSearchBody.appendChild(tr);
+        });
+    }
+
+    function addPartToLineItems(part) {
+        const tr = document.createElement('tr');
+        tr.dataset.partId = part.id;
+        tr.innerHTML = `
+            <td><input type="text" class="form-control" value="${part.name}" placeholder="e.g. Brake Pads"></td>
+            <td><input type="number" class="form-control qty-input" value="1" min="1" max="${part.quantity_in_stock}"></td>
+            <td><input type="number" class="form-control price-input" value="${part.unit_price}" min="0" step="0.01"></td>
+            <td class="font-bold text-teal line-subtotal">$${parseFloat(part.unit_price).toFixed(2)}</td>
+            <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
+        `;
+        lineItemsBody.appendChild(tr);
+        attachRowListeners(tr);
+        updateGrandTotal();
+    }
 
 });

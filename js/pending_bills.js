@@ -239,6 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: l.qty,
                 unit_price: l.price
             });
+            if (l.part_id) {
+                db.deductPartStock(l.part_id, l.qty);
+            }
         });
 
         db.deletePendingBill(currentBillId);

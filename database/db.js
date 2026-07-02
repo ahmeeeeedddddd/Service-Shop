@@ -58,6 +58,7 @@ function initDB() {
       payment_method TEXT,
       odometer TEXT,
       notes TEXT,
+      legacy_id TEXT,
       FOREIGN KEY(customer_id) REFERENCES customers(id)
     );
 
@@ -135,6 +136,7 @@ function initDB() {
   try { db.exec(`ALTER TABLE repairs ADD COLUMN paid_amount REAL`); } catch(e) {}
   try { db.exec(`ALTER TABLE repairs ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
   try { db.exec(`ALTER TABLE repairs ADD COLUMN discount REAL DEFAULT 0`); } catch(e) {}
+  try { db.exec(`ALTER TABLE repairs ADD COLUMN legacy_id TEXT`); } catch(e) {}
   try { db.exec(`ALTER TABLE suppliers ADD COLUMN pending_amount REAL DEFAULT 0`); } catch(e) {}
   try { db.exec(`ALTER TABLE pending_bills ADD COLUMN discount REAL DEFAULT 0`); } catch(e) {}
 
@@ -165,9 +167,18 @@ function initDB() {
       name TEXT NOT NULL,
       role TEXT,
       daily_rate REAL NOT NULL DEFAULT 0,
+      accumulated_deductions REAL DEFAULT 0,
+      pending_adjustments TEXT DEFAULT '[]',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  try {
+    db.exec("ALTER TABLE employees ADD COLUMN accumulated_deductions REAL DEFAULT 0");
+  } catch(e) {}
+  try {
+    db.exec("ALTER TABLE employees ADD COLUMN pending_adjustments TEXT DEFAULT '[]'");
+  } catch(e) {}
 }
 
 function performAutomaticBackup() {
@@ -356,6 +367,20 @@ function deletePart(id) {
   db.prepare('DELETE FROM parts WHERE id = ?').run(id);
 }
 
+function searchParts(term) {
+  return db.prepare(`
+    SELECT parts.*, suppliers.name as supplier_name
+    FROM parts
+    LEFT JOIN suppliers ON parts.supplier_id = suppliers.id
+    WHERE parts.name LIKE ? OR parts.category LIKE ?
+    ORDER BY parts.name COLLATE NOCASE ASC
+  `).all(`%${term}%`, `%${term}%`);
+}
+
+function deductPartStock(id, quantity) {
+  db.prepare('UPDATE parts SET quantity_in_stock = MAX(0, quantity_in_stock - ?) WHERE id = ?').run(quantity, id);
+}
+
 function deleteRepairItems(repairId) {
   db.prepare('DELETE FROM repair_items WHERE repair_id = ?').run(repairId);
 }
@@ -449,6 +474,25 @@ function deleteEmployee(id) {
   db.prepare('DELETE FROM employees WHERE id = ?').run(id);
 }
 
+function addEmployeeAdjustment(id, adjustmentObj) {
+  // adjustmentObj = { type: 'Deduction'|'Borrow', amount: 100, reason: '...', date: '...' }
+  const emp = db.prepare('SELECT pending_adjustments FROM employees WHERE id = ?').get(id);
+  if (emp) {
+    let adjs = [];
+    try {
+        if (emp.pending_adjustments) {
+            adjs = JSON.parse(emp.pending_adjustments);
+        }
+    } catch(e) {}
+    adjs.push(adjustmentObj);
+    db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run(JSON.stringify(adjs), id);
+  }
+}
+
+function clearEmployeeAdjustments(id) {
+  db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run('[]', id);
+}
+
 module.exports = {
   getCustomers,
   searchCustomers,
@@ -467,10 +511,12 @@ module.exports = {
   addSupplierTransaction,
   getSupplierTransactions,
   getParts,
+  searchParts,
   addPart,
   updatePart,
   updatePartInline,
   deletePart,
+  deductPartStock,
   getExpenses,
   addExpense,
   deleteExpense,
@@ -491,5 +537,7 @@ module.exports = {
   getEmployees,
   addEmployee,
   updateEmployee,
-  deleteEmployee
+  deleteEmployee,
+  addEmployeeAdjustment,
+  clearEmployeeAdjustments
 };

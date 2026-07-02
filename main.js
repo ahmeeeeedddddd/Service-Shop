@@ -4,8 +4,10 @@ const fs = require('fs');
 
 // Disable hardware acceleration to prevent UI lag/freezes
 app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
 app.commandLine.appendSwitch('disable-gpu-compositing');
-app.commandLine.appendSwitch('disable-software-rasterizer');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
 
 // When launched by migrate.js as a runner — do nothing here, migrate.js handles everything
 if (process.argv.includes('--run-migrate')) {

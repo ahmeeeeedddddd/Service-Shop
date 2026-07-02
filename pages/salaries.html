@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .salary-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .emp-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
+        .emp-modal.active { display:flex; }
+        .emp-modal-card { width:100%; max-width:480px; background:white; color:#1e293b; border-radius:12px; padding:2rem; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+        .emp-modal-card h3 { margin:0 0 1.5rem 0; font-size:1.2rem; font-weight:700; }
     </style>
 </head>
 <body>
@@ -33,23 +37,12 @@
                     <span class="nav-group-arrow">&#9662;</span>
                 </div>
                 <div class="nav-group-items open" id="reportsItems">
-                    <a href="daily_report.html" class="nav-item">
-                        <span data-i18n="dailyReport">Daily Report</span>
-                    </a>
-                    <a href="work_order.html" class="nav-item">
-                        <span data-i18n="workOrder">Work Order</span>
-                    </a>
-                    <a href="inspection.html" class="nav-item">
-                        <span data-i18n="inspection">Comprehensive Inspection</span>
-                    </a>
-                    <a href="estimate.html" class="nav-item">
-                        <span data-i18n="estimate">Car Repair Estimate</span>
-                    </a>
-                    <a href="salaries.html" class="nav-item active">
-                        <span data-i18n="salaries">Salaries</span>
-                    </a>
+                    <a href="daily_report.html" class="nav-item"><span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="work_order.html" class="nav-item"><span data-i18n="workOrder">Work Order</span></a>
+                    <a href="inspection.html" class="nav-item"><span data-i18n="inspection">Comprehensive Inspection</span></a>
+                    <a href="estimate.html" class="nav-item"><span data-i18n="estimate">Car Repair Estimate</span></a>
+                    <a href="salaries.html" class="nav-item active"><span data-i18n="salaries">Salaries</span></a>
                 </div>
-            </div>
             </div>
         </nav>
         <div class="sidebar-footer">
@@ -64,6 +57,7 @@
             <p data-i18n="salariesSubtitle">Manage employee records and record salaries as expenses</p>
         </header>
 
+        <!-- Add/Edit Employee Form -->
         <div class="card">
             <h3 class="card-title" id="formTitle" data-i18n="addEmployee">Add Employee</h3>
             <div class="salary-form">
@@ -90,6 +84,7 @@
             </div>
         </div>
 
+        <!-- Employees List -->
         <div class="card" style="margin-top:1.5rem;">
             <h3 class="card-title" data-i18n="employeesList">Employees List</h3>
             <div class="table-container">
@@ -101,6 +96,7 @@
                             <th data-i18n="employeeRole">Role</th>
                             <th data-i18n="dailyRate">Daily Rate</th>
                             <th data-i18n="weeklyTotal">Weekly Salary (7 days)</th>
+                            <th data-i18n="deductions">Total Deducted/Borrowed</th>
                             <th data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
@@ -110,38 +106,107 @@
         </div>
     </main>
 
-    <!-- Record Salary Modal -->
-    <div id="salaryModal" class="print-preview-overlay" style="display:none; justify-content:center; align-items:center;">
-        <div class="card" style="width: 100%; max-width: 500px; background: white; color: black; border-radius: 8px; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <h3 class="card-title" style="margin-bottom: 1.5rem;" id="modalEmpTitle">Record Salary</h3>
-            
+    <!-- ===== Record Salary Modal ===== -->
+    <div id="salaryModal" class="emp-modal">
+        <div class="emp-modal-card">
+            <h3 id="salaryModalTitle">Record Salary</h3>
+
             <div class="form-group" style="margin-bottom:1rem;">
                 <label id="lblDaysWorked">Days Worked</label>
                 <input type="number" id="modalDaysWorked" class="form-control" value="7" min="0" max="7" step="1">
             </div>
-            
-            <div class="form-group" style="margin-bottom:1rem;">
-                <label id="lblDeductions">Deductions</label>
-                <input type="number" id="modalDeductions" class="form-control" value="0" min="0" step="0.5">
-            </div>
 
-            <div class="form-group" style="margin-bottom:1rem;">
-                <label id="lblRaise">Bonus / Raise</label>
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label id="lblRaise">Bonus / Raise ($)</label>
                 <input type="number" id="modalRaise" class="form-control" value="0" min="0" step="0.5">
             </div>
 
-            <div class="form-group" style="margin-bottom:1.5rem;">
-                <label id="lblDeductionReason">Deduction Reason (Optional)</label>
-                <input type="text" id="modalDeductionReason" class="form-control" placeholder="e.g. Absence, Penalty">
-            </div>
-
-            <div style="font-size: 1.1rem; font-weight: bold; margin-bottom: 1.5rem; color: #0d9488;">
+            <div style="font-size:1.15rem; font-weight:700; margin-bottom:1.5rem; color:#0d9488; padding:0.75rem; background:#f0fdf4; border-radius:8px;">
                 <span id="lblNetSalary">Net Salary:</span> <span id="modalNetSalary">$0.00</span>
             </div>
 
             <div class="flex gap-2">
-                <button class="btn btn-primary" id="modalConfirmBtn">Record Expense</button>
+                <button class="btn btn-primary" id="modalConfirmBtn">✓ Record Salary</button>
                 <button class="btn btn-outline" id="modalCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Deduction Modal ===== -->
+    <div id="deductionModal" class="emp-modal">
+        <div class="emp-modal-card">
+            <h3 id="deductionModalTitle">Add Deduction</h3>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label>Deduction Amount ($) <span style="color:#ef4444;">*</span></label>
+                <input type="number" id="deductionAmount" class="form-control" value="0" min="0" step="0.5">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label>Reason (Optional)</label>
+                <input type="text" id="deductionReason" class="form-control" placeholder="e.g. Absence, Late arrival, Penalty">
+            </div>
+
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:1.5rem; padding:0.75rem; background:#fef2f2; border-radius:8px; border-left:3px solid #ef4444;">
+                ⚠️ This deduction will be recorded and subtracted from the employee's next salary.
+            </p>
+
+            <div class="flex gap-2">
+                <button class="btn btn-primary" id="deductionConfirmBtn" style="background:#ef4444; border-color:#ef4444;">✓ Record Deduction</button>
+                <button class="btn btn-outline" id="deductionCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Borrow Money Modal ===== -->
+    <div id="borrowModal" class="emp-modal">
+        <div class="emp-modal-card">
+            <h3 id="borrowModalTitle">Record Borrowed Money</h3>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label>Amount Borrowed ($) <span style="color:#f59e0b;">*</span></label>
+                <input type="number" id="borrowAmount" class="form-control" value="0" min="0" step="0.5">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label>Note (Optional)</label>
+                <input type="text" id="borrowNote" class="form-control" placeholder="e.g. Personal advance, Emergency">
+            </div>
+
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:1.5rem; padding:0.75rem; background:#fffbeb; border-radius:8px; border-left:3px solid #f59e0b;">
+                💰 This amount will be recorded as an <strong>Expense</strong> in the expenses section.
+            </p>
+
+            <div class="flex gap-2">
+                <button class="btn btn-primary" id="borrowConfirmBtn" style="background:#f59e0b; border-color:#f59e0b;">✓ Record Advance</button>
+                <button class="btn btn-outline" id="borrowCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Adjustments History Modal ===== -->
+    <div id="historyModal" class="emp-modal">
+        <div class="emp-modal-card" style="max-width: 600px;">
+            <h3 id="historyModalTitle">Deductions & Advances History</h3>
+            
+            <div class="table-container" style="max-height:300px; overflow-y:auto; margin-bottom:1.5rem;">
+                <table style="width:100%; text-align:left;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #e2e8f0;">
+                            <th style="padding:0.5rem;">Date</th>
+                            <th style="padding:0.5rem;">Type</th>
+                            <th style="padding:0.5rem;">Reason</th>
+                            <th style="padding:0.5rem;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- History rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end">
+                <button class="btn btn-outline" id="historyCloseBtn">Close</button>
             </div>
         </div>
     </div>

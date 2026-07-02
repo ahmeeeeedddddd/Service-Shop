@@ -18,53 +18,26 @@
             </div>
         </div>
         <nav class="sidebar-nav">
-            <a href="customers.html" class="nav-item">
-                <span data-i18n="customers">Customers</span>
-            </a>
-            <a href="billing.html" class="nav-item">
-                <span data-i18n="billing">Billing</span>
-            </a>
-            <a href="pending_bills.html" class="nav-item">
-                <span data-i18n="pendingBills">Pending Bills</span>
-            </a>
-            <a href="parts.html" class="nav-item active">
-                <span data-i18n="parts">Parts & Stock</span>
-            </a>
-            <a href="suppliers.html" class="nav-item">
-                <span data-i18n="suppliers">Suppliers</span>
-            </a>
-            <a href="income.html" class="nav-item">
-                <span data-i18n="income">Income</span>
-            </a>
-            <a href="expenses.html" class="nav-item">
-                <span data-i18n="expenses">Expenses</span>
-            </a>
-            <a href="bills_history.html" class="nav-item">
-                <span data-i18n="billsHistory">Bills History</span>
-            </a>
+            <a href="customers.html" class="nav-item"><span data-i18n="customers">Customers</span></a>
+            <a href="billing.html" class="nav-item"><span data-i18n="billing">Billing</span></a>
+            <a href="pending_bills.html" class="nav-item"><span data-i18n="pendingBills">Pending Bills</span></a>
+            <a href="parts.html" class="nav-item active"><span data-i18n="parts">Parts &amp; Stock</span></a>
+            <a href="suppliers.html" class="nav-item"><span data-i18n="suppliers">Suppliers</span></a>
+            <a href="income.html" class="nav-item"><span data-i18n="income">Income</span></a>
+            <a href="expenses.html" class="nav-item"><span data-i18n="expenses">Expenses</span></a>
+            <a href="bills_history.html" class="nav-item"><span data-i18n="billsHistory">Bills History</span></a>
             <div class="nav-group">
                 <div class="nav-group-toggle" id="reportsToggle">
                     <span data-i18n="reports">Reports</span>
                     <span class="nav-group-arrow">&#9662;</span>
                 </div>
                 <div class="nav-group-items" id="reportsItems">
-                    <a href="daily_report.html" class="nav-item">
-                        <span data-i18n="dailyReport">Daily Report</span>
-                    </a>
-                    <a href="work_order.html" class="nav-item">
-                        <span data-i18n="workOrder">Work Order</span>
-                    </a>
-                    <a href="inspection.html" class="nav-item">
-                        <span data-i18n="inspection">Comprehensive Inspection</span>
-                    </a>
-                    <a href="estimate.html" class="nav-item">
-                        <span data-i18n="estimate">Car Repair Estimate</span>
-                    </a>
-                    <a href="salaries.html" class="nav-item">
-                        <span data-i18n="salaries">Salaries</span>
-                    </a>
+                    <a href="daily_report.html" class="nav-item"><span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="work_order.html" class="nav-item"><span data-i18n="workOrder">Work Order</span></a>
+                    <a href="inspection.html" class="nav-item"><span data-i18n="inspection">Comprehensive Inspection</span></a>
+                    <a href="estimate.html" class="nav-item"><span data-i18n="estimate">Car Repair Estimate</span></a>
+                    <a href="salaries.html" class="nav-item"><span data-i18n="salaries">Salaries</span></a>
                 </div>
-            </div>
             </div>
         </nav>
         <div class="sidebar-footer">
@@ -76,12 +49,12 @@
     <!-- Main Content -->
     <main class="main-content">
         <header class="page-header">
-            <h2 data-i18n="parts">Parts & Stock</h2>
+            <h2 data-i18n="parts">Parts &amp; Stock</h2>
             <p data-i18n="partsSubtitle">Manage inventory, prices, and stock levels</p>
         </header>
 
         <div class="flex gap-2" style="align-items: flex-start;">
-            
+
             <!-- Left Side: Table of Parts -->
             <div style="flex: 2;">
                 <div class="card">
@@ -92,17 +65,24 @@
                             <span data-i18n="printInventory">Print Inventory</span>
                         </button>
                     </div>
+
+                    <!-- Search -->
+                    <div class="form-group" style="margin-bottom: 1rem;">
+                        <input type="text" id="partsSearchInput" class="form-control"
+                               placeholder="🔍 Search by part name or category...">
+                    </div>
+
                     <div class="table-container">
                         <table>
                             <thead>
                                 <tr>
-                                <th data-i18n="partName">Part Name</th>
-                                <th data-i18n="category">Category</th>
-                                <th data-i18n="supplier">Supplier</th>
-                                <th style="width: 100px;" data-i18n="qtyInStock">Qty</th>
-                                <th style="width: 120px;" data-i18n="unitPrice">Unit Price</th>
-                                <th style="width: 150px;"></th>
-                            </tr>
+                                    <th data-i18n="partName">Part Name</th>
+                                    <th data-i18n="category">Category</th>
+                                    <th data-i18n="supplier">Supplier</th>
+                                    <th style="width: 100px;" data-i18n="qtyInStock">Qty</th>
+                                    <th style="width: 120px;" data-i18n="unitPrice">Unit Price</th>
+                                    <th style="width: 150px;"></th>
+                                </tr>
                             </thead>
                             <tbody id="partsTableBody">
                                 <!-- Populated by JS -->
@@ -127,7 +107,7 @@
                             <option value="Brakes">Brakes</option>
                             <option value="Suspension">Suspension</option>
                             <option value="Electrical">Electrical</option>
-                            <option value="Fluids">Fluids & Filters</option>
+                            <option value="Fluids">Fluids &amp; Filters</option>
                             <option value="Other">Other</option>
                         </select>
                     </div>
