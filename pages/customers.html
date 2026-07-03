@@ -125,20 +125,19 @@
 
                 <!-- Customer Info Card -->
                 <div id="customerInfoCard" class="card mt-4" style="display: none; background: #f8fafc;">
-                    <h3 class="card-title text-teal" id="infoName">Customer Name</h3>
-                    <div class="stat-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 0;">
+                    <div class="flex justify-between items-center mb-4">
                         <div>
-                            <small style="color: #64748b;" data-i18n="phone">Phone</small>
-                            <div id="infoPhone" class="font-bold"></div>
+                            <h3 class="card-title text-teal" id="infoName" style="margin-bottom: 0;">Customer Name</h3>
+                            <div id="infoPhone" style="color: #64748b; font-size: 0.9rem;">Phone</div>
                         </div>
-                        <div>
-                            <small style="color: #64748b;" data-i18n="carName">Car</small>
-                            <div id="infoCar" class="font-bold"></div>
-                        </div>
-                        <div>
-                            <small style="color: #64748b;" data-i18n="plateNumber">Plate</small>
-                            <div id="infoPlate" class="font-bold"></div>
-                        </div>
+                        <button class="btn btn-outline" id="addAnotherCarBtn" style="color: #0d9488; border-color: #0d9488; font-size: 0.85rem; padding: 0.3rem 0.6rem;">
+                            <span data-i18n="addCar">+ Add Another Car</span>
+                        </button>
+                    </div>
+                    
+                    <h4 style="font-size: 0.9rem; color: #475569; margin-bottom: 0.5rem;" data-i18n="registeredCars">Registered Cars</h4>
+                    <div id="infoCarsList" class="stat-grid" style="grid-template-columns: 1fr; margin-bottom: 0; gap: 0.5rem;">
+                        <!-- Cars populated via JS -->
                     </div>
                 </div>
 

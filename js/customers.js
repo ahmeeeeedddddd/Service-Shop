@@ -99,11 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCustomerBtn.textContent = getCurrentLanguage() === 'en' ? 'Save Customer' : 'حفظ العميل';
             alert(getCurrentLanguage() === 'en' ? 'Customer updated successfully' : 'تم تحديث العميل بنجاح');
         } else {
-            const existing = db.getCustomerByPhone(phone);
-            if (existing) {
-                const lang = getCurrentLanguage();
-                alert(translations[lang].duplicateCustomerError);
-                return;
+            const existings = db.getCustomersByPhone(phone);
+            if (existings && existings.length > 0) {
+                // Allow same phone if car is different, block if exact same name & car
+                const duplicate = existings.find(c => c.name === name && c.car_name === car_name && c.plate_number === plate_number);
+                if (duplicate) {
+                    const lang = getCurrentLanguage();
+                    alert(translations[lang].duplicateCustomerError);
+                    return;
+                }
             }
 
             db.addCustomer({ name, phone, car_name, plate_number });
@@ -141,20 +145,34 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Group by phone (or name if no phone)
+        const grouped = {};
         results.forEach(c => {
+            const key = c.phone || c.name;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    id: c.id, // primary id for repairs lookup (fallback)
+                    name: c.name,
+                    phone: c.phone,
+                    cars: []
+                };
+            }
+            grouped[key].cars.push(c);
+        });
+
+        Object.values(grouped).forEach(g => {
+            const t = translations[getCurrentLanguage()];
+            const carLabel = g.cars.length === 1 ? (t.carRegistered || 'car registered') : (t.carsRegistered || 'cars registered');
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `
                 <div style="flex: 1;">
-                    <span class="result-name">${c.name}</span>
-                    <span class="result-phone">${c.phone || ''}</span>
-                    <span class="result-car">${c.car_name || ''} | ${c.plate_number || ''}</span>
+                    <span class="result-name">${g.name}</span>
+                    <span class="result-phone">${g.phone || ''}</span>
+                    <span class="result-car" style="color: #64748b; font-size: 0.85rem;">${g.cars.length} ${carLabel}</span>
                 </div>
-                <button class="btn btn-outline" style="color: #ef4444; border-color: #fee2e2; padding: 0.4rem;" onclick="event.stopPropagation(); deleteCustomer(${c.id})">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                </button>
             `;
-            div.onclick = () => selectCustomer(c);
+            div.onclick = () => selectCustomer(g);
             searchResults.appendChild(div);
         });
 
@@ -219,27 +237,74 @@ document.addEventListener('DOMContentLoaded', () => {
         switchTab('add');
     };
 
-    function selectCustomer(customer) {
+    function selectCustomer(customerGroup) {
         customerSearch.value = '';
         searchResults.classList.remove('active');
 
         // Show customer info card
         customerInfoCard.style.display = 'block';
-        document.getElementById('infoName').textContent = customer.name;
-        document.getElementById('infoPhone').textContent = customer.phone || '-';
-        document.getElementById('infoCar').textContent = customer.car_name || '-';
-        document.getElementById('infoPlate').textContent = customer.plate_number || '-';
+        document.getElementById('infoName').textContent = customerGroup.name;
+        document.getElementById('infoPhone').textContent = customerGroup.phone || '-';
+        
+        const carsList = document.getElementById('infoCarsList');
+        carsList.innerHTML = '';
+        customerGroup.cars.forEach(car => {
+            const el = document.createElement('div');
+            el.style.background = '#fff';
+            el.style.padding = '0.5rem';
+            el.style.borderRadius = '4px';
+            el.style.border = '1px solid #e2e8f0';
+            el.style.display = 'flex';
+            el.style.justifyContent = 'space-between';
+            el.innerHTML = `
+                <div>
+                    <div class="font-bold text-teal">${car.car_name || '-'}</div>
+                    <div style="font-size: 0.8rem; color: #64748b;">Plate: ${car.plate_number || '-'}</div>
+                </div>
+                <button class="btn btn-outline" style="color: #ef4444; border-color: #fee2e2; padding: 0.25rem; height: 30px;" onclick="deleteCustomer(${car.id})">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                </button>
+            `;
+            carsList.appendChild(el);
+        });
 
-        // Load repair history
-        const repairs = db.getRepairsByCustomer(customer.id);
+        // Set up Add Another Car button
+        const addAnotherBtn = document.getElementById('addAnotherCarBtn');
+        if (addAnotherBtn) {
+            addAnotherBtn.onclick = () => {
+                document.getElementById('addName').value = customerGroup.name;
+                document.getElementById('addPhone').value = customerGroup.phone || '';
+                document.getElementById('addCarName').value = '';
+                document.getElementById('addPlate').value = '';
+                editingCustomerId = null;
+                saveCustomerBtn.textContent = getCurrentLanguage() === 'en' ? 'Save Customer' : 'حفظ العميل';
+                switchTab('tabAddCustomer');
+            };
+        }
+
+        // Load repair history for ALL cars of this customer
+        let allRepairs = [];
+        customerGroup.cars.forEach(car => {
+            const carRepairs = db.getRepairsByCustomer(car.id);
+            // Append car info to repairs so we know which car it is
+            carRepairs.forEach(r => {
+                r.car_name = car.car_name;
+                r.plate_number = car.plate_number;
+            });
+            allRepairs = allRepairs.concat(carRepairs);
+        });
+        
+        // Sort by date descending
+        allRepairs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
         repairsTableBody.innerHTML = '';
         
-        if (repairs.length > 0) {
+        if (allRepairs.length > 0) {
             repairsHistorySection.style.display = 'block';
-            repairs.forEach(r => {
+            allRepairs.forEach(r => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${r.date}</td>
+                    <td>${r.date}<br><small style="color:#64748b;">${r.car_name}</small></td>
                     <td>${r.description || 'General Service'}</td>
                     <td class="font-bold text-teal">$${parseFloat(r.total_amount).toFixed(2)}</td>
                     <td>${r.payment_method}</td>

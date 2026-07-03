@@ -162,7 +162,16 @@ const translations = {
         dailyRate: "Daily Rate",
         weeklyTotal: "Weekly Salary (7 days)",
         deductions: "Deductions",
-        employeesList: "Employees List"
+        employeesList: "Employees List",
+        
+        // Multi-car Support
+        addCar: "+ Add Another Car",
+        registeredCars: "Registered Cars",
+        selectCar: "Select Car",
+        carsRegistered: "cars registered",
+        carRegistered: "car registered",
+        unknownCar: "Unknown Car",
+        noPlate: "No Plate"
     },
     ar: {
         // Sidebar & General
@@ -327,7 +336,16 @@ const translations = {
         dailyRate: "الأجر اليومي",
         weeklyTotal: "إجمالي الراتب الأسبوعي (٧ أيام)",
         deductions: "الخصومات",
-        employeesList: "قائمة الموظفين"
+        employeesList: "قائمة الموظفين",
+        
+        // Multi-car Support
+        addCar: "+ إضافة سيارة أخرى",
+        registeredCars: "السيارات المسجلة",
+        selectCar: "اختر سيارة",
+        carsRegistered: "سيارات مسجلة",
+        carRegistered: "سيارة مسجلة",
+        unknownCar: "سيارة غير معروفة",
+        noPlate: "بدون لوحة"
     }
 };
 

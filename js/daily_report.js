@@ -64,17 +64,43 @@ document.addEventListener('DOMContentLoaded', () => {
         dayNetEl.style.color = net >= 0 ? '#0d9488' : '#ef4444';
 
         // Income Breakdown
-        reportIncomeBody.innerHTML = income.map(i => {
-            const actualPaid = getPaid(i);
-            return `
-                <tr>
-                    <td>${i.customer_name}</td>
-                    <td>${i.car_name || '-'}</td>
-                    <td>${window.getTranslatedPaymentMethod(i.payment_method)}</td>
-                    <td class="font-bold">$${actualPaid.toFixed(2)}</td>
-                </tr>
-            `;
-        }).join('') || '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records</td></tr>';
+        const groupedIncome = {};
+        income.forEach(i => {
+            const pm = i.payment_method || 'Cash';
+            if(!groupedIncome[pm]) groupedIncome[pm] = [];
+            groupedIncome[pm].push(i);
+        });
+
+        let incomeHtml = '';
+        if (Object.keys(groupedIncome).length === 0) {
+            incomeHtml = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No records</td></tr>';
+        } else {
+            for (const [pm, items] of Object.entries(groupedIncome)) {
+                const methodTotal = items.reduce((sum, i) => sum + getPaid(i), 0);
+                
+                // Add a header row for the payment method
+                incomeHtml += `
+                    <tr style="background: #f1f5f9;">
+                        <td colspan="3" class="font-bold" style="color: #334155;">${window.getTranslatedPaymentMethod(pm)} (Total)</td>
+                        <td class="font-bold" style="color: #0d9488;">$${methodTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+                
+                // Add detail rows
+                items.forEach(i => {
+                    const actualPaid = getPaid(i);
+                    incomeHtml += `
+                        <tr>
+                            <td style="padding-left: 20px;">${i.customer_name}</td>
+                            <td>${i.car_name || '-'}</td>
+                            <td>${window.getTranslatedPaymentMethod(i.payment_method)}</td>
+                            <td>$${actualPaid.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+        reportIncomeBody.innerHTML = incomeHtml;
 
         // Expenses Breakdown
         reportExpensesBody.innerHTML = expenses.map(e => `

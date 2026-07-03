@@ -72,31 +72,75 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const grouped = {};
         results.forEach(c => {
+            const key = c.phone || c.name;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    name: c.name,
+                    phone: c.phone,
+                    cars: []
+                };
+            }
+            grouped[key].cars.push(c);
+        });
+
+        Object.values(grouped).forEach(g => {
+            const t = translations[getCurrentLanguage()];
+            const carLabel = g.cars.length === 1 ? (t.carRegistered || 'car registered') : (t.carsRegistered || 'cars registered');
             const div = document.createElement('div');
             div.className = 'result-item';
             div.innerHTML = `
-                <span class="result-name">${c.name}</span>
-                <span class="result-phone">${c.phone}</span>
-                <span class="result-car">${c.car_name} | ${c.plate_number}</span>
+                <span class="result-name">${g.name}</span>
+                <span class="result-phone">${g.phone}</span>
+                <span class="result-car" style="color: #64748b; font-size: 0.85rem;">${g.cars.length} ${carLabel}</span>
             `;
-            div.onclick = () => selectCustomer(c);
+            div.onclick = () => selectCustomerGroup(g);
             searchResults.appendChild(div);
         });
 
         searchResults.classList.add('active');
     }
 
-    function selectCustomer(customer) {
-        selectedCustomer = customer;
+    function selectCustomerGroup(group) {
         customerSearch.value = '';
         searchResults.classList.remove('active');
 
-        // Auto-fill fields
-        customerName.value = customer.name;
-        customerPhone.value = customer.phone;
-        carModelInput.value = customer.car_name;
-        plateNumberInput.value = customer.plate_number;
+        // Auto-fill person fields
+        customerName.value = group.name;
+        customerPhone.value = group.phone;
+        
+        const carSelectGroup = document.getElementById('carSelectGroup');
+        const carSelect = document.getElementById('carSelect');
+
+        if (group.cars.length > 1 && carSelectGroup && carSelect) {
+            carSelectGroup.style.display = 'block';
+            carSelect.innerHTML = '';
+            group.cars.forEach((car, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                const t = translations[getCurrentLanguage()];
+                const carNameStr = car.car_name || (t.unknownCar || 'Unknown Car');
+                const plateStr = car.plate_number || (t.noPlate || 'No Plate');
+                opt.textContent = `${carNameStr} | ${plateStr}`;
+                carSelect.appendChild(opt);
+            });
+            
+            carSelect.onchange = () => {
+                selectedCustomer = group.cars[carSelect.value];
+                carModelInput.value = selectedCustomer.car_name || '';
+                plateNumberInput.value = selectedCustomer.plate_number || '';
+            };
+            
+            // Select first by default
+            carSelect.value = 0;
+            carSelect.onchange();
+        } else {
+            if (carSelectGroup) carSelectGroup.style.display = 'none';
+            selectedCustomer = group.cars[0];
+            carModelInput.value = selectedCustomer.car_name || '';
+            plateNumberInput.value = selectedCustomer.plate_number || '';
+        }
     }
 
     // Close search results when clicking outside
@@ -367,6 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
         customerPhone.value = '';
         carModelInput.value = '';
         plateNumberInput.value = '';
+        
+        const carSelectGroup = document.getElementById('carSelectGroup');
+        if (carSelectGroup) carSelectGroup.style.display = 'none';
 
         lineItemsBody.innerHTML = `
             <tr>

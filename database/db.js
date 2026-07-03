@@ -249,6 +249,10 @@ function getCustomerByPhone(phone) {
   return db.prepare('SELECT * FROM customers WHERE phone = ?').get(phone);
 }
 
+function getCustomersByPhone(phone) {
+  return db.prepare('SELECT * FROM customers WHERE phone = ?').all(phone);
+}
+
 // --- Repairs & Repair Items CRUD ---
 function addRepair(repair) {
   const stmt = db.prepare('INSERT INTO repairs (customer_id, description, date, total_amount, paid_amount, pending_amount, discount, payment_method, odometer, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -523,6 +527,7 @@ module.exports = {
   updateExpense,
   deleteCustomer,
   getCustomerByPhone,
+  getCustomersByPhone,
   deleteRepairItems,
   updateRepair,
   updateRepairFull,
