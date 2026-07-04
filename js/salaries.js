@@ -204,7 +204,7 @@ function loadEmployees() {
 
     list.forEach(emp => {
         const tr     = document.createElement('tr');
-        const weekly = (emp.daily_rate * 7).toFixed(2);
+        const weekly = (emp.daily_rate * 6).toFixed(2);
         
         let adjs = [];
         try {
@@ -267,10 +267,10 @@ window.openSalaryModal = function(id, name, role, dailyRate, deductions) {
     document.getElementById('salaryModalTitle').textContent =
         getCurrentLanguage() === 'en' ? `Record Salary — ${name}` : `تسجيل راتب — ${name}`;
 
-    document.getElementById('modalDaysWorked').value = 7;
+    document.getElementById('modalDaysWorked').value = 6;
     document.getElementById('modalRaise').value      = 0;
     
-    let net = (dailyRate * 7) - (deductions || 0);
+    let net = (dailyRate * 6) - (deductions || 0);
     document.getElementById('modalNetSalary').textContent = `$${Math.max(0, net).toFixed(2)}`;
 
     document.getElementById('salaryModal').classList.add('active');

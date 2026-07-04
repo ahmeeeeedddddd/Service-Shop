@@ -160,7 +160,7 @@ const translations = {
         employeeId: "ID",
         employeeRole: "Role",
         dailyRate: "Daily Rate",
-        weeklyTotal: "Weekly Salary (7 days)",
+        weeklyTotal: "Weekly Salary (6 days)",
         deductions: "Deductions",
         employeesList: "Employees List",
         
@@ -334,7 +334,7 @@ const translations = {
         employeeId: "الرقم التعريفي",
         employeeRole: "الوظيفة / الدور",
         dailyRate: "الأجر اليومي",
-        weeklyTotal: "إجمالي الراتب الأسبوعي (٧ أيام)",
+        weeklyTotal: "إجمالي الراتب الأسبوعي (٦ أيام)",
         deductions: "الخصومات",
         employeesList: "قائمة الموظفين",
         
