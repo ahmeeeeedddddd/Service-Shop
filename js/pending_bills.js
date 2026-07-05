@@ -38,6 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const processPaymentMethod = document.getElementById('processPaymentMethod');
     const processPayByPartsSection = document.getElementById('processPayByPartsSection');
     const processAmountPaid = document.getElementById('processAmountPaid');
+    const processSplitSection = document.getElementById('processSplitSection');
+    const processSplitMethod1 = document.getElementById('processSplitMethod1');
+    const processSplitAmount1 = document.getElementById('processSplitAmount1');
+    const processSplitMethod2 = document.getElementById('processSplitMethod2');
+    const processSplitAmount2 = document.getElementById('processSplitAmount2');
+    const processSplitRemaining = document.getElementById('processSplitRemaining');
     const closeProcessBtn = document.getElementById('closeProcessBtn');
     const confirmProcessBtn = document.getElementById('confirmProcessBtn');
 
@@ -181,20 +187,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!bill) return;
         
         processPaymentMethod.value = bill.payment_method;
-        processPayByPartsSection.style.display = bill.payment_method === 'PayByParts' ? 'block' : 'none';
+        processPayByPartsSection.style.display = 'none';
+        if (processSplitSection) processSplitSection.style.display = 'none';
+
+        if (bill.payment_method === 'PayByParts') {
+            processPayByPartsSection.style.display = 'block';
+        }
         
         const netTotal = Math.max(0, parseFloat(bill.total_amount) - (parseFloat(bill.discount) || 0));
         processAmountPaid.value = netTotal;
+        if (processSplitAmount1) processSplitAmount1.value = 0;
+        if (processSplitAmount2) processSplitAmount2.value = 0;
+        if (processSplitRemaining) processSplitRemaining.textContent = netTotal.toFixed(2);
+        
+        // Store netTotal for split remaining calculation
+        processPaymentMethod.dataset.netTotal = netTotal;
 
         detailModal.classList.remove('active');
         processModal.classList.add('active');
     };
 
+    function updateProcessSplitRemaining() {
+        const netTotal = parseFloat(processPaymentMethod.dataset.netTotal) || 0;
+        const s1 = parseFloat(processSplitAmount1 ? processSplitAmount1.value : 0) || 0;
+        const s2 = parseFloat(processSplitAmount2 ? processSplitAmount2.value : 0) || 0;
+        const remaining = Math.max(0, netTotal - s1 - s2);
+        if (processSplitRemaining) {
+            processSplitRemaining.textContent = remaining.toFixed(2);
+            processSplitRemaining.style.color = remaining > 0.009 ? '#ef4444' : '#059669';
+        }
+    }
+    if (processSplitAmount1) processSplitAmount1.addEventListener('input', updateProcessSplitRemaining);
+    if (processSplitAmount2) processSplitAmount2.addEventListener('input', updateProcessSplitRemaining);
+
     processPaymentMethod.addEventListener('change', () => {
         if (processPaymentMethod.value === 'PayByParts') {
             processPayByPartsSection.style.display = 'block';
+            if (processSplitSection) processSplitSection.style.display = 'none';
+        } else if (processPaymentMethod.value === 'SplitPayment') {
+            processPayByPartsSection.style.display = 'none';
+            if (processSplitSection) processSplitSection.style.display = 'block';
+            updateProcessSplitRemaining();
         } else {
             processPayByPartsSection.style.display = 'none';
+            if (processSplitSection) processSplitSection.style.display = 'none';
         }
     });
 
@@ -219,6 +255,24 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingAmt = Math.max(0, netTotal - paidAmt);
         }
 
+        const isSplit = paymentMethod === 'SplitPayment';
+        let splitData = null;
+        if (isSplit) {
+            const s1 = parseFloat(processSplitAmount1 ? processSplitAmount1.value : 0) || 0;
+            const s2 = parseFloat(processSplitAmount2 ? processSplitAmount2.value : 0) || 0;
+            splitData = {
+                method1: processSplitMethod1 ? processSplitMethod1.value : 'Cash',
+                amount1: s1,
+                method2: processSplitMethod2 ? processSplitMethod2.value : 'Instapay',
+                amount2: s2
+            };
+            paidAmt = s1 + s2;
+        }
+
+        const notesWithSplit = splitData
+            ? (bill.notes ? bill.notes + '\n' : '') + '__SPLIT__:' + JSON.stringify(splitData)
+            : bill.notes;
+
         const repairId = db.addRepair({
             customer_id: bill.customer_id,
             description: bill.description,
@@ -229,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             discount: bill.discount || 0,
             payment_method: paymentMethod,
             odometer: bill.odometer,
-            notes: bill.notes
+            notes: notesWithSplit
         });
 
         lines.forEach(l => {
@@ -376,33 +430,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const total = `$${parseFloat(bill.total_amount).toFixed(2)}`;
         const lines = JSON.parse(bill.line_items_json || '[]');
 
-        // Dynamic scaling to fit one page
-        let baseFontSize = '1rem';
+        // Parse split payment data if present in notes
+        let splitData = null;
+        let cleanNotes = bill.notes || '';
+        if (cleanNotes.includes('__SPLIT__:')) {
+            const splitIdx = cleanNotes.indexOf('__SPLIT__:');
+            try { splitData = JSON.parse(cleanNotes.substring(splitIdx + 10)); } catch(e) {}
+            cleanNotes = cleanNotes.substring(0, splitIdx).trim();
+        }
+
+        // Fixed sizing, relying on CSS pagination for long lists
+        let baseFontSize = '0.95rem';
         let logoMaxHeight = '140px';
         let tablePadding = '0.5rem';
         let sectionMargin = '1rem';
         let footerMargin = '4rem';
-
-        const itemCount = lines.length;
-        if (itemCount > 15) {
-            baseFontSize = '0.65rem';
-            logoMaxHeight = '70px';
-            tablePadding = '0.2rem';
-            sectionMargin = '0.3rem';
-            footerMargin = '1.5rem';
-        } else if (itemCount > 10) {
-            baseFontSize = '0.75rem';
-            logoMaxHeight = '90px';
-            tablePadding = '0.3rem';
-            sectionMargin = '0.5rem';
-            footerMargin = '2rem';
-        } else if (itemCount > 5) {
-            baseFontSize = '0.85rem';
-            logoMaxHeight = '110px';
-            tablePadding = '0.4rem';
-            sectionMargin = '0.75rem';
-            footerMargin = '3rem';
-        }
 
         receiptContent.style.fontSize = baseFontSize;
 
@@ -430,7 +472,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="text-align: right;">
                     <p style="margin: 0.25rem 0;"><strong>${t.date}:</strong> ${date}</p>
-                    <p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(bill.payment_method)}</p>
+                    ${splitData
+                        ? `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> Split</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method1}: $${parseFloat(splitData.amount1).toFixed(2)}</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method2}: $${parseFloat(splitData.amount2).toFixed(2)}</p>`
+                        : `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(bill.payment_method)}</p>`
+                    }
                     ${bill.odometer ? `<p style="margin: 0.25rem 0;"><strong>${t.odometer}:</strong> ${bill.odometer}</p>` : ''}
                 </div>
             </div>
@@ -470,12 +517,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>$${(parseFloat(bill.total_amount) - parseFloat(bill.discount)).toFixed(2)}</span>
                 </div>
                 ` : ''}
+                ${splitData ? `
+                <div style="border-top: 1px solid #eee; margin-top:0.5rem; padding-top:0.5rem;">
+                    <p style="font-size:0.85rem; font-weight:600; color:#059669; margin-bottom:0.25rem;">Payment Breakdown</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${splitData.method1}:</span>
+                        <span>$${parseFloat(splitData.amount1).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${splitData.method2}:</span>
+                        <span>$${parseFloat(splitData.amount2).toFixed(2)}</span>
+                    </div>
+                </div>
+                ` : ''}
             </div>
 
-            ${bill.notes ? `
+            ${cleanNotes ? `
             <div style="margin-top: ${sectionMargin}; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                 <p style="margin: 0; font-weight: 700; color: #1e293b;">${t.notes}:</p>
-                <p style="margin: 0.5rem 0 0 0; color: #475569; white-space: pre-wrap;">${bill.notes}</p>
+                <p style="margin: 0.5rem 0 0 0; color: #475569; white-space: pre-wrap;">${cleanNotes}</p>
             </div>
             ` : ''}
 
@@ -506,34 +566,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const bill = db.getPendingBillById(currentBillId);
         if (!bill) return;
 
-        generateReceipt(bill);
-        detailModal.classList.remove('active');
-        receiptModal.classList.add('active');
+        // Build receipt HTML into the dedicated print container (no modal = no clipping)
+        const printContainer = document.getElementById('printContainer');
+        generateReceipt(bill); // still builds into receiptContent for the modal preview
+        printContainer.innerHTML = receiptContent.innerHTML;
+        if (getCurrentLanguage() === 'ar') {
+            printContainer.style.direction = 'rtl';
+        } else {
+            printContainer.style.direction = 'ltr';
+        }
+        window.print();
+        printContainer.innerHTML = '';
     });
 
     closeReceiptBtn.addEventListener('click', () => receiptModal.classList.remove('active'));
 
-    printReceiptBtn.addEventListener('click', async () => {
+    printReceiptBtn.addEventListener('click', () => {
         if (!currentBillId) return;
         const bill = db.getPendingBillById(currentBillId);
         if (!bill) return;
 
-        const { ipcRenderer } = require('electron');
-        const dateStr = bill.date_created;
-        const customerNameStr = bill.customer_name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = `pending_${dateStr}_${customerNameStr}.pdf`;
-
-        const result = await ipcRenderer.invoke('print-to-pdf', {
-            folder: 'bills',
-            name: fileName
-        });
-
-        if (result.success) {
-            console.log('Bill saved to:', result.path);
-            // Don't close modal here — print dialog renders the page async, modal must stay visible
+        const printContainer = document.getElementById('printContainer');
+        generateReceipt(bill);
+        printContainer.innerHTML = receiptContent.innerHTML;
+        if (getCurrentLanguage() === 'ar') {
+            printContainer.style.direction = 'rtl';
         } else {
-            alert('Printing/Saving failed: ' + result.error);
+            printContainer.style.direction = 'ltr';
         }
+        receiptModal.classList.remove('active');
+        window.print();
+        printContainer.innerHTML = '';
+        receiptModal.classList.add('active');
     });
 
     loadBills();

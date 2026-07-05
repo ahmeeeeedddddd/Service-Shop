@@ -540,21 +540,13 @@ tbody tr:hover {
 
 /* Print Specific */
 @media print {
-    body { background-color: white !important; }
-    body > *:not(.modal.active):not(.print-area) { display: none !important; }
-    .modal.active { position: static !important; display: block !important; background: none !important; padding: 0 !important; }
-    .modal-content { 
-        box-shadow: none !important; 
-        border: none !important; 
-        padding: 0 !important; 
-        width: 100% !important; 
-        max-width: none !important; 
-        max-height: none !important; 
-        overflow: visible !important; 
-    }
-    table { width: 100% !important; border-collapse: collapse !important; }
+    body { background-color: white !important; display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; }
+    html { height: auto !important; overflow: visible !important; position: static !important; }
+    table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
     .no-print { display: none !important; }
-    .print-area { display: block !important; width: 100% !important; }
 }
 
 /* Custom Scrollbar */

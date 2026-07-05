@@ -3,8 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="billingTitle">Billing - Motor Garage</title>
+    <title data-i18n="billingTitle">Billing - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        #printContainer { display: none; }
+        @media print {
+            body > * { display: none !important; }
+            #printContainer {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -191,6 +211,7 @@
                             <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
                             <option value="Instapay" data-i18n="instapay">Instapay</option>
                             <option value="PayByParts" data-i18n="payByParts">Pay By Parts</option>
+                            <option value="SplitPayment">Split Payment</option>
                         </select>
                     </div>
 
@@ -203,6 +224,45 @@
                         <div class="flex justify-between items-center" style="font-size:0.9rem;">
                             <span data-i18n="pendingAmount" style="color:#64748b;">Pending Amount</span>
                             <span id="pendingDisplay" class="font-bold" style="color:#ef4444;">0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Split Payment Section (hidden by default) -->
+                    <div id="splitPaymentSection" style="display:none; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:0.75rem; margin-bottom:1rem;">
+                        <p style="font-size:0.8rem; color:#059669; font-weight:600; margin-bottom:0.75rem;">Split across two payment methods</p>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                            <div style="flex:1;">
+                                <label style="font-size:0.8rem; color:#475569;">Method 1</label>
+                                <select id="splitMethod1" class="form-control" style="margin-top:0.25rem;">
+                                    <option value="Cash">Cash</option>
+                                    <option value="Instapay">Instapay</option>
+                                    <option value="Bank Alahly">Bank Alahly</option>
+                                    <option value="Bank Masr">Bank Masr</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;">
+                                <label style="font-size:0.8rem; color:#475569;">Amount</label>
+                                <input type="number" id="splitAmount1" class="form-control" value="0" min="0" step="0.01" style="margin-top:0.25rem;">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                            <div style="flex:1;">
+                                <label style="font-size:0.8rem; color:#475569;">Method 2</label>
+                                <select id="splitMethod2" class="form-control" style="margin-top:0.25rem;">
+                                    <option value="Instapay">Instapay</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank Alahly">Bank Alahly</option>
+                                    <option value="Bank Masr">Bank Masr</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;">
+                                <label style="font-size:0.8rem; color:#475569;">Amount</label>
+                                <input type="number" id="splitAmount2" class="form-control" value="0" min="0" step="0.01" style="margin-top:0.25rem;">
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center" style="font-size:0.85rem; border-top:1px solid #bbf7d0; padding-top:0.5rem;">
+                            <span style="color:#475569;">Remaining</span>
+                            <span id="splitRemaining" class="font-bold" style="color:#ef4444;">0.00</span>
                         </div>
                     </div>
 
@@ -267,6 +327,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Hidden print container — no modal clipping -->
+    <div id="printContainer"></div>
 
     <script src="../js/i18n.js"></script>
     <script src="../js/billing.js"></script>

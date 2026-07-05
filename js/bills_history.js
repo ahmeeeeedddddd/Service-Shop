@@ -68,33 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fetch items from DB
         const items = db.getRepairItems(bill.id);
 
-        // Dynamic scaling to fit one page
-        let baseFontSize = '1rem';
+        // Fixed sizing, relying on CSS pagination for long lists
+        let baseFontSize = '0.95rem';
         let logoMaxHeight = '140px';
         let tablePadding = '0.5rem';
         let sectionMargin = '1rem';
         let footerMargin = '4rem';
-
-        const itemCount = items.length;
-        if (itemCount > 15) {
-            baseFontSize = '0.65rem';
-            logoMaxHeight = '70px';
-            tablePadding = '0.2rem';
-            sectionMargin = '0.3rem';
-            footerMargin = '1.5rem';
-        } else if (itemCount > 10) {
-            baseFontSize = '0.75rem';
-            logoMaxHeight = '90px';
-            tablePadding = '0.3rem';
-            sectionMargin = '0.5rem';
-            footerMargin = '2rem';
-        } else if (itemCount > 5) {
-            baseFontSize = '0.85rem';
-            logoMaxHeight = '110px';
-            tablePadding = '0.4rem';
-            sectionMargin = '0.75rem';
-            footerMargin = '3rem';
-        }
 
         billDetailContent.style.fontSize = baseFontSize;
 
@@ -227,7 +206,19 @@ document.addEventListener('DOMContentLoaded', () => {
         billModal.classList.remove('active');
         currentBillId = null;
     });
-    printBillBtn.addEventListener('click', () => window.print());
+    printBillBtn.addEventListener('click', () => {
+        const printContainer = document.getElementById('printContainer');
+        printContainer.innerHTML = billDetailContent.innerHTML;
+        if (getCurrentLanguage() === 'ar') {
+            printContainer.style.direction = 'rtl';
+        } else {
+            printContainer.style.direction = 'ltr';
+        }
+        billModal.classList.remove('active');
+        window.print();
+        printContainer.innerHTML = '';
+        billModal.classList.add('active');
+    });
 
     if (deleteBillBtn) {
         deleteBillBtn.addEventListener('click', () => {

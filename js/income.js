@@ -43,7 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentBillId = null;
 
     if (printBillBtn) {
-        printBillBtn.addEventListener('click', () => window.print());
+        printBillBtn.addEventListener('click', () => {
+            const printContainer = document.getElementById('printContainer');
+            printContainer.innerHTML = detailsContent.innerHTML;
+            printContainer.style.direction = getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr';
+            detailsModal.classList.remove('active');
+            window.print();
+            printContainer.innerHTML = '';
+            detailsModal.classList.add('active');
+        });
     }
 
     window.viewBillDetails = function(id) {
@@ -53,32 +61,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const lang = getCurrentLanguage();
         const t = translations[lang];
 
-        // Dynamic scaling to fit one page
-        let baseFontSize = '1rem';
+        // Fixed sizing, relying on CSS pagination for long lists
+        let baseFontSize = '0.95rem';
         let logoMaxHeight = '140px';
         let tablePadding = '0.5rem';
         let sectionMargin = '1rem';
         let footerMargin = '4rem';
 
-        const itemCount = items.length;
-        if (itemCount > 15) {
-            baseFontSize = '0.65rem';
-            logoMaxHeight = '70px';
-            tablePadding = '0.2rem';
-            sectionMargin = '0.3rem';
-            footerMargin = '1.5rem';
-        } else if (itemCount > 10) {
-            baseFontSize = '0.75rem';
-            logoMaxHeight = '90px';
-            tablePadding = '0.3rem';
-            sectionMargin = '0.5rem';
-            footerMargin = '2rem';
-        } else if (itemCount > 5) {
-            baseFontSize = '0.85rem';
-            logoMaxHeight = '110px';
-            tablePadding = '0.4rem';
-            sectionMargin = '0.75rem';
-            footerMargin = '3rem';
+        // Parse split payment data if present in notes
+        let splitData = null;
+        let cleanNotes = bill.notes || '';
+        if (cleanNotes.includes('__SPLIT__:')) {
+            const splitIdx = cleanNotes.indexOf('__SPLIT__:');
+            try { splitData = JSON.parse(cleanNotes.substring(splitIdx + 10)); } catch(e) {}
+            cleanNotes = cleanNotes.substring(0, splitIdx).trim();
         }
 
         detailsContent.style.fontSize = baseFontSize;
@@ -107,7 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="text-align: right;">
                     <p style="margin: 0.25rem 0;"><strong>${t.date}:</strong> ${bill.date}</p>
-                    <p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(bill.payment_method)}</p>
+                    ${splitData
+                        ? `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> Split</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method1}: $${parseFloat(splitData.amount1).toFixed(2)}</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method2}: $${parseFloat(splitData.amount2).toFixed(2)}</p>`
+                        : `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(bill.payment_method)}</p>`
+                    }
                     ${bill.odometer ? `<p style="margin: 0.25rem 0;"><strong>${t.odometer}:</strong> ${bill.odometer}</p>` : ''}
                 </div>
             </div>
@@ -158,12 +159,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>$${parseFloat(bill.pending_amount || 0).toFixed(2)}</span>
                 </div>
                 ` : ''}
+                ${splitData ? `
+                <div style="border-top: 1px solid #eee; margin-top:0.5rem; padding-top:0.5rem;">
+                    <p style="font-size:0.85rem; font-weight:600; color:#059669; margin-bottom:0.25rem;">Payment Breakdown</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${splitData.method1}:</span>
+                        <span>$${parseFloat(splitData.amount1).toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${splitData.method2}:</span>
+                        <span>$${parseFloat(splitData.amount2).toFixed(2)}</span>
+                    </div>
+                </div>
+                ` : ''}
             </div>
 
-            ${bill.notes ? `
+            ${cleanNotes ? `
             <div style="margin-top: ${sectionMargin}; padding: 1rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                 <p style="margin: 0; font-weight: 700; color: #1e293b;">${t.notes}:</p>
-                <p style="margin: 0.5rem 0 0 0; color: #475569; white-space: pre-wrap;">${bill.notes}</p>
+                <p style="margin: 0.5rem 0 0 0; color: #475569; white-space: pre-wrap;">${cleanNotes}</p>
             </div>
             ` : ''}
 
@@ -350,21 +364,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // No, I'll just change saveBillEditBtn to Print if it's report mode.
         saveBillEditBtn.textContent = t.print;
         saveBillEditBtn.style.display = 'block';
-        saveBillEditBtn.onclick = async () => {
-            const { ipcRenderer } = require('electron');
-            const dateStr = filterDateInput.value || new Date().toISOString().split('T')[0];
-            const fileName = `IncomeReport_${dateStr}.pdf`;
-
-            const result = await ipcRenderer.invoke('print-to-pdf', {
-                folder: 'reports',
-                name: fileName
-            });
-
-            if (result.success) {
-                alert('Report saved to: ' + result.path);
-            } else {
-                alert('Saving failed: ' + result.error);
-            }
+        saveBillEditBtn.onclick = () => {
+            const printContainer = document.getElementById('printContainer');
+            printContainer.innerHTML = detailsContent.innerHTML;
+            printContainer.style.direction = getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr';
+            detailsModal.classList.remove('active');
+            window.print();
+            printContainer.innerHTML = '';
+            detailsModal.classList.add('active');
         };
         
         detailsModal.classList.add('active');

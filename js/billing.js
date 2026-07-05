@@ -46,6 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const payByPartsSection = document.getElementById('payByPartsSection');
     const amountPaidInput = document.getElementById('amountPaidInput');
     const pendingDisplay = document.getElementById('pendingDisplay');
+    const splitPaymentSection = document.getElementById('splitPaymentSection');
+    const splitMethod1 = document.getElementById('splitMethod1');
+    const splitAmount1 = document.getElementById('splitAmount1');
+    const splitMethod2 = document.getElementById('splitMethod2');
+    const splitAmount2 = document.getElementById('splitAmount2');
+    const splitRemaining = document.getElementById('splitRemaining');
 
     // Language Toggle
     langToggle.addEventListener('click', () => {
@@ -278,18 +284,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const pending = Math.max(0, netTotal - amountPaid);
             pendingDisplay.textContent = pending.toFixed(2);
         }
+
+        if (splitRemaining) {
+            const s1 = parseFloat(splitAmount1.value) || 0;
+            const s2 = parseFloat(splitAmount2.value) || 0;
+            const remaining = Math.max(0, netTotal - s1 - s2);
+            splitRemaining.textContent = remaining.toFixed(2);
+            splitRemaining.style.color = remaining > 0.009 ? '#ef4444' : '#059669';
+        }
     }
 
     if(discountInput) discountInput.addEventListener('input', updateGrandTotal);
     if(amountPaidInput) amountPaidInput.addEventListener('input', updateGrandTotal);
+    if(splitAmount1) splitAmount1.addEventListener('input', updateGrandTotal);
+    if(splitAmount2) splitAmount2.addEventListener('input', updateGrandTotal);
 
     // Payment Method Select
     paymentMethodSelect.addEventListener('change', () => {
         paymentMethod = paymentMethodSelect.value;
         if (paymentMethod === 'PayByParts') {
             payByPartsSection.style.display = 'block';
+            splitPaymentSection.style.display = 'none';
+        } else if (paymentMethod === 'SplitPayment') {
+            payByPartsSection.style.display = 'none';
+            splitPaymentSection.style.display = 'block';
+            updateGrandTotal();
         } else {
             payByPartsSection.style.display = 'none';
+            splitPaymentSection.style.display = 'none';
         }
     });
 
@@ -332,14 +354,28 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingAmt = Math.max(0, netTotal - paidAmt);
         }
 
+        const isSplit = paymentMethodSelect.value === 'SplitPayment';
+        let splitData = null;
+        if (isSplit) {
+            const s1 = parseFloat(splitAmount1.value) || 0;
+            const s2 = parseFloat(splitAmount2.value) || 0;
+            splitData = {
+                method1: splitMethod1.value,
+                amount1: s1,
+                method2: splitMethod2.value,
+                amount2: s2
+            };
+        }
+
         currentBillData = {
             customer_id: selectedCustomer.id,
             lines: lines,
             total_amount: grandTotal,
-            paid_amount: paidAmt,
+            paid_amount: isSplit ? ((parseFloat(splitAmount1.value)||0) + (parseFloat(splitAmount2.value)||0)) : paidAmt,
             pending_amount: pendingAmt,
             discount: discount,
             payment_method: paymentMethodSelect.value,
+            split_data: splitData,
             date: todayStr,
             odometer: document.getElementById('odometer').value,
             notes: document.getElementById('notes').value
@@ -364,6 +400,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentBillData) return;
 
         // Save to Database
+        const notesWithSplit = currentBillData.split_data
+            ? (currentBillData.notes ? currentBillData.notes + '\n' : '') + '__SPLIT__:' + JSON.stringify(currentBillData.split_data)
+            : currentBillData.notes;
+
         const repairId = db.addRepair({
             customer_id: currentBillData.customer_id,
             description: currentBillData.lines.map(l => l.name).join(', '),
@@ -374,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             discount: currentBillData.discount,
             payment_method: currentBillData.payment_method,
             odometer: currentBillData.odometer,
-            notes: currentBillData.notes
+            notes: notesWithSplit
         });
 
         currentBillData.lines.forEach(l => {
@@ -445,33 +485,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
         const total = grandTotalEl.textContent;
 
-        // Dynamic scaling to fit one page
-        let baseFontSize = '1rem';
+        // Fixed sizing, relying on CSS pagination for long lists
+        let baseFontSize = '0.95rem';
         let logoMaxHeight = '140px';
         let tablePadding = '0.5rem';
         let sectionMargin = '1rem';
         let footerMargin = '4rem';
-
-        const itemCount = lines.length;
-        if (itemCount > 15) {
-            baseFontSize = '0.65rem';
-            logoMaxHeight = '70px';
-            tablePadding = '0.2rem';
-            sectionMargin = '0.3rem';
-            footerMargin = '1.5rem';
-        } else if (itemCount > 10) {
-            baseFontSize = '0.75rem';
-            logoMaxHeight = '90px';
-            tablePadding = '0.3rem';
-            sectionMargin = '0.5rem';
-            footerMargin = '2rem';
-        } else if (itemCount > 5) {
-            baseFontSize = '0.85rem';
-            logoMaxHeight = '110px';
-            tablePadding = '0.4rem';
-            sectionMargin = '0.75rem';
-            footerMargin = '3rem';
-        }
 
         receiptContent.style.fontSize = baseFontSize;
 
@@ -499,7 +518,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="text-align: right;">
                     <p style="margin: 0.25rem 0;"><strong>${t.date}:</strong> ${date}</p>
-                    <p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(paymentMethod)}</p>
+                    ${currentBillData && currentBillData.split_data
+                        ? `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> Split</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method1}: $${currentBillData.split_data.amount1.toFixed(2)}</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method2}: $${currentBillData.split_data.amount2.toFixed(2)}</p>`
+                        : `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(paymentMethod)}</p>`
+                    }
                     ${currentBillData && currentBillData.odometer ? `<p style="margin: 0.25rem 0;"><strong>${t.odometer}:</strong> ${currentBillData.odometer}</p>` : ''}
                 </div>
             </div>
@@ -550,6 +574,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>$${currentBillData.pending_amount.toFixed(2)}</span>
                 </div>
                 ` : ''}
+                ${currentBillData && currentBillData.split_data ? `
+                <div style="border-top: 1px solid #eee; margin-top:0.5rem; padding-top:0.5rem;">
+                    <p style="font-size:0.85rem; font-weight:600; color:#059669; margin-bottom:0.25rem;">Payment Breakdown</p>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${currentBillData.split_data.method1}:</span>
+                        <span>$${currentBillData.split_data.amount1.toFixed(2)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
+                        <span>${currentBillData.split_data.method2}:</span>
+                        <span>$${currentBillData.split_data.amount2.toFixed(2)}</span>
+                    </div>
+                </div>
+                ` : ''}
             </div>
 
             ${currentBillData && currentBillData.notes ? `
@@ -582,22 +619,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     closeModalBtn.addEventListener('click', () => receiptModal.classList.remove('active'));
-    printReceiptBtn.addEventListener('click', async () => {
-        const { ipcRenderer } = require('electron');
-        const dateStr = currentBillData ? currentBillData.date : new Date().toISOString().split('T')[0];
-        const customerNameStr = (selectedCustomer ? selectedCustomer.name : 'Unknown').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-        const fileName = `${dateStr}_${customerNameStr}.pdf`;
-
-        const result = await ipcRenderer.invoke('print-to-pdf', {
-            folder: 'bills',
-            name: fileName
-        });
-
-        if (result.success) {
-            console.log('Bill saved to:', result.path);
+    printReceiptBtn.addEventListener('click', () => {
+        const printContainer = document.getElementById('printContainer');
+        printContainer.innerHTML = receiptContent.innerHTML;
+        if (getCurrentLanguage() === 'ar') {
+            printContainer.style.direction = 'rtl';
         } else {
-            alert('Printing/Saving failed: ' + result.error);
+            printContainer.style.direction = 'ltr';
         }
+        receiptModal.classList.remove('active');
+        window.print();
+        printContainer.innerHTML = '';
+        receiptModal.classList.add('active');
     });
 
     savePendingBtn.addEventListener('click', () => {
