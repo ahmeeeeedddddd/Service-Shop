@@ -91,6 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (dayCashEl) dayCashEl.textContent = `$${cash.toFixed(2)}`;
+        
+        // Calculate Cash Expenses
+        const cashExpenses = expenses.reduce((sum, e) => {
+            return (e.from_cash === 1 || e.from_cash === undefined) ? sum + e.amount : sum;
+        }, 0);
+        
+        const dayTotalCashEl = document.getElementById('dayTotalCash');
+        if (dayTotalCashEl) dayTotalCashEl.textContent = `$${(cash - cashExpenses).toFixed(2)}`;
+
         if (dayInstapayEl) dayInstapayEl.textContent = `$${instapay.toFixed(2)}`;
         if (dayAlahlyEl) dayAlahlyEl.textContent = `$${alahly.toFixed(2)}`;
         if (dayMasrEl) dayMasrEl.textContent = `$${masr.toFixed(2)}`;
@@ -138,26 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
     filterDateInput.addEventListener('input', updateReport);
     
     printReportBtn.addEventListener('click', () => {
-        previewArea.innerHTML = document.getElementById('reportArea').innerHTML;
-        previewModal.classList.add('active');
-    });
-
-    closePreviewBtn.addEventListener('click', () => previewModal.classList.remove('active'));
-    confirmPrintReportBtn.addEventListener('click', async () => {
-        const { ipcRenderer } = require('electron');
-        const dateStr = filterDateInput.value || new Date().toISOString().split('T')[0];
-        const fileName = `DailyReport_${dateStr}.pdf`;
-
-        const result = await ipcRenderer.invoke('print-to-pdf', {
-            folder: 'reports',
-            name: fileName
-        });
-
-        if (result.success) {
-            alert('Report saved to: ' + result.path);
-        } else {
-            alert('Saving failed: ' + result.error);
-        }
+        const printContainer = document.getElementById('printContainer');
+        printContainer.innerHTML = document.getElementById('reportArea').innerHTML;
+        printContainer.style.direction = getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr';
+        window.print();
     });
 
     // Initialize

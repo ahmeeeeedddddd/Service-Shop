@@ -91,6 +91,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.edit-price').forEach(input => {
             input.addEventListener('change', handleInlineEdit);
         });
+
+        updateTotalStockValue(parts);
+    }
+
+    function updateTotalStockValue(partsList) {
+        const totalValueEl = document.getElementById('totalStockValue');
+        if (!totalValueEl) return;
+        
+        let total = 0;
+        const items = partsList || db.getParts(); // fetch if not provided
+        items.forEach(p => {
+            total += (p.quantity_in_stock || 0) * (p.unit_price || 0);
+        });
+        totalValueEl.textContent = `$${total.toFixed(2)}`;
     }
 
     function handleInlineEdit(e) {
@@ -111,6 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             tr.style.backgroundColor = '';
         }
+
+        updateTotalStockValue(); // refresh the total display
     }
 
     let editingPartId = null;

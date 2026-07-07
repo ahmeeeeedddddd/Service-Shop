@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
             printContainer.style.direction = getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr';
             detailsModal.classList.remove('active');
             window.print();
-            printContainer.innerHTML = '';
             detailsModal.classList.add('active');
         });
     }
@@ -370,7 +369,6 @@ document.addEventListener('DOMContentLoaded', () => {
             printContainer.style.direction = getCurrentLanguage() === 'ar' ? 'rtl' : 'ltr';
             detailsModal.classList.remove('active');
             window.print();
-            printContainer.innerHTML = '';
             detailsModal.classList.add('active');
         };
         

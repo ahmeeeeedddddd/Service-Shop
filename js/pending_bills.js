@@ -576,7 +576,6 @@ document.addEventListener('DOMContentLoaded', () => {
             printContainer.style.direction = 'ltr';
         }
         window.print();
-        printContainer.innerHTML = '';
     });
 
     closeReceiptBtn.addEventListener('click', () => receiptModal.classList.remove('active'));
@@ -596,7 +595,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         receiptModal.classList.remove('active');
         window.print();
-        printContainer.innerHTML = '';
         receiptModal.classList.add('active');
     });
 

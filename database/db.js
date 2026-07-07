@@ -159,6 +159,10 @@ function initDB() {
     db.exec("ALTER TABLE supplier_transactions ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
   } catch(e) {}
 
+  try {
+    db.exec("ALTER TABLE expenses ADD COLUMN from_cash INTEGER DEFAULT 1");
+  } catch(e) {}
+
   // Employees table
   db.exec(`
     CREATE TABLE IF NOT EXISTS employees (
@@ -408,8 +412,9 @@ function getExpenses() {
 }
 
 function addExpense(expense) {
-  const stmt = db.prepare('INSERT INTO expenses (description, amount, category, date) VALUES (?, ?, ?, ?)');
-  const info = stmt.run(expense.description, expense.amount, expense.category, expense.date);
+  const fromCash = expense.from_cash !== undefined ? expense.from_cash : 1;
+  const stmt = db.prepare('INSERT INTO expenses (description, amount, category, date, from_cash) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(expense.description, expense.amount, expense.category, expense.date, fromCash);
   return info.lastInsertRowid;
 }
 
@@ -418,8 +423,9 @@ function deleteExpense(id) {
 }
 
 function updateExpense(id, expense) {
-  return db.prepare('UPDATE expenses SET description = ?, amount = ?, category = ?, date = ? WHERE id = ?')
-    .run(expense.description, expense.amount, expense.category, expense.date, id);
+  const fromCash = expense.from_cash !== undefined ? expense.from_cash : 1;
+  return db.prepare('UPDATE expenses SET description = ?, amount = ?, category = ?, date = ?, from_cash = ? WHERE id = ?')
+    .run(expense.description, expense.amount, expense.category, expense.date, fromCash, id);
 }
 
 // --- Pending Bills CRUD ---

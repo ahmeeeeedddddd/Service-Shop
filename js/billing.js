@@ -629,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         receiptModal.classList.remove('active');
         window.print();
-        printContainer.innerHTML = '';
         receiptModal.classList.add('active');
     });
 

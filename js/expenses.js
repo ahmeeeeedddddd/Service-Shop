@@ -90,14 +90,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const amount = parseFloat(document.getElementById('expAmount').value);
         const category = document.getElementById('expCategory').value;
         const date = document.getElementById('expDate').value;
+        const fromCash = document.getElementById('expFromCash') ? (document.getElementById('expFromCash').checked ? 1 : 0) : 1;
         const id = editingExpenseId.value;
 
         if (!description || isNaN(amount)) return;
 
         if (id) {
-            db.updateExpense(parseInt(id), { description, amount, category, date });
+            db.updateExpense(parseInt(id), { description, amount, category, date, from_cash: fromCash });
         } else {
-            db.addExpense({ description, amount, category, date });
+            db.addExpense({ description, amount, category, date, from_cash: fromCash });
         }
         
         resetForm();
@@ -110,6 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('expAmount').value = exp.amount;
         document.getElementById('expCategory').value = exp.category;
         document.getElementById('expDate').value = exp.date;
+        if (document.getElementById('expFromCash')) {
+            document.getElementById('expFromCash').checked = (exp.from_cash === undefined || exp.from_cash === 1);
+        }
         editingExpenseId.value = exp.id;
         
         cancelEditBtn.style.display = 'inline-block';

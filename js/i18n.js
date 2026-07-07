@@ -35,6 +35,8 @@ const translations = {
         total: "Total",
         paymentMethod: "Payment method",
         cash: "Cash",
+        cashIncome: "Cash Income",
+        totalCash: "Total Cash",
         card: "ATM / Card",
         confirmPrint: "Confirm & Print",
         discount: "Discount",
@@ -58,10 +60,13 @@ const translations = {
         // Expenses Page
         expensesTitle: "Expenses",
         expensesSubtitle: "Log and review all shop expenses",
+        expensesSub: "Record shop expenses",
+        operatingExpenses: "Operating Expenses",
         logExpense: "Log expense",
         description: "Description",
         category: "Category",
         saveExpense: "Save expense",
+        deductFromCash: "Deduct from Cash Income",
         totalLogged: "Total logged expenses",
         
         // Categories
@@ -232,10 +237,13 @@ const translations = {
         // Expenses Page
         expensesTitle: "المصاريف",
         expensesSubtitle: "تسجيل ومراجعة كافة مصاريف المحل",
+        expensesSub: "تسجيل مصروفات المركز",
+        operatingExpenses: "مصاريف تشغيل",
         logExpense: "تسجيل مصروف",
         description: "الوصف",
         category: "الفئة",
         saveExpense: "حفظ المصروف",
+        deductFromCash: "خصم من دخل الكاش",
         totalLogged: "إجمالي المصاريف المسجلة",
         
         // Categories

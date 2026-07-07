@@ -216,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         billModal.classList.remove('active');
         window.print();
-        printContainer.innerHTML = '';
         billModal.classList.add('active');
     });
 

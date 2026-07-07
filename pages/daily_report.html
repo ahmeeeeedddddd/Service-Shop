@@ -5,6 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="dailyReport">Daily Report - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
+    <style>
+        #printContainer { display: none; }
+        @media print {
+            body > * { display: none !important; }
+            #printContainer {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -117,10 +137,14 @@
             </div>
 
             <!-- Payment Methods Stats -->
-            <div class="stat-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(4, 1fr);">
+            <div class="stat-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
                 <div class="stat-card">
-                    <span class="stat-label" data-i18n="cash">Cash</span>
+                    <span class="stat-label" data-i18n="cashIncome">Cash Income</span>
                     <div class="stat-value text-teal" id="dayCash">$0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="totalCash">Total Cash</span>
+                    <div class="stat-value text-teal" id="dayTotalCash">$0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="instapay">Instapay</span>
@@ -184,6 +208,8 @@
             </div>
         </div>
     </div>
+
+    <div id="printContainer"></div>
 
     <script src="../js/i18n.js"></script>
     <script src="../js/daily_report.js"></script>
