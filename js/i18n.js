@@ -2,6 +2,7 @@ const translations = {
     en: {
         // Sidebar & General
         appName: "El Ansary",
+        appSubtitle: "SERVICE CENTER",
         customers: "Customers",
         billing: "Billing",
         parts: "Parts & Stock",
@@ -188,6 +189,7 @@ const translations = {
     ar: {
         // Sidebar & General
         appName: "الأنصاري",
+        appSubtitle: "مركز الخدمة",
         customers: "العملاء",
         billing: "الفواتير",
         parts: "القطع والمخزون",
