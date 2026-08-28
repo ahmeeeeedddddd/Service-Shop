@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -28,7 +28,7 @@
                 <span data-i18n="pendingBills">Pending Bills</span>
             </a>
             <a href="parts.html" class="nav-item">
-                <span data-i18n="parts">Parts & Stock</span>
+                <span data-i18n="parts">Parts &amp; Stock</span>
             </a>
             <a href="suppliers.html" class="nav-item active">
                 <span data-i18n="suppliers">Suppliers</span>
@@ -51,6 +51,7 @@
                     <a href="daily_report.html" class="nav-item">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -84,7 +85,7 @@
         <div class="stat-grid" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
             <div class="stat-card accent">
                 <span class="stat-label" data-i18n="totalSupplierPending">Total Pending to Suppliers</span>
-                <div class="stat-value" id="totalSupplierPendingEl">$0.00</div>
+                <div class="stat-value" id="totalSupplierPendingEl">0.00</div>
             </div>
         </div>
 
@@ -103,7 +104,7 @@
                                     <th data-i18n="suppliesWhat">Supplies What</th>
                                     <th data-i18n="pendingBalance">Pending Balance</th>
                                     <th data-i18n="notes">Notes</th>
-                                    <th style="width: 80px;"></th>
+                                    <th style="width: 120px;"></th>
                                 </tr>
                             </thead>
                             <tbody id="suppliersTableBody">
@@ -145,6 +146,70 @@
         </div>
     </main>
 
+    <!-- Supplier Billing Modal -->
+    <div class="modal" id="supplierBillingModal">
+        <div class="modal-content" style="max-width: 780px; width:95%;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="card-title" id="billingModalTitle" style="margin-bottom:0;" data-i18n="recordSupplierBill">📦 Record Supplier Bill</h3>
+                <button class="btn btn-outline" id="closeBillingModalBtn" style="padding:0.35rem 0.8rem;" data-i18n="close">✕ Close</button>
+            </div>
+            <p id="billingModalSupplierName" style="color:#64748b; margin-bottom:1.2rem; font-size:0.95rem;"></p>
+
+            <!-- Search existing parts -->
+            <div class="form-group" style="margin-bottom:0.75rem; position:relative;">
+                <label style="font-size:0.85rem; font-weight:600; color:#475569;" data-i18n="searchExistingParts">Search existing parts to add:</label>
+                <input type="text" id="billPartSearch" class="form-control" data-i18n-placeholder="searchPartsPlaceholder" placeholder="Type to search parts in stock…" autocomplete="off" style="margin-top:0.3rem;">
+                <div id="billPartSearchResults" style="position:absolute; left:0; right:0; top:100%; background:#fff; border:1px solid #e2e8f0; border-radius:8px; max-height:180px; overflow-y:auto; z-index:999; display:none; box-shadow:0 4px 16px rgba(0,0,0,0.12);"></div>
+            </div>
+            <button class="btn btn-outline" id="billAddNewPartBtn" style="margin-bottom:1rem; color:#0d9488; border-color:#0d9488; font-size:0.85rem;" data-i18n="addNewItemBtn">+ Add New Item (Not in Stock)</button>
+
+            <!-- Line items -->
+            <div class="table-container" style="max-height:260px; overflow-y:auto; margin-bottom:1rem;">
+                <table id="billLineItemsTable">
+                    <thead>
+                        <tr>
+                            <th data-i18n="partItemName">Part / Item Name</th>
+                            <th style="width:80px;" data-i18n="qtyReceived">Qty Received</th>
+                            <th style="width:120px;" data-i18n="costEach">Cost Each</th>
+                            <th style="width:100px;" data-i18n="subtotal">Subtotal</th>
+                            <th style="width:40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="billLineItemsBody">
+                        <!-- rows added by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals + Payment -->
+            <div style="background:#f8fafc; border-radius:10px; padding:1rem; border:1px solid #e2e8f0;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                    <span style="font-weight:700; font-size:1rem;" data-i18n="grandTotal">Grand Total:</span>
+                    <span id="billGrandTotal" style="font-weight:800; font-size:1.25rem; color:#0d9488;">0.00</span>
+                </div>
+                <div style="display:flex; gap:1rem; align-items:flex-end; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:160px;">
+                        <label style="font-size:0.85rem; font-weight:600; color:#475569; display:block; margin-bottom:0.3rem;"><span data-i18n="amountPaidNow">Amount Paid Now</span> <span style="color:#94a3b8; font-weight:400;" data-i18n="leave0Credit">(leave 0 to put all on credit)</span></label>
+                        <input type="number" id="billAmountPaid" class="form-control" value="0" min="0" step="0.01">
+                    </div>
+                    <div style="flex:1; min-width:160px;">
+                        <label style="font-size:0.85rem; font-weight:600; color:#ef4444; display:block; margin-bottom:0.3rem;" data-i18n="addedToCredit">Added to Credit (Owed to Supplier):</label>
+                        <div id="billCreditAmount" style="font-size:1.1rem; font-weight:700; color:#ef4444; padding:0.5rem 0;">0.00</div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:0.75rem; margin-bottom:0;">
+                    <label style="font-size:0.85rem; font-weight:600; color:#475569;" data-i18n="noteOptional">Note (optional)</label>
+                    <input type="text" id="billNote" class="form-control" data-i18n-placeholder="notePlaceholder" placeholder="e.g. Invoice #123, delivery note…" style="margin-top:0.3rem;">
+                </div>
+            </div>
+
+            <div class="flex justify-end mt-4" style="gap:0.75rem;">
+                <button class="btn btn-outline" id="closeBillingModalBtn2" data-i18n="cancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmBillingBtn" data-i18n="confirmBillBtn">✓ Confirm Bill &amp; Update Stock</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Payment Modal -->
     <div class="modal" id="paymentModal">
         <div class="modal-content" style="max-width: 480px;">
@@ -161,7 +226,7 @@
             </div>
 
             <div class="form-group">
-                <label style="font-weight: 600;" id="modalAmountLabel">Amount Paid ($)</label>
+                <label style="font-weight: 600;" id="modalAmountLabel">Amount Paid</label>
                 <input type="number" id="modalAmount" class="form-control" placeholder="e.g. 2000" min="0" step="0.01">
             </div>
             <div class="form-group">
@@ -194,3 +259,4 @@
     <script src="../js/suppliers.js"></script>
 </body>
 </html>
+

@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const todayCount = filtered.filter(b => b.date_created === today).length;
 
         pendingCountEl.textContent = filtered.length;
-        pendingTotalEl.textContent = `$${total.toFixed(2)}`;
+        pendingTotalEl.textContent = `${total.toFixed(2)}`;
         todayPendingEl.textContent = todayCount;
 
         pendingBillsBody.innerHTML = '';
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${bill.car_name}${bill.plate_number ? ' | ' + bill.plate_number : ''}</td>
                 <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${bill.description}">${bill.description}</td>
                 <td><span class="badge badge-cash">${window.getTranslatedPaymentMethod(bill.payment_method)}</span></td>
-                <td class="font-bold">$${(parseFloat(bill.total_amount) - (parseFloat(bill.discount) || 0)).toFixed(2)}</td>
+                <td class="font-bold">${(parseFloat(bill.total_amount) - (parseFloat(bill.discount) || 0)).toFixed(2)}</td>
                 <td>
                     <div class="flex gap-2">
                         <button class="btn btn-outline btn-sm" onclick="openDetail(${bill.id})" style="padding:0.25rem 0.5rem;font-size:0.75rem;">${t.view || 'View'}</button>
@@ -146,25 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tr style="border-bottom:1px solid #eee;">
                             <td style="padding:0.5rem;">${l.name}</td>
                             <td style="padding:0.5rem;text-align:center;">${l.qty}</td>
-                            <td style="padding:0.5rem;text-align:right;">$${parseFloat(l.price).toFixed(2)}</td>
-                            <td style="padding:0.5rem;text-align:right;">$${parseFloat(l.total).toFixed(2)}</td>
+                            <td style="padding:0.5rem;text-align:right;">${parseFloat(l.price).toFixed(2)}</td>
+                            <td style="padding:0.5rem;text-align:right;">${parseFloat(l.total).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
             <div style="text-align:right;margin-top:1rem;font-size:1.1rem;font-weight:700;">
-                ${t.total}: $${parseFloat(bill.total_amount).toFixed(2)}
+                ${t.total}: ${parseFloat(bill.total_amount).toFixed(2)}
             </div>
             ${bill.discount > 0 ? `
-            <div style="text-align:right;font-size:1.1rem;font-weight:700;color:#ef4444;">
-                ${t.discount || 'Discount'}: -$${parseFloat(bill.discount).toFixed(2)}
+            <div style="display:flex; justify-content:space-between; color:#ef4444; font-size:1.1rem; margin-bottom:0.25rem;">
+                ${t.discount || 'Discount'}: -${parseFloat(bill.discount).toFixed(2)}
             </div>
-            <div style="text-align:right;margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid #eee;font-size:1.25rem;font-weight:700;color:#10b981;">
-                ${t.netTotal || 'Net Total'}: $${(parseFloat(bill.total_amount) - parseFloat(bill.discount)).toFixed(2)}
+            <div style="display:flex; justify-content:space-between; color:#10b981; font-weight:bold; font-size:1.2rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #e2e8f0;">
+                ${t.netTotal || 'Net Total'}: ${(parseFloat(bill.total_amount) - parseFloat(bill.discount)).toFixed(2)}
             </div>
             ` : `
-            <div style="text-align:right;margin-top:0.5rem;font-size:1.25rem;font-weight:700;color:#eab308;">
-                ${t.total}: $${parseFloat(bill.total_amount).toFixed(2)}
+            <div style="display:flex; justify-content:space-between; color:#0d9488; font-weight:bold; font-size:1.2rem; margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid #e2e8f0;">
+                ${t.total}: ${parseFloat(bill.total_amount).toFixed(2)}
             </div>
             `}
             ${bill.notes ? `<div style="margin-top:1rem;padding:0.75rem;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;"><strong>${t.notes}:</strong><br>${bill.notes}</div>` : ''}
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lang = getCurrentLanguage();
         const t = translations[lang];
         const date = bill.date_created;
-        const total = `$${parseFloat(bill.total_amount).toFixed(2)}`;
+        const total = `${parseFloat(bill.total_amount).toFixed(2)}`;
         const lines = JSON.parse(bill.line_items_json || '[]');
 
         // Parse split payment data if present in notes
@@ -474,8 +474,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p style="margin: 0.25rem 0;"><strong>${t.date}:</strong> ${date}</p>
                     ${splitData
                         ? `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> Split</p>
-                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method1}: $${parseFloat(splitData.amount1).toFixed(2)}</p>
-                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method2}: $${parseFloat(splitData.amount2).toFixed(2)}</p>`
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method1}: ${parseFloat(splitData.amount1).toFixed(2)}</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${splitData.method2}: ${parseFloat(splitData.amount2).toFixed(2)}</p>`
                         : `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(bill.payment_method)}</p>`
                     }
                     ${bill.odometer ? `<p style="margin: 0.25rem 0;"><strong>${t.odometer}:</strong> ${bill.odometer}</p>` : ''}
@@ -495,8 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tr style="border-bottom: 1px solid #eee;">
                             <td style="padding: ${tablePadding};">${l.name}</td>
                             <td style="padding: ${tablePadding}; text-align: center;">${l.qty}</td>
-                            <td style="padding: ${tablePadding}; text-align: right;">$${parseFloat(l.price).toFixed(2)}</td>
-                            <td style="padding: ${tablePadding}; text-align: right;">$${l.total ? l.total.toFixed(2) : (l.qty * l.price).toFixed(2)}</td>
+                            <td style="padding: ${tablePadding}; text-align: right;">${parseFloat(l.price).toFixed(2)}</td>
+                            <td style="padding: ${tablePadding}; text-align: right;">${l.total ? l.total.toFixed(2) : (l.qty * l.price).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -510,11 +510,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${bill.discount > 0 ? `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.1rem; color: #ef4444;">
                     <span>${t.discount || 'Discount'}:</span>
-                    <span>-$${parseFloat(bill.discount).toFixed(2)}</span>
+                    <span>-${parseFloat(bill.discount).toFixed(2)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: bold; color: #10b981; border-top: 1px solid #eee; padding-top: 0.5rem;">
                     <span>${t.netTotal || 'Net Total'}:</span>
-                    <span>$${(parseFloat(bill.total_amount) - parseFloat(bill.discount)).toFixed(2)}</span>
+                    <span>${(parseFloat(bill.total_amount) - parseFloat(bill.discount)).toFixed(2)}</span>
                 </div>
                 ` : ''}
                 ${splitData ? `
@@ -522,11 +522,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p style="font-size:0.85rem; font-weight:600; color:#059669; margin-bottom:0.25rem;">Payment Breakdown</p>
                     <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
                         <span>${splitData.method1}:</span>
-                        <span>$${parseFloat(splitData.amount1).toFixed(2)}</span>
+                        <span>${parseFloat(splitData.amount1).toFixed(2)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
                         <span>${splitData.method2}:</span>
-                        <span>$${parseFloat(splitData.amount2).toFixed(2)}</span>
+                        <span>${parseFloat(splitData.amount2).toFixed(2)}</span>
                     </div>
                 </div>
                 ` : ''}
@@ -546,9 +546,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>01010103777</p>
                     <p>01010606016</p>
                 </div>
-                <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
-                    <p><strong>Engineer's Signature:</strong></p>
-                    <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                <div style="text-align: right; font-size: 0.9rem; color: #64748b; display: flex; gap: 3rem; justify-content: flex-end;">
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المحاسب</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المهندس</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
                 </div>
             </div>
         `;

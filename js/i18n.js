@@ -114,6 +114,7 @@ const translations = {
 
         // Suppliers Page
         suppliersSubtitle: "Manage your suppliers and contacts",
+        supplier: "Supplier",
         allSuppliers: "All Suppliers",
         contactNumber: "Contact Number",
         suppliesWhat: "Supplies What",
@@ -153,6 +154,7 @@ const translations = {
         instapay: "Instapay",
         bankAlahly: "Bank Alahly",
         bankMasr: "Bank Masr",
+        vodafoneCash: "Vodafone Cash",
         view: "View",
         car: "Car",
         cancel: "Cancel",
@@ -166,7 +168,12 @@ const translations = {
         employeeRole: "Role",
         dailyRate: "Daily Rate",
         weeklyTotal: "Weekly Salary (6 days)",
+        borrows: "Borrows",
         deductions: "Deductions",
+        bonus: "Bonus",
+        netPay: "Net Pay",
+        printPayroll: "Print Payroll",
+        resetAllDeductions: "Reset All Deductions",
         employeesList: "Employees List",
         
         // Multi-car Support
@@ -291,6 +298,7 @@ const translations = {
 
         // Suppliers Page
         suppliersSubtitle: "إدارة الموردين وجهات الاتصال الخاصة بك",
+        supplier: "المورد",
         allSuppliers: "كل الموردين",
         contactNumber: "رقم الاتصال",
         suppliesWhat: "ماذا يورّد",
@@ -343,7 +351,12 @@ const translations = {
         employeeRole: "الوظيفة / الدور",
         dailyRate: "الأجر اليومي",
         weeklyTotal: "إجمالي الراتب الأسبوعي (٦ أيام)",
+        borrows: "السلف",
         deductions: "الخصومات",
+        bonus: "المكافآت / الحوافز",
+        netPay: "صافي الراتب",
+        printPayroll: "طباعة كشف الرواتب",
+        resetAllDeductions: "تصفير كل الخصومات",
         employeesList: "قائمة الموظفين",
         
         // Multi-car Support

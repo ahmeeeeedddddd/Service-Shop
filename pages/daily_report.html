@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -71,6 +71,7 @@
                     <a href="daily_report.html" class="nav-item active">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -102,9 +103,15 @@
         <!-- Tool Bar -->
         <div class="card no-print">
             <div class="flex justify-between items-center">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label data-i18n="selectDate">Select Date</label>
-                    <input type="date" id="filterDate" class="form-control" style="width: 200px;">
+                <div class="flex gap-3 items-end">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label data-i18n="startDate">Start Date</label>
+                        <input type="date" id="filterStartDate" class="form-control" style="width: 170px;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label data-i18n="endDate">End Date</label>
+                        <input type="date" id="filterEndDate" class="form-control" style="width: 170px;">
+                    </div>
                 </div>
                 <button class="btn btn-primary" id="printReportBtn">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -117,22 +124,22 @@
         <div id="reportArea" class="print-area">
             <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #0d9488; padding-bottom: 1rem;">
                 <h1 style="color: #0d9488;" data-i18n="appName">El Ansary</h1>
-                <p><span data-i18n="dailyReport">Daily Report</span> - <span id="displayDate">---</span></p>
+                <p><span data-i18n="dateRangeReport">Date Range Report</span> - <span id="displayDate">---</span></p>
             </div>
 
             <!-- Stats -->
             <div class="stat-grid" style="margin-bottom: 2rem;">
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="income">Income</span>
-                    <div class="stat-value text-teal" id="dayIncome">$0.00</div>
+                    <div class="stat-value text-teal" id="dayIncome">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="expenses">Expenses</span>
-                    <div class="stat-value" id="dayExpenses" style="color: #ef4444;">$0.00</div>
+                    <div class="stat-value" id="dayExpenses" style="color: #ef4444;">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="netProfit">Net Profit</span>
-                    <div class="stat-value" id="dayNet">$0.00</div>
+                    <div class="stat-value" id="dayNet">0.00</div>
                 </div>
             </div>
 
@@ -140,23 +147,27 @@
             <div class="stat-grid" style="margin-bottom: 2rem; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="cashIncome">Cash Income</span>
-                    <div class="stat-value text-teal" id="dayCash">$0.00</div>
+                    <div class="stat-value text-teal" id="dayCash">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="totalCash">Total Cash</span>
-                    <div class="stat-value text-teal" id="dayTotalCash">$0.00</div>
+                    <div class="stat-value text-teal" id="dayTotalCash">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="instapay">Instapay</span>
-                    <div class="stat-value text-teal" id="dayInstapay">$0.00</div>
+                    <div class="stat-value text-teal" id="dayInstapay">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="bankAlahly">Bank Alahly</span>
-                    <div class="stat-value text-teal" id="dayAlahly">$0.00</div>
+                    <div class="stat-value text-teal" id="dayAlahly">0.00</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label" data-i18n="bankMasr">Bank Masr</span>
-                    <div class="stat-value text-teal" id="dayMasr">$0.00</div>
+                    <div class="stat-value text-teal" id="dayMasr">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="vodafoneCash">Vodafone Cash</span>
+                    <div class="stat-value text-teal" id="dayVodafoneCash">0.00</div>
                 </div>
             </div>
 
@@ -215,3 +226,4 @@
     <script src="../js/daily_report.js"></script>
 </body>
 </html>
+

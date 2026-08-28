@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -69,6 +69,7 @@
                     <a href="daily_report.html" class="nav-item">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -105,7 +106,7 @@
             </div>
             <div class="stat-card">
                 <span class="stat-label" data-i18n="totalValue">Total Value</span>
-                <div class="stat-value" id="pendingTotal">$0.00</div>
+                <div class="stat-value" id="pendingTotal">0.00</div>
             </div>
             <div class="stat-card">
                 <span class="stat-label" data-i18n="todayPending">Today's Pending</span>
@@ -175,6 +176,7 @@
                             <option value="Instapay" data-i18n="instapay">Instapay</option>
                             <option value="Bank Alahly" data-i18n="bankAlahly">Bank Alahly</option>
                             <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
+                            <option value="Vodafone Cash" data-i18n="vodafoneCash">Vodafone Cash</option>
                         </select>
                     </div>
                     <div class="form-group" style="flex:1;margin-bottom:0;">
@@ -222,6 +224,7 @@
                         <option value="Instapay" data-i18n="instapay">Instapay</option>
                         <option value="Bank Alahly" data-i18n="bankAlahly">Bank Alahly</option>
                         <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
+                        <option value="Vodafone Cash" data-i18n="vodafoneCash">Vodafone Cash</option>
                         <option value="PayByParts" data-i18n="payByParts">Pay By Parts</option>
                         <option value="SplitPayment">Split Payment</option>
                     </select>
@@ -243,6 +246,7 @@
                                 <option value="Instapay">Instapay</option>
                                 <option value="Bank Alahly">Bank Alahly</option>
                                 <option value="Bank Masr">Bank Masr</option>
+                                <option value="Vodafone Cash">Vodafone Cash</option>
                             </select>
                         </div>
                         <div style="flex:1;">
@@ -258,6 +262,7 @@
                                 <option value="Cash">Cash</option>
                                 <option value="Bank Alahly">Bank Alahly</option>
                                 <option value="Bank Masr">Bank Masr</option>
+                                <option value="Vodafone Cash">Vodafone Cash</option>
                             </select>
                         </div>
                         <div style="flex:1;">
@@ -298,3 +303,4 @@
     <script src="../js/pending_bills.js"></script>
 </body>
 </html>
+

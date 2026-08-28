@@ -6,7 +6,7 @@
     <title data-i18n="salaries">Salaries - El Ansary</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
-        .salary-form { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .salary-form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
         .emp-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center; }
         .emp-modal.active { display:flex; }
         .emp-modal-card { width:100%; max-width:480px; background:white; color:#1e293b; border-radius:12px; padding:2rem; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
@@ -38,6 +38,7 @@
                 </div>
                 <div class="nav-group-items open" id="reportsItems">
                     <a href="daily_report.html" class="nav-item"><span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item"><span data-i18n="workOrder">Work Order</span></a>
                     <a href="inspection.html" class="nav-item"><span data-i18n="inspection">Comprehensive Inspection</span></a>
                     <a href="estimate.html" class="nav-item"><span data-i18n="estimate">Car Repair Estimate</span></a>
@@ -65,16 +66,13 @@
                     <label data-i18n="employeeName">Name</label>
                     <input type="text" id="empName" class="form-control" required>
                 </div>
-                <div class="form-group">
-                    <label data-i18n="employeeId">ID</label>
-                    <input type="text" id="empId" class="form-control" required>
-                </div>
+
                 <div class="form-group">
                     <label data-i18n="employeeRole">Role</label>
                     <input type="text" id="empRole" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label data-i18n="dailyRate">Daily Rate ($)</label>
+                    <label data-i18n="dailyRate">Daily Rate</label>
                     <input type="number" id="empDailyRate" class="form-control" min="0" step="0.1" required>
                 </div>
             </div>
@@ -86,17 +84,29 @@
 
         <!-- Employees List -->
         <div class="card" style="margin-top:1.5rem;">
-            <h3 class="card-title" data-i18n="employeesList">Employees List</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="card-title" data-i18n="employeesList" style="margin-bottom:0;">Employees List</h3>
+                <div class="flex gap-2">
+                    <button class="btn btn-outline" style="color:#0d9488; border-color:#0d9488;" onclick="printSalaries()">
+                        🖨️ <span data-i18n="printPayroll">Print Payroll</span>
+                    </button>
+                    <button class="btn btn-outline" style="color:#ef4444; border-color:#ef4444;" onclick="resetAllDeductions()">
+                        🔄 <span data-i18n="resetAllDeductions">Reset All Deductions</span>
+                    </button>
+                </div>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
                             <th data-i18n="employeeName">Name</th>
-                            <th data-i18n="employeeId">ID</th>
                             <th data-i18n="employeeRole">Role</th>
                             <th data-i18n="dailyRate">Daily Rate</th>
                             <th data-i18n="weeklyTotal">Weekly Salary (6 days)</th>
-                            <th data-i18n="deductions">Total Deducted/Borrowed</th>
+                            <th data-i18n="borrows">Borrows</th>
+                            <th data-i18n="deductions">Deductions</th>
+                            <th data-i18n="bonus">Bonus</th>
+                            <th data-i18n="netPay">Net Pay</th>
                             <th data-i18n="actions">Actions</th>
                         </tr>
                     </thead>
@@ -117,12 +127,12 @@
             </div>
 
             <div class="form-group" style="margin-bottom:1.5rem;">
-                <label id="lblRaise">Bonus / Raise ($)</label>
+                <label id="lblRaise">Bonus / Raise</label>
                 <input type="number" id="modalRaise" class="form-control" value="0" min="0" step="0.5">
             </div>
 
             <div style="font-size:1.15rem; font-weight:700; margin-bottom:1.5rem; color:#0d9488; padding:0.75rem; background:#f0fdf4; border-radius:8px;">
-                <span id="lblNetSalary">Net Salary:</span> <span id="modalNetSalary">$0.00</span>
+                <span id="lblNetSalary">Net Salary:</span> <span id="modalNetSalary">0.00</span>
             </div>
 
             <div class="flex gap-2">
@@ -138,7 +148,7 @@
             <h3 id="deductionModalTitle">Add Deduction</h3>
 
             <div class="form-group" style="margin-bottom:1rem;">
-                <label>Deduction Amount ($) <span style="color:#ef4444;">*</span></label>
+                <label>Deduction Amount <span style="color:#ef4444;">*</span></label>
                 <input type="number" id="deductionAmount" class="form-control" value="0" min="0" step="0.5">
             </div>
 
@@ -164,7 +174,7 @@
             <h3 id="borrowModalTitle">Record Borrowed Money</h3>
 
             <div class="form-group" style="margin-bottom:1rem;">
-                <label>Amount Borrowed ($) <span style="color:#f59e0b;">*</span></label>
+                <label>Amount Borrowed <span style="color:#f59e0b;">*</span></label>
                 <input type="number" id="borrowAmount" class="form-control" value="0" min="0" step="0.5">
             </div>
 
@@ -184,6 +194,32 @@
         </div>
     </div>
 
+    <!-- ===== Bonus Modal ===== -->
+    <div id="bonusModal" class="emp-modal">
+        <div class="emp-modal-card">
+            <h3 id="bonusModalTitle">Add Bonus</h3>
+
+            <div class="form-group" style="margin-bottom:1rem;">
+                <label>Bonus Amount <span style="color:#10b981;">*</span></label>
+                <input type="number" id="bonusAmount" class="form-control" value="0" min="0" step="0.5">
+            </div>
+
+            <div class="form-group" style="margin-bottom:1.5rem;">
+                <label>Reason (Optional)</label>
+                <input type="text" id="bonusReason" class="form-control" placeholder="e.g. Great performance">
+            </div>
+
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:1.5rem; padding:0.75rem; background:#ecfdf5; border-radius:8px; border-left:3px solid #10b981;">
+                🎉 This bonus will be added to the employee's next salary.
+            </p>
+
+            <div class="flex gap-2">
+                <button class="btn btn-primary" id="bonusConfirmBtn" style="background:#10b981; border-color:#10b981;">✓ Record Bonus</button>
+                <button class="btn btn-outline" id="bonusCancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== Adjustments History Modal ===== -->
     <div id="historyModal" class="emp-modal">
         <div class="emp-modal-card" style="max-width: 600px;">
@@ -197,6 +233,7 @@
                             <th style="padding:0.5rem;">Type</th>
                             <th style="padding:0.5rem;">Reason</th>
                             <th style="padding:0.5rem;">Amount</th>
+                            <th style="padding:0.5rem;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="historyTableBody">
@@ -215,3 +252,4 @@
     <script src="../js/salaries.js"></script>
 </body>
 </html>
+

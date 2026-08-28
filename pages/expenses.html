@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -51,6 +51,7 @@
                     <a href="daily_report.html" class="nav-item">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -130,7 +131,7 @@
                 <div class="stat-card accent mb-4" style="flex-direction: row; justify-content: space-between; align-items: center; padding: 2rem;">
                     <div>
                         <span class="stat-label">Total logged expenses</span>
-                        <div class="stat-value" id="totalExpenses">$0.00</div>
+                        <div class="stat-value" id="totalExpenses">0.00</div>
                     </div>
                     <div style="text-align: right;">
                         <input type="month" id="monthFilter" class="form-control" style="background: rgba(255,255,255,0.1); border: none; color: white;">
@@ -141,9 +142,15 @@
                     <div class="flex justify-between items-center mb-4">
                         <div class="flex gap-2">
                             <div class="form-group" style="margin-bottom: 0;">
-                                <label data-i18n="selectDate">Select Date</label>
-                                <input type="date" id="filterDate" class="form-control">
+                                <label data-i18n="startDate">Start Date</label>
+                                <input type="date" id="filterStartDate" class="form-control">
                             </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label data-i18n="endDate">End Date</label>
+                                <input type="date" id="filterEndDate" class="form-control">
+                            </div>
+                            <button class="btn btn-outline" id="resetFiltersBtn" data-i18n="reset" style="margin-top:20px;">Reset</button>
+                            <button class="btn btn-primary" id="printExpensesReportBtn" data-i18n="print" style="margin-top:20px;">🖨️ Print</button>
                         </div>
                     </div>
                     <div class="table-container">
@@ -171,3 +178,4 @@
     <script src="../js/expenses.js"></script>
 </body>
 </html>
+

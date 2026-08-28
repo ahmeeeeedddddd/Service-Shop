@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Report - El Ansary</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        #printContainer { display: none; }
+        @media print {
+            body > * { display: none !important; }
+            #printContainer {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+        }
+        .filter-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .method-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .method-tag {
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .method-tag:hover { opacity: 0.85; transform: translateY(-1px); }
+        .method-tag.all    { background: #334155; color: #e2e8f0; border-color: #475569; }
+        .method-tag.cash   { background: #14532d; color: #86efac; border-color: #16a34a; }
+        .method-tag.instapay { background: #7c2d12; color: #fdba74; border-color: #ea580c; }
+        .method-tag.bank   { background: #1e3a5f; color: #93c5fd; border-color: #3b82f6; }
+        .method-tag.vodafone { background: #4c1d1d; color: #fca5a5; border-color: #ef4444; }
+        .method-tag.split  { background: #2d1b69; color: #c4b5fd; border-color: #7c3aed; }
+        .method-tag.parts  { background: #1a2e1a; color: #a3e635; border-color: #65a30d; }
+        .method-tag.active { opacity: 1; box-shadow: 0 0 0 2px rgba(255,255,255,0.3); }
+        .method-tag:not(.active) { opacity: 0.45; }
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-chip {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .summary-chip .label { font-size: 0.72rem; color: #64748b; font-weight: 600; text-transform: uppercase; margin-bottom: 0.4rem; }
+        .summary-chip .value { font-size: 1.35rem; font-weight: 800; color: #0d9488; }
+        .summary-chip.highlight { border-color: #0d9488; background: linear-gradient(135deg, #0f2924, #1e293b); }
+        .results-table thead tr { background: #1e293b; }
+        .results-table thead th { padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #334155; }
+        .results-table tbody td { padding: 0.65rem 1rem; font-size: 0.88rem; border-bottom: 1px solid #1e293b; }
+        .results-table tbody tr:hover { background: rgba(13,148,136,0.04); }
+        .badge-sm { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+        .badge-Cash        { background: #dcfce7; color: #15803d; }
+        .badge-Instapay    { background: #ffedd5; color: #c2410c; }
+        .badge-Bank        { background: #dbeafe; color: #1d4ed8; }
+        .badge-Vodafone    { background: #fee2e2; color: #b91c1c; }
+        .badge-Split       { background: #ede9fe; color: #6d28d9; }
+        .badge-PayByParts  { background: #d1fae5; color: #065f46; }
+        .badge-Deleted     { background: #f1f5f9; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+            </div>
+            <div class="shop-name"><h1 data-i18n="appName">El Ansary</h1></div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="customers.html" class="nav-item"><span data-i18n="customers">Customers</span></a>
+            <a href="billing.html" class="nav-item"><span data-i18n="billing">Billing</span></a>
+            <a href="pending_bills.html" class="nav-item"><span data-i18n="pendingBills">Pending Bills</span></a>
+            <a href="parts.html" class="nav-item"><span data-i18n="parts">Parts &amp; Stock</span></a>
+            <a href="suppliers.html" class="nav-item"><span data-i18n="suppliers">Suppliers</span></a>
+            <a href="income.html" class="nav-item"><span data-i18n="income">Income</span></a>
+            <a href="expenses.html" class="nav-item"><span data-i18n="expenses">Expenses</span></a>
+            <a href="bills_history.html" class="nav-item"><span data-i18n="billsHistory">Bills History</span></a>
+            <div class="nav-group">
+                <div class="nav-group-toggle open" id="reportsToggle">
+                    <span data-i18n="reports">Reports</span>
+                    <span class="nav-group-arrow">&#9662;</span>
+                </div>
+                <div class="nav-group-items open" id="reportsItems">
+                    <a href="daily_report.html" class="nav-item"><span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="income_report.html" class="nav-item active"><span>Income Report</span></a>
+                    <a href="work_order.html" class="nav-item"><span data-i18n="workOrder">Work Order</span></a>
+                    <a href="inspection.html" class="nav-item"><span data-i18n="inspection">Comprehensive Inspection</span></a>
+                    <a href="estimate.html" class="nav-item"><span data-i18n="estimate">Car Repair Estimate</span></a>
+                    <a href="salaries.html" class="nav-item"><span data-i18n="salaries">Salaries</span></a>
+                </div>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
+            <div class="version-info" data-i18n="version">Version 1.0 — Works offline</div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header no-print">
+            <h2>Income Report / تقرير الدخل</h2>
+            <p>Filter income by payment method and date range</p>
+        </header>
+
+        <!-- Filter Card -->
+        <div class="filter-card no-print">
+            <!-- Payment Method Tags -->
+            <div style="margin-bottom: 1rem;">
+                <div class="filter-group" style="margin-bottom: 0.75rem;">
+                    <label>Payment Method / طريقة الدفع</label>
+                </div>
+                <div class="method-tags">
+                    <span class="method-tag all active"    data-method="all">All / الكل</span>
+                    <span class="method-tag cash active"   data-method="Cash">Cash / نقدي</span>
+                    <span class="method-tag instapay active" data-method="Instapay">Instapay</span>
+                    <span class="method-tag bank active"   data-method="Bank Alahly">Bank Alahly / البنك الأهلي</span>
+                    <span class="method-tag bank active"   data-method="Bank Masr">Bank Masr / بنك مصر</span>
+                    <span class="method-tag vodafone active" data-method="Vodafone Cash">Vodafone Cash / فودافون كاش</span>
+                    <span class="method-tag split active"  data-method="SplitPayment">Split Payment</span>
+                    <span class="method-tag parts active"  data-method="PayByParts">Pay By Parts</span>
+                </div>
+            </div>
+            <!-- Date Range -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>From / من</label>
+                    <input type="date" id="fromDate" class="form-control">
+                </div>
+                <div class="filter-group">
+                    <label>To / إلى</label>
+                    <input type="date" id="toDate" class="form-control">
+                </div>
+                <div class="filter-group" style="flex: 0.5; min-width: 120px;">
+                    <label>Quick Range / فترة سريعة</label>
+                    <select id="quickRange" class="form-control">
+                        <option value="">Custom</option>
+                        <option value="today">Today / اليوم</option>
+                        <option value="week">This Week / هذا الأسبوع</option>
+                        <option value="month">This Month / هذا الشهر</option>
+                        <option value="all">All Time / الكل</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="flex: 0.5; min-width: 130px;">
+                    <label>Search Customer</label>
+                    <input type="text" id="searchCustomer" class="form-control" placeholder="Name...">
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: flex-end; padding-bottom: 0.05rem;">
+                    <button class="btn btn-primary" id="applyFilterBtn">Apply / تطبيق</button>
+                    <button class="btn btn-outline no-print" id="printReportBtn" style="color: #ffffff; border-color: #475569;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Strip -->
+        <div class="summary-strip" id="summaryStrip">
+            <div class="summary-chip highlight">
+                <div class="label">Total Records</div>
+                <div class="value" id="sumCount">0</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Total Income</div>
+                <div class="value" id="sumTotal">0.00</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Cash</div>
+                <div class="value" id="sumCash" style="color: #22c55e;">0.00</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Instapay</div>
+                <div class="value" id="sumInstapay" style="color: #f97316;">0.00</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Bank Alahly</div>
+                <div class="value" id="sumBankA" style="color: #60a5fa;">0.00</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Bank Masr</div>
+                <div class="value" id="sumBankM" style="color: #60a5fa;">0.00</div>
+            </div>
+            <div class="summary-chip">
+                <div class="label">Vodafone Cash</div>
+                <div class="value" id="sumVodafone" style="color: #f87171;">0.00</div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="card" style="padding: 0; overflow: hidden;">
+            <table class="results-table" style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th>Date / التاريخ</th>
+                        <th>Customer / العميل</th>
+                        <th>Description / الوصف</th>
+                        <th>Payment / الدفع</th>
+                        <th style="text-align: right;">Paid / مدفوع</th>
+                        <th style="text-align: right;">Pending / متبقي</th>
+                        <th style="text-align: right;">Total / الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody id="reportBody">
+                    <tr><td colspan="7" style="text-align:center; padding: 3rem; color: #64748b;">Select filters and click Apply</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Hidden print container -->
+    <div id="printContainer"></div>
+
+    <script src="../js/i18n.js"></script>
+    <script src="../js/income_report.js"></script>
+</body>
+</html>

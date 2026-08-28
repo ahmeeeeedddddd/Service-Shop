@@ -303,6 +303,10 @@ function getRepairsByDate(date) {
   `).all(date);
 }
 
+
+function markRepairAsDeleted(id) {
+  db.prepare("UPDATE repairs SET paid_amount = 0, total_amount = 0, pending_amount = 0, discount = 0, payment_method = 'Deleted', description = '[Deleted] ' || IFNULL(description, '') WHERE id = ?").run(id);
+}
 function deleteRepair(id) {
   db.prepare('DELETE FROM repair_items WHERE repair_id = ?').run(id);
   db.prepare('DELETE FROM repairs WHERE id = ?').run(id);
@@ -387,6 +391,14 @@ function searchParts(term) {
 
 function deductPartStock(id, quantity) {
   db.prepare('UPDATE parts SET quantity_in_stock = MAX(0, quantity_in_stock - ?) WHERE id = ?').run(quantity, id);
+}
+
+function addPartStock(id, quantity, new_unit_price) {
+  if (new_unit_price !== null && new_unit_price !== undefined) {
+    db.prepare('UPDATE parts SET quantity_in_stock = quantity_in_stock + ?, unit_price = ? WHERE id = ?').run(quantity, new_unit_price, id);
+  } else {
+    db.prepare('UPDATE parts SET quantity_in_stock = quantity_in_stock + ? WHERE id = ?').run(quantity, id);
+  }
 }
 
 function deleteRepairItems(repairId) {
@@ -503,6 +515,14 @@ function clearEmployeeAdjustments(id) {
   db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run('[]', id);
 }
 
+function clearAllEmployeeAdjustments() {
+  db.prepare('UPDATE employees SET pending_adjustments = ?').run('[]');
+}
+
+function updateEmployeeAdjustments(id, adjsArray) {
+  db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run(JSON.stringify(adjsArray), id);
+}
+
 module.exports = {
   getCustomers,
   searchCustomers,
@@ -539,7 +559,7 @@ module.exports = {
   updateRepairFull,
   updateCustomer,
   getRepairById,
-  deleteRepair,
+  deleteRepair, markRepairAsDeleted,
   getPendingBills,
   addPendingBill,
   deletePendingBill,
@@ -550,5 +570,8 @@ module.exports = {
   updateEmployee,
   deleteEmployee,
   addEmployeeAdjustment,
-  clearEmployeeAdjustments
+  updateEmployeeAdjustments,
+  clearEmployeeAdjustments,
+  clearAllEmployeeAdjustments,
+  addPartStock
 };

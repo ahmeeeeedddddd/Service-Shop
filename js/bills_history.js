@@ -46,13 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(bill => {
             const tr = document.createElement('tr');
             tr.className = 'clickable-row';
-            const badgeClass = bill.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card';
+            const isDeleted = bill.payment_method === 'Deleted';
+            
+            if (isDeleted) tr.style.opacity = '0.6';
+            
+            const badgeClass = isDeleted ? '' : (bill.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card');
+            const badgeStyle = isDeleted ? 'background: #ef4444; color: white;' : '';
             const paymentText = window.getTranslatedPaymentMethod(bill.payment_method);
 
             tr.innerHTML = `
                 <td>${bill.date}</td>
                 <td>${bill.customer_name}</td>
-                <td><span class="badge ${badgeClass}">${paymentText}</span></td>
+                <td><span class="badge ${badgeClass}" style="${badgeStyle}">${paymentText}</span></td>
                 <td class="font-bold">$${parseFloat(bill.total_amount).toFixed(2)}</td>
             `;
             tr.onclick = () => showBillDetails(bill);
@@ -168,9 +173,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>01010103777</p>
                     <p>01010606016</p>
                 </div>
-                <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
-                    <p><strong>Engineer's Signature:</strong></p>
-                    <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                <div style="text-align: right; font-size: 0.9rem; color: #64748b; display: flex; gap: 3rem; justify-content: flex-end;">
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المحاسب</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المهندس</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
                 </div>
             </div>
         `;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -71,6 +71,7 @@
                     <a href="daily_report.html" class="nav-item">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -177,7 +178,7 @@
                                         <td><input type="text" class="form-control" placeholder="e.g. Oil change"></td>
                                         <td><input type="number" class="form-control qty-input" value="1" min="1"></td>
                                         <td><input type="number" class="form-control price-input" value="0" min="0"></td>
-                                        <td class="font-bold text-teal line-subtotal">$0.00</td>
+                                        <td class="font-bold text-teal line-subtotal">0.00</td>
                                         <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
                                     </tr>
                                 </tbody>
@@ -191,7 +192,7 @@
             <div class="billing-summary-col">
                 <div class="card">
                     <div class="stat-label" data-i18n="total">Total</div>
-                    <div class="stat-value text-teal" id="grandTotal" style="margin-bottom: 1.5rem;">$0.00</div>
+                    <div class="stat-value text-teal" id="grandTotal" style="margin-bottom: 1.5rem;">0.00</div>
 
                     <!-- Discount -->
                     <div class="form-group">
@@ -201,7 +202,7 @@
 
                     <!-- Net Total -->
                     <div class="stat-label" data-i18n="netTotal">Net Total</div>
-                    <div class="stat-value text-teal" id="netTotal" style="margin-bottom:1rem;">$0.00</div>
+                    <div class="stat-value text-teal" id="netTotal" style="margin-bottom:1rem;">0.00</div>
 
                     <div class="form-group">
                         <label data-i18n="paymentMethod">Payment method</label>
@@ -210,7 +211,8 @@
                             <option value="Bank Alahly" data-i18n="bankAlahly">Bank Alahly</option>
                             <option value="Bank Masr" data-i18n="bankMasr">Bank Masr</option>
                             <option value="Instapay" data-i18n="instapay">Instapay</option>
-                            <option value="PayByParts" data-i18n="payByParts">Pay By Parts</option>
+                            <option value="Vodafone Cash" data-i18n="vodafoneCash">Vodafone Cash</option>
+                            <option value="PayByParts" data-i18n="payByParts">Pay in parts</option>
                             <option value="SplitPayment">Split Payment</option>
                         </select>
                     </div>
@@ -238,6 +240,7 @@
                                     <option value="Instapay">Instapay</option>
                                     <option value="Bank Alahly">Bank Alahly</option>
                                     <option value="Bank Masr">Bank Masr</option>
+                                    <option value="Vodafone Cash">Vodafone Cash</option>
                                 </select>
                             </div>
                             <div style="flex:1;">
@@ -253,6 +256,7 @@
                                     <option value="Cash">Cash</option>
                                     <option value="Bank Alahly">Bank Alahly</option>
                                     <option value="Bank Masr">Bank Masr</option>
+                                    <option value="Vodafone Cash">Vodafone Cash</option>
                                 </select>
                             </div>
                             <div style="flex:1;">
@@ -335,3 +339,4 @@
     <script src="../js/billing.js"></script>
 </body>
 </html>
+

@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><input type="text" class="form-control" placeholder="e.g. Brake Pads"></td>
             <td><input type="number" class="form-control qty-input" value="1" min="1"></td>
             <td><input type="number" class="form-control price-input" value="0" min="0"></td>
-            <td class="font-bold text-teal line-subtotal">$0.00</td>
+            <td class="font-bold text-teal line-subtotal">0.00</td>
             <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
         `;
         lineItemsBody.appendChild(tr);
@@ -171,13 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateGrandTotal();
     });
 
-    // Remove Item
-    lineItemsBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            e.target.closest('tr').remove();
-            updateGrandTotal();
-        }
-    });
+    // Remove Item listener is handled in attachRowListeners
 
     function attachRowListeners(row) {
         const nameInput = row.querySelector('input[type="text"]');
@@ -255,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const qty = parseFloat(qtyInput.value) || 0;
                     const price = parseFloat(priceInput.value) || 0;
                     const subtotal = qty * price;
-                    row.querySelector('.line-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                    row.querySelector('.line-subtotal').textContent = `${subtotal.toFixed(2)}`;
                     updateGrandTotal();
                     if (input === priceInput && price > 0) {
                         tryAutoAdd();
@@ -272,12 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.line-subtotal').forEach(el => {
             total += parseFloat(el.textContent.replace('$', '')) || 0;
         });
-        if(grandTotalEl) grandTotalEl.textContent = `$${total.toFixed(2)}`;
+        if(grandTotalEl) grandTotalEl.textContent = `${total.toFixed(2)}`;
         
         let discount = 0;
         if(discountInput) discount = parseFloat(discountInput.value) || 0;
         const netTotal = Math.max(0, total - discount);
-        if(netTotalEl) netTotalEl.textContent = `$${netTotal.toFixed(2)}`;
+        if(netTotalEl) netTotalEl.textContent = `${netTotal.toFixed(2)}`;
 
         if(amountPaidInput && pendingDisplay) {
             const amountPaid = parseFloat(amountPaidInput.value) || 0;
@@ -457,10 +451,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         lineItemsBody.innerHTML = `
             <tr>
-                <td><input type="text" class="form-control" placeholder="e.g. Engine Oil Change"></td>
+                <td><input type="text" class="form-control" placeholder="e.g. Oil change"></td>
                 <td><input type="number" class="form-control qty-input" value="1" min="1"></td>
-                <td><input type="number" class="form-control price-input" value="0" min="0" step="0.01"></td>
-                <td class="font-bold text-teal line-subtotal">$0.00</td>
+                <td><input type="number" class="form-control price-input" value="0" min="0"></td>
+                <td class="font-bold text-teal line-subtotal">0.00</td>
                 <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
             </tr>
         `;
@@ -520,8 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p style="margin: 0.25rem 0;"><strong>${t.date}:</strong> ${date}</p>
                     ${currentBillData && currentBillData.split_data
                         ? `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> Split</p>
-                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method1}: $${currentBillData.split_data.amount1.toFixed(2)}</p>
-                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method2}: $${currentBillData.split_data.amount2.toFixed(2)}</p>`
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method1}: ${currentBillData.split_data.amount1.toFixed(2)}</p>
+                           <p style="margin: 0.1rem 0; font-size:0.85rem; color:#059669;">${currentBillData.split_data.method2}: ${currentBillData.split_data.amount2.toFixed(2)}</p>`
                         : `<p style="margin: 0.25rem 0;"><strong>${t.payment}:</strong> ${window.getTranslatedPaymentMethod(paymentMethod)}</p>`
                     }
                     ${currentBillData && currentBillData.odometer ? `<p style="margin: 0.25rem 0;"><strong>${t.odometer}:</strong> ${currentBillData.odometer}</p>` : ''}
@@ -541,8 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <tr style="border-bottom: 1px solid #eee;">
                             <td style="padding: ${tablePadding};">${l.name}</td>
                             <td style="padding: ${tablePadding}; text-align: center;">${l.qty}</td>
-                            <td style="padding: ${tablePadding}; text-align: right;">$${parseFloat(l.price).toFixed(2)}</td>
-                            <td style="padding: ${tablePadding}; text-align: right;">$${l.total.toFixed(2)}</td>
+                            <td style="padding: ${tablePadding}; text-align: right;">${parseFloat(l.price).toFixed(2)}</td>
+                            <td style="padding: ${tablePadding}; text-align: right;">${l.total.toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -556,22 +550,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${currentBillData && currentBillData.discount > 0 ? `
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.1rem; color: #ef4444;">
                     <span>${t.discount || 'Discount'}:</span>
-                    <span>-$${currentBillData.discount.toFixed(2)}</span>
+                    <span>-${currentBillData.discount.toFixed(2)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: bold; color: #10b981; border-top: 1px solid #eee; padding-top: 0.5rem;">
                     <span>${t.netTotal || 'Net Total'}:</span>
-                    <span>$${(currentBillData.total_amount - currentBillData.discount).toFixed(2)}</span>
+                    <span>${(currentBillData.total_amount - currentBillData.discount).toFixed(2)}</span>
                 </div>
                 ` : ''}
                 
                 ${currentBillData && currentBillData.payment_method === 'PayByParts' ? `
                 <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.1rem; color: #3b82f6;">
                     <span>${t.amountPaidNow || 'Amount Paid'}:</span>
-                    <span>$${currentBillData.paid_amount.toFixed(2)}</span>
+                    <span>${currentBillData.paid_amount.toFixed(2)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 1.1rem; color: #ef4444;">
                     <span>${t.pendingAmount || 'Pending'}:</span>
-                    <span>$${currentBillData.pending_amount.toFixed(2)}</span>
+                    <span>${currentBillData.pending_amount.toFixed(2)}</span>
                 </div>
                 ` : ''}
                 ${currentBillData && currentBillData.split_data ? `
@@ -579,11 +573,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p style="font-size:0.85rem; font-weight:600; color:#059669; margin-bottom:0.25rem;">Payment Breakdown</p>
                     <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
                         <span>${currentBillData.split_data.method1}:</span>
-                        <span>$${currentBillData.split_data.amount1.toFixed(2)}</span>
+                        <span>${currentBillData.split_data.amount1.toFixed(2)}</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 1rem; color: #1e293b;">
                         <span>${currentBillData.split_data.method2}:</span>
-                        <span>$${currentBillData.split_data.amount2.toFixed(2)}</span>
+                        <span>${currentBillData.split_data.amount2.toFixed(2)}</span>
                     </div>
                 </div>
                 ` : ''}
@@ -603,9 +597,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>01010103777</p>
                     <p>01010606016</p>
                 </div>
-                <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
-                    <p><strong>Engineer's Signature:</strong></p>
-                    <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                <div style="text-align: right; font-size: 0.9rem; color: #64748b; display: flex; gap: 3rem; justify-content: flex-end;">
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المحاسب</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المهندس</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -722,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td class="font-bold text-teal">${p.name}</td>
                 <td>${p.quantity_in_stock}</td>
-                <td>$${parseFloat(p.unit_price).toFixed(2)}</td>
+                <td>${parseFloat(p.unit_price).toFixed(2)}</td>
                 <td>
                     <button class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;" ${p.quantity_in_stock <= 0 ? 'disabled' : ''}>
                         Add
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td><input type="text" class="form-control" value="${part.name}" placeholder="e.g. Brake Pads"></td>
             <td><input type="number" class="form-control qty-input" value="1" min="1" max="${part.quantity_in_stock}"></td>
             <td><input type="number" class="form-control price-input" value="${part.unit_price}" min="0" step="0.01"></td>
-            <td class="font-bold text-teal line-subtotal">$${parseFloat(part.unit_price).toFixed(2)}</td>
+            <td class="font-bold text-teal line-subtotal">${parseFloat(part.unit_price).toFixed(2)}</td>
             <td><button class="btn btn-outline remove-item-btn" style="color: #ef4444; border-color: #fee2e2;">×</button></td>
         `;
         lineItemsBody.appendChild(tr);

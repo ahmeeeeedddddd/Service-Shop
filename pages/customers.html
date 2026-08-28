@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -51,6 +51,7 @@
                     <a href="daily_report.html" class="nav-item">
                         <span data-i18n="dailyReport">Daily Report</span>
                     </a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item">
                         <span data-i18n="workOrder">Work Order</span>
                     </a>
@@ -194,7 +195,10 @@
                 <div id="historyDetails" style="display: none;" class="mt-4 border-t pt-4">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="card-title text-teal" id="historyCustomerName">Customer Name</h3>
-                        <button class="btn btn-outline" id="backToHistoryList">&larr; Back to List</button>
+                        <div class="flex gap-2">
+                            <button class="btn btn-outline" onclick="printCustomerHistory()" style="color:#0d9488; border-color:#0d9488;">&#128424;&#65039; Print History</button>
+                            <button class="btn btn-outline" id="backToHistoryList">&larr; Back to List</button>
+                        </div>
                     </div>
                     <div class="table-container">
                         <table>
@@ -220,3 +224,4 @@
     <script src="../js/customers.js"></script>
 </body>
 </html>
+

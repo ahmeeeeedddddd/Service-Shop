@@ -378,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <ul style="list-style: none; padding: 0; margin: 0;">
                                 ${items.map(i => `<li style="display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px dashed #e2e8f0; padding-bottom: 4px;">
                                     <span>• ${i.item_name} (x${i.quantity})</span>
-                                    <span class="font-bold">$${(i.quantity * i.unit_price).toFixed(2)}</span>
+                                    <span class="font-bold">${(i.quantity * i.unit_price).toFixed(2)}</span>
                                 </li>`).join('')}
                             </ul>
                             <div style="margin-top: 0.75rem; border-top: 1px solid #e2e8f0; pt-2;">
@@ -408,13 +408,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td>
                         <div class="flex justify-between items-center">
                             <div class="font-bold text-teal">${r.description || 'Service'}</div>
-                            <button class="btn btn-outline btn-sm" onclick="toggleDetails(${index})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
-                                Details
-                            </button>
+                            <div class="flex gap-1">
+                                <button class="btn btn-outline btn-sm" onclick="printSingleRepair(${r.id})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; color:#0d9488; border-color:#0d9488;">
+                                    &#128424;&#65039;
+                                </button>
+                                <button class="btn btn-outline btn-sm" onclick="toggleDetails(${index})" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    Details
+                                </button>
+                            </div>
                         </div>
                         ${detailsHtml}
                     </td>
-                    <td style="vertical-align: top;" class="font-bold">$${parseFloat(r.total_amount).toFixed(2)}</td>
+                    <td style="vertical-align: top;" class="font-bold">${parseFloat(r.total_amount).toFixed(2)}</td>
                     <td style="vertical-align: top;"><span class="badge ${badgeClass}">${r.payment_method}</span></td>
                 `;
                 historyRepairsTableBody.appendChild(tr);
@@ -423,6 +428,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         historyCustomerList.style.display = 'none';
         historyDetails.style.display = 'block';
+
+        // Store current customer for printing
+        historyDetails.dataset.customerId   = customer.id;
+        historyDetails.dataset.customerName = customer.name;
     }
 
     window.toggleDetails = (index) => {
@@ -434,6 +443,247 @@ document.addEventListener('DOMContentLoaded', () => {
 
     historySearch.addEventListener('input', loadHistoryCustomers);
     backToHistoryList.onclick = () => loadHistoryCustomers();
+
+    // Print Single Repair
+    window.printSingleRepair = function(repairId) {
+        const lang = getCurrentLanguage();
+        const shopName = lang === 'ar' ? '\u0627\u0644\u0623\u0646\u0635\u0627\u0631\u064a' : 'El Ansary Service Shop';
+        
+        // Find the repair object
+        let repair = null;
+        let customer = null;
+        
+        // We know the customer ID from the historyDetails dataset
+        const customerId = parseInt(historyDetails.dataset.customerId);
+        if (!customerId) return;
+        
+        const repairs = db.getRepairsByCustomer(customerId);
+        repair = repairs.find(r => r.id === repairId);
+        if (!repair) return;
+
+        const allCustomers = db.getCustomers();
+        customer = allCustomers.find(c => c.id === customerId);
+        if (!customer) return;
+
+        const items = db.getRepairItems(repair.id);
+        const amount = parseFloat(repair.total_amount) || 0;
+        const discount = parseFloat(repair.discount) || 0;
+        const net = amount - discount;
+        const paid = repair.paid_amount !== null ? parseFloat(repair.paid_amount) : net;
+
+        let itemsHtml = '';
+        if (items.length > 0) {
+            itemsHtml = items.map(function(it) {
+                return '<tr>' +
+                    '<td>' + it.item_name + '</td>' +
+                    '<td style="text-align:center;">' + it.quantity + '</td>' +
+                    '<td style="text-align:right;">' + parseFloat(it.unit_price).toFixed(2) + '</td>' +
+                    '<td style="text-align:right;">' + (it.quantity * it.unit_price).toFixed(2) + '</td>' +
+                    '</tr>';
+            }).join('');
+        } else {
+            itemsHtml = '<tr><td colspan="4">' + (repair.description || (lang === 'ar' ? 'صيانة عامة' : 'General Service')) + '</td></tr>';
+        }
+
+        var textAlign = lang === 'ar' ? 'right' : 'left';
+        var dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+        const html = '<html dir="' + dir + '"><head><meta charset="UTF-8">' +
+        '<style>' +
+        'body{font-family:Arial,sans-serif;font-size:14px;margin:30px;color:#1e293b; line-height:1.5;}' +
+        '.header{text-align:center; margin-bottom:20px; padding-bottom:10px; border-bottom:2px solid #0d9488;}' +
+        '.header h1{font-size:1.8rem; margin:0 0 5px 0; color:#0d9488;}' +
+        '.info-section{display:flex; justify-content:space-between; margin-bottom:20px;}' +
+        '.info-box{background:#f8fafc; border:1px solid #e2e8f0; padding:15px; border-radius:8px; width:48%; box-sizing:border-box;}' +
+        '.info-box h3{margin:0 0 10px 0; font-size:1rem; border-bottom:1px solid #cbd5e1; padding-bottom:5px;}' +
+        'table{width:100%; border-collapse:collapse; margin-bottom:20px;}' +
+        'th{background:#f1f5f9; padding:10px; text-align:' + textAlign + '; font-size:0.9rem; border-bottom:2px solid #cbd5e1;}' +
+        'td{padding:10px; font-size:0.9rem; border-bottom:1px solid #e2e8f0;}' +
+        '.totals{width:50%; margin-left:auto; margin-right: ' + (lang === "ar" ? "auto" : "0") + '; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;}' +
+        '.totals-row{display:flex; justify-content:space-between; padding:8px 15px; border-bottom:1px solid #e2e8f0;}' +
+        '.totals-row.final{background:#f8fafc; font-weight:bold; font-size:1.1rem; border-bottom:none; color:#0d9488;}' +
+        '@media print { body { margin: 15px; } .info-section { display:block; } .info-box { width:100%; margin-bottom:10px; } .totals { width: 100%; margin: 0; } }' +
+        '</style></head><body>' +
+        
+        '<div class="header">' +
+            '<h1>' + shopName + '</h1>' +
+            '<div>' + (lang === 'ar' ? 'فاتورة صيانة' : 'Service Invoice') + ' #' + repair.id + '</div>' +
+        '</div>' +
+
+        '<div class="info-section">' +
+            '<div class="info-box">' +
+                '<h3>' + (lang === 'ar' ? 'معلومات العميل' : 'Customer Info') + '</h3>' +
+                '<div><strong>' + (lang === 'ar' ? 'الاسم:' : 'Name:') + '</strong> ' + customer.name + '</div>' +
+                '<div><strong>' + (lang === 'ar' ? 'رقم الهاتف:' : 'Phone:') + '</strong> ' + (customer.phone || '-') + '</div>' +
+                '<div><strong>' + (lang === 'ar' ? 'السيارة:' : 'Vehicle:') + '</strong> ' + (customer.car_name || '-') + '</div>' +
+                '<div><strong>' + (lang === 'ar' ? 'رقم اللوحة:' : 'Plate Number:') + '</strong> ' + (customer.plate_number || '-') + '</div>' +
+            '</div>' +
+            '<div class="info-box">' +
+                '<h3>' + (lang === 'ar' ? 'تفاصيل الصيانة' : 'Service Details') + '</h3>' +
+                '<div><strong>' + (lang === 'ar' ? 'التاريخ:' : 'Date:') + '</strong> ' + repair.date + '</div>' +
+                '<div><strong>' + (lang === 'ar' ? 'عداد المسافة (كم):' : 'Odometer (km):') + '</strong> ' + (repair.odometer || '-') + '</div>' +
+            '</div>' +
+        '</div>' +
+
+        (repair.notes ? '<div style="margin-bottom:20px;"><strong>' + (lang === 'ar' ? 'ملاحظات:' : 'Notes:') + '</strong><br>' + repair.notes + '</div>' : '') +
+
+        '<table>' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>' + (lang === 'ar' ? 'الوصف / القطع' : 'Description / Item') + '</th>' +
+                    '<th style="text-align:center;">' + (lang === 'ar' ? 'الكمية' : 'Qty') + '</th>' +
+                    '<th style="text-align:right;">' + (lang === 'ar' ? 'السعر' : 'Unit Price') + '</th>' +
+                    '<th style="text-align:right;">' + (lang === 'ar' ? 'الإجمالي' : 'Total') + '</th>' +
+                '</tr>' +
+            '</thead>' +
+            '<tbody>' + itemsHtml + '</tbody>' +
+        '</table>' +
+
+        '<div class="totals" style="' + (lang === 'ar' ? 'margin-left:0; margin-right:auto;' : '') + '">' +
+            '<div class="totals-row">' +
+                '<span>' + (lang === 'ar' ? 'الإجمالي:' : 'Subtotal:') + '</span>' +
+                '<span>' + amount.toFixed(2) + '</span>' +
+            '</div>' +
+            (discount > 0 ? 
+            '<div class="totals-row" style="color:#ef4444;">' +
+                '<span>' + (lang === 'ar' ? 'الخصم:' : 'Discount:') + '</span>' +
+                '<span>-' + discount.toFixed(2) + '</span>' +
+            '</div>' : '') +
+            '<div class="totals-row final">' +
+                '<span>' + (lang === 'ar' ? 'الصافي (المطلوب):' : 'Net Total:') + '</span>' +
+                '<span>' + net.toFixed(2) + '</span>' +
+            '</div>' +
+            '<div class="totals-row">' +
+                '<span>' + (lang === 'ar' ? 'المدفوع:' : 'Paid:') + '</span>' +
+                '<span>' + paid.toFixed(2) + '</span>' +
+            '</div>' +
+            '<div class="totals-row" style="color:' + ((net - paid) > 0 ? '#ef4444' : '#64748b') + ';">' +
+                '<span>' + (lang === 'ar' ? 'المتبقي:' : 'Remaining Balance:') + '</span>' +
+                '<span>' + (net - paid).toFixed(2) + '</span>' +
+            '</div>' +
+        '</div>' +
+
+        '<div style="margin-top: 4rem; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 1rem;">' +
+            '<div style="font-size: 0.9rem; color: #64748b;">' +
+                '<p><strong>' + (lang === 'ar' ? 'اتصل بنا:' : 'Contact Us:') + '</strong></p>' +
+                '<p>01010103777</p>' +
+                '<p>01010606016</p>' +
+            '</div>' +
+            '<div style="font-size: 0.9rem; color: #64748b; display: flex; gap: 3rem; justify-content: flex-end;">' +
+                '<div style="text-align: center;">' +
+                    '<p><strong>توقيع المحاسب</strong></p>' +
+                    '<div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>' +
+                '</div>' +
+                '<div style="text-align: center;">' +
+                    '<p><strong>توقيع المهندس</strong></p>' +
+                    '<div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+
+        '</body></html>';
+
+        var win = window.open('', '_blank', 'width=800,height=800');
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        setTimeout(function() { win.print(); }, 500);
+    };
+
+    // Print Customer History
+    window.printCustomerHistory = function() {
+        const customerId   = parseInt(historyDetails.dataset.customerId);
+        const customerName = historyDetails.dataset.customerName || 'Customer';
+        if (!customerId) return;
+
+        const repairs = db.getRepairsByCustomer(customerId);
+        const allCustomers = db.getCustomers();
+        const customer = allCustomers.find(c => c.id === customerId);
+
+        const lang = getCurrentLanguage();
+        const shopName = lang === 'ar' ? '\u0627\u0644\u0623\u0646\u0635\u0627\u0631\u064a' : 'El Ansary Service Shop';
+        const now = new Date();
+        const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+        let totalPaid = 0;
+        const rows = repairs.map(function(r) {
+            const items = db.getRepairItems(r.id);
+            const amount = parseFloat(r.total_amount) || 0;
+            totalPaid += amount;
+            
+            let detailsList = '';
+            if (items.length > 0) {
+                detailsList = items.map(function(it) {
+                    return '<div>\u2022 ' + it.item_name + ' (x' + it.quantity + ') &mdash; ' + (it.quantity * it.unit_price).toFixed(2) + '</div>';
+                }).join('');
+            } else {
+                detailsList = '<div>\u2022 ' + (r.description || 'Service') + '</div>';
+            }
+
+            if (r.odometer) {
+                detailsList += '<div style="margin-top:4px; font-size:0.8rem; color:#475569;"><strong>' + (lang === 'ar' ? 'العداد:' : 'Odometer:') + '</strong> ' + r.odometer + '</div>';
+            }
+            if (r.notes) {
+                detailsList += '<div style="margin-top:2px; font-size:0.8rem; color:#475569;"><strong>' + (lang === 'ar' ? 'ملاحظات:' : 'Notes:') + '</strong> ' + r.notes + '</div>';
+            }
+
+            return '<tr style="border-bottom:1px solid #e2e8f0;">' +
+                '<td style="padding:10px; vertical-align:top;">' + r.date + '</td>' +
+                '<td style="padding:10px; vertical-align:top;">' + detailsList + '</td>' +
+                '<td style="padding:10px; font-weight:700; text-align:right; vertical-align:top;">' + amount.toFixed(2) + '</td>' +
+                '<td style="padding:10px; text-align:center; vertical-align:top;">' + (r.payment_method || '-') + '</td>' +
+                '</tr>';
+        }).join('');
+
+        var textAlign = lang === 'ar' ? 'right' : 'left';
+        var dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+        const html = '<html dir="' + dir + '"><head><meta charset="UTF-8">' +
+        '<style>' +
+        'body{font-family:Arial,sans-serif;font-size:12px;margin:30px;color:#1e293b;}' +
+        '.header{text-align:center; margin-bottom:20px; border-bottom:2px solid #0d9488; padding-bottom:15px;}' +
+        '.header h1{font-size:1.8rem; margin:0 0 5px 0; color:#0d9488;}' +
+        '.header-details{display:flex; justify-content:space-between; margin-top:15px; text-align:' + textAlign + '; font-size:0.9rem;}' +
+        'table{width:100%; border-collapse:collapse; margin-top:1rem;}' +
+        'th{background:#f8fafc; padding:10px; text-align:' + textAlign + '; font-size:0.9rem; border-bottom:2px solid #cbd5e1;}' +
+        '.total-row{background:#f8fafc; font-weight:bold; font-size:1.1rem;}' +
+        '@media print { body { margin: 15px; } .header-details { display:block; text-align:center; } }' +
+        '</style></head><body>' +
+        '<div class="header">' +
+            '<h1>' + shopName + '</h1>' +
+            '<div style="font-size:1.2rem; font-weight:bold; color:#334155;">' + (lang === 'ar' ? 'سجل الصيانة الشامل' : 'Complete Service History') + '</div>' +
+            '<div class="header-details">' +
+                '<div>' +
+                    '<strong>' + (lang === 'ar' ? 'العميل:' : 'Customer:') + '</strong> ' + customerName + '<br>' +
+                    '<strong>' + (lang === 'ar' ? 'السيارة:' : 'Vehicle:') + '</strong> ' + (customer ? customer.car_name : '-') + ' / ' + (customer ? customer.plate_number : '-') +
+                '</div>' +
+                '<div>' +
+                    '<strong>' + (lang === 'ar' ? 'تاريخ الطباعة:' : 'Print Date:') + '</strong> ' + dateStr +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<table>' +
+            '<thead><tr>' +
+                '<th>' + (lang === 'ar' ? 'التاريخ' : 'Date') + '</th>' +
+                '<th>' + (lang === 'ar' ? 'التفاصيل / الملاحظات' : 'Details / Notes') + '</th>' +
+                '<th style="text-align:right;">' + (lang === 'ar' ? 'الإجمالي' : 'Amount') + '</th>' +
+                '<th style="text-align:center;">' + (lang === 'ar' ? 'الدفع' : 'Payment') + '</th>' +
+            '</tr></thead>' +
+            '<tbody>' + rows + '</tbody>' +
+            '<tfoot><tr class="total-row">' +
+                '<td colspan="2" style="padding:10px; text-align:' + textAlign + ';">' + (lang === 'ar' ? 'إجمالي المدفوعات' : 'Total Spent') + '</td>' +
+                '<td style="padding:10px; text-align:right; color:#0d9488;">' + totalPaid.toFixed(2) + '</td>' +
+                '<td></td>' +
+            '</tr></tfoot>' +
+        '</table>' +
+        '</body></html>';
+
+        var win = window.open('', '_blank', 'width=750,height=600');
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        setTimeout(function() { win.print(); }, 500);
+    };
 
     function loadAllCustomers() {
         const customers = db.getCustomers();

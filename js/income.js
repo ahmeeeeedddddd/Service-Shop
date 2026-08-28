@@ -21,7 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const invoiceCountEl = document.getElementById('invoiceCount');
     
     const searchInput = document.getElementById('searchInput');
-    const filterDateInput = document.getElementById('filterDate');
+    const filterStartDateInput = document.getElementById('filterStartDate');
+    const filterEndDateInput = document.getElementById('filterEndDate');
     const paymentFilter = document.getElementById('paymentFilter');
     const resetFiltersBtn = document.getElementById('resetFiltersBtn');
 
@@ -29,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const now = new Date();
     const today = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
-    filterDateInput.value = today;
+    if(filterStartDateInput) filterStartDateInput.value = today;
+    if(filterEndDateInput) filterEndDateInput.value = today;
     
     const detailsModal = document.getElementById('detailsModal');
     const detailsContent = document.getElementById('detailsContent');
@@ -187,9 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>01010103777</p>
                     <p>01010606016</p>
                 </div>
-                <div style="text-align: right; font-size: 0.9rem; color: #64748b;">
-                    <p><strong>Engineer's Signature:</strong></p>
-                    <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                <div style="text-align: right; font-size: 0.9rem; color: #64748b; display: flex; gap: 3rem; justify-content: flex-end;">
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المحاسب</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
+                    <div style="text-align: center;">
+                        <p><strong>توقيع المهندس</strong></p>
+                        <div style="margin-top: 2rem; border-bottom: 1px solid #94a3b8; width: 150px; display: inline-block;"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -214,26 +222,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!currentBillId) return;
             const lang = getCurrentLanguage();
             const confirmMsg = lang === 'ar'
-                ? 'هل أنت متأكد من حذف هذه الفاتورة؟ سيتم تسجيلها كمصروف.'
-                : 'Are you sure you want to delete this bill? It will be recorded as an expense.';
+                ? 'هل أنت متأكد من حذف هذه الفاتورة؟ ستظهر كفاتورة محذوفة.'
+                : 'Are you sure you want to void this bill? It will appear as a deleted bill.';
             
             if (!confirm(confirmMsg)) return;
 
             const bill = allInvoices.find(b => b.id === currentBillId);
             if (bill) {
                 try {
+                    const billDate = bill.date || new Date().toISOString().split('T')[0];
                     db.addExpense({
-                        description: `[Deleted Bill] ${bill.customer_name} — ${bill.description || 'Confirmed bill'}`,
-                        amount: parseFloat(bill.total_amount) || 0,
+                        description: `[Deleted Bill] ${bill.customer_name} — Original amount was $${parseFloat(bill.total_amount).toFixed(2)}`,
+                        amount: 0,
                         category: 'Deleted Bill',
-                        date: bill.date || filterDateInput.value || new Date().toISOString().split('T')[0]
+                        date: billDate
                     });
-                    db.deleteRepair(currentBillId);
+                    db.markRepairAsDeleted(currentBillId);
                     detailsModal.classList.remove('active');
                     currentBillId = null;
                     loadInvoices();
                 } catch (e) {
-                    console.error('Failed to record deleted bill as expense:', e);
+                    console.error('Failed to void bill:', e);
+                    alert('Error: ' + e.message);
                 }
             }
         });
@@ -392,15 +402,20 @@ document.addEventListener('DOMContentLoaded', () => {
         data.forEach(inv => {
             const tr = document.createElement('tr');
             const lang = getCurrentLanguage();
+            const isDeleted = inv.payment_method === 'Deleted';
+            
+            if (isDeleted) tr.style.opacity = '0.6';
+            
             const paymentText = window.getTranslatedPaymentMethod(inv.payment_method);
-            const badgeClass = inv.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card';
+            const badgeClass = isDeleted ? '' : (inv.payment_method.toLowerCase() === 'cash' ? 'badge-cash' : 'badge-card');
+            const badgeStyle = isDeleted ? 'background: #ef4444; color: white;' : '';
             
             const actualPaid = (inv.paid_amount !== null && inv.paid_amount !== undefined) ? inv.paid_amount : (inv.total_amount - (inv.discount || 0));
 
             tr.innerHTML = `
                 <td>${inv.date}</td>
                 <td><span class="font-bold text-teal" style="cursor: pointer;" onclick="viewBillDetails(${inv.id})">${inv.customer_name}</span></td>
-                <td><span class="badge ${badgeClass}">${paymentText}</span></td>
+                <td><span class="badge ${badgeClass}" style="${badgeStyle}">${paymentText}</span></td>
                 <td class="font-bold">$${parseFloat(actualPaid).toFixed(2)}</td>
                 <td>
                 </td>
@@ -429,13 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Filter Logic
     function applyFilters() {
         const searchTerm = searchInput.value.toLowerCase();
-        const filterDate = filterDateInput.value;
+        const startDate = filterStartDateInput ? filterStartDateInput.value : '';
+        const endDate = filterEndDateInput ? filterEndDateInput.value : '';
         const payment = paymentFilter.value;
 
         const filtered = allInvoices.filter(inv => {
             const matchesSearch = inv.customer_name.toLowerCase().includes(searchTerm);
             const matchesPayment = payment === 'all' || inv.payment_method === payment;
-            const matchesDate = !filterDate || inv.date === filterDate;
+            let matchesDate = true;
+            if (startDate && inv.date < startDate) matchesDate = false;
+            if (endDate && inv.date > endDate) matchesDate = false;
             
             return matchesSearch && matchesPayment && matchesDate;
         });
@@ -444,13 +462,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStats(filtered);
     }
 
-    [searchInput, filterDateInput, paymentFilter].forEach(input => {
+    [searchInput, filterStartDateInput, filterEndDateInput, paymentFilter].forEach(input => { if(input)
         input.addEventListener('input', applyFilters);
     });
 
     resetFiltersBtn.addEventListener('click', () => {
         searchInput.value = '';
-        filterDateInput.value = '';
+        if(filterStartDateInput) filterStartDateInput.value = '';
+        if(filterEndDateInput) filterEndDateInput.value = '';
         paymentFilter.value = 'all';
         applyFilters();
     });

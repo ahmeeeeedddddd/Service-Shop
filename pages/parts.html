@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -33,6 +33,7 @@
                 </div>
                 <div class="nav-group-items" id="reportsItems">
                     <a href="daily_report.html" class="nav-item"><span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="income_report.html" class="nav-item"><span>Income Report</span></a>
                     <a href="work_order.html" class="nav-item"><span data-i18n="workOrder">Work Order</span></a>
                     <a href="inspection.html" class="nav-item"><span data-i18n="inspection">Comprehensive Inspection</span></a>
                     <a href="estimate.html" class="nav-item"><span data-i18n="estimate">Car Repair Estimate</span></a>
@@ -60,21 +61,31 @@
                 <div class="card">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="card-title" style="margin-bottom: 0;" data-i18n="inventory">Inventory</h3>
-                        <button class="btn btn-outline" id="printPartsBtn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                            <span data-i18n="printInventory">Print Inventory</span>
-                        </button>
+                        <div class="flex gap-2">
+                            <select id="printCategoryFilter" class="form-control" style="width: 200px;">
+                                <option value="all">Print All / طباعة الكل</option>
+                                <option value="Mechanical">Mechanical / ميكانيكا</option>
+                                <option value="Electrical">Electrical / كهربا</option>
+                                <option value="Body parts">Body parts / عفشه</option>
+                                <option value="Fluids and filters">Fluids &amp; filters / سوائل و زيوت</option>
+                                <option value="Other">Other / أخرى</option>
+                            </select>
+                            <button class="btn btn-outline" id="printPartsBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <span data-i18n="printInventory">Print Inventory</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div style="background: #e0f2fe; border: 1px solid #bae6fd; padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                         <span style="font-size: 1.1rem; font-weight: 600; color: #0369a1;" data-i18n="totalStockValue">Total Stock Value</span>
-                        <span id="totalStockValue" style="font-size: 1.3rem; font-weight: 800; color: #0284c7;">$0.00</span>
+                        <span id="totalStockValue" style="font-size: 1.3rem; font-weight: 800; color: #0284c7;">0.00</span>
                     </div>
 
                     <!-- Search -->
                     <div class="form-group" style="margin-bottom: 1rem;">
                         <input type="text" id="partsSearchInput" class="form-control"
-                               placeholder="🔍 Search by part name or category...">
+                                placeholder="🔍 Search by part name or category...">
                     </div>
 
                     <div class="table-container">
@@ -108,12 +119,11 @@
                     <div class="form-group">
                         <label data-i18n="category">Category</label>
                         <select id="partCategory" class="form-control">
-                            <option value="Engine">Engine</option>
-                            <option value="Brakes">Brakes</option>
-                            <option value="Suspension">Suspension</option>
-                            <option value="Electrical">Electrical</option>
-                            <option value="Fluids">Fluids &amp; Filters</option>
-                            <option value="Other">Other</option>
+                            <option value="Mechanical">Mechanical / ميكانيكا</option>
+                            <option value="Electrical">Electrical / كهربا</option>
+                            <option value="Body parts">Body parts / عفشه</option>
+                            <option value="Fluids and filters">Fluids &amp; filters / سوائل و زيوت</option>
+                            <option value="Other">Other / أخرى</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -160,3 +170,4 @@
     <script src="../js/parts.js"></script>
 </body>
 </html>
+
