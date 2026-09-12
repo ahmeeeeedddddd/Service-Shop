@@ -293,8 +293,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: l.qty,
                 unit_price: l.price
             });
-            if (l.part_id) {
-                db.deductPartStock(l.part_id, l.qty);
+            const pId = parseInt(l.part_id);
+            if (!isNaN(pId) && pId > 0) {
+                db.deductPartStock(pId, parseFloat(l.qty) || 1);
             }
         });
 
@@ -456,14 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div style="flex: 1; text-align: center;">
                     <img src="../assets/logo.png" style="max-height: ${logoMaxHeight}; max-width: 100%; object-fit: contain;" alt="El Ansary" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #1e293b; margin-top: 5px; text-align: center;">بيان الخدمه (معلقة)</div>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #1e293b; margin-top: 5px; text-align: center;">بيان الخدمه</div>
                     <h1 style="display:none; color: #eab308; margin:0;">${t.appName}</h1>
                 </div>
                 <div style="flex: 1; text-align: right; font-weight: bold; color: #475569; font-size: 1.1rem; padding-top: 10px; direction: rtl;">
                     مركز الانصاري لصيانه السيارات
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: ${sectionMargin};">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; background:#fefce8; padding: 0.85rem 1.25rem; border-radius: 8px; border: 1.5px solid #fde047; font-size: 0.95rem;">
                 <div>
                     <p style="margin: 0.25rem 0;"><strong>${t.customer}:</strong> ${bill.customer_name}</p>
                     <p style="margin: 0.25rem 0;"><strong>${t.phone}:</strong> ${bill.customer_phone}</p>

@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     مركز الانصاري لصيانه السيارات
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: ${sectionMargin};">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; background:#fefce8; padding: 0.85rem 1.25rem; border-radius: 8px; border: 1.5px solid #fde047; font-size: 0.95rem;">
                 <div>
                     <p style="margin: 0.25rem 0;"><strong>${t.customer}:</strong> ${bill.customer_name}</p>
                     <p style="margin: 0.25rem 0;"><strong>${t.phone}:</strong> ${bill.customer_phone || '-'}</p>

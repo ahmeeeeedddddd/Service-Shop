@@ -128,6 +128,26 @@ const translations = {
         noSuppliers: "No suppliers found.",
         confirmPayment: "Confirm Payment",
         billProcessed: "Successfully processed",
+
+        // Supplier Report
+        supplierReport: "Supplier Report",
+        supplierReportTitle: "Supplier Payment Report",
+        supplierReportSub: "Weekly & periodic report of payments made to suppliers and remaining balance",
+        totalPaidInPeriod: "Total Paid in Period",
+        totalPurchasedInPeriod: "Total Added Purchases",
+        totalRemainingOwed: "Total Remaining Balance",
+        suppliersPaidCount: "Suppliers Paid",
+        thisWeek: "This Week",
+        lastWeek: "Last Week",
+        supplierSummaryTable: "Suppliers Summary",
+        paymentLogTable: "Detailed Payments Log",
+        noPaymentsInPeriod: "No supplier payments logged in this period",
+        filterSupplier: "Filter Supplier",
+        startDate: "Start Date",
+        endDate: "End Date",
+        amountPaid: "Amount Paid",
+        remainingOwed: "Remaining Owed",
+        balanceAfter: "Balance After",
         billAlreadyProcessed: "Bill is already processed",
         confirmDeleteCustomer: "Are you sure you want to delete this customer?",
         duplicateCustomerError: "Customer with this phone number already exists!",
@@ -162,13 +182,14 @@ const translations = {
         updateExpense: "Update Expense",
         confirmDeleteExpense: "Are you sure you want to delete this expense?",
         salaries: "Salaries",
-        salariesSubtitle: "Manage employee records and record salaries as expenses",
+        salariesTitle: "Salaries",
+        salariesSubtitle: "Manage employee payroll, borrows, deductions and bonuses",
         addEmployee: "Add Employee",
         employeeName: "Name",
         employeeId: "ID",
         employeeRole: "Role",
         dailyRate: "Daily Rate",
-        weeklyTotal: "Weekly Salary (6 days)",
+        weeklyTotal: "Weekly (6d)",
         borrows: "Borrows",
         deductions: "Deductions",
         bonus: "Bonus",
@@ -176,6 +197,18 @@ const translations = {
         printPayroll: "Print Payroll",
         resetAllDeductions: "Reset All Deductions",
         employeesList: "Employees List",
+        recordSalary: "Record Salary",
+        recordDeduction: "Deduction",
+        recordBorrow: "Borrow (سلفة)",
+        recordBonus: "Bonus (مكافأة)",
+        daysWorked: "Days Worked",
+        bonusAmount: "Bonus / Raise",
+        deductionAmount: "Deduction Amount",
+        deductionReason: "Reason",
+        borrowAmount: "Borrow Amount",
+        confirmResetAll: "This will clear ALL borrows, deductions, and bonuses for all employees. Continue?",
+        save: "Save",
+        noData: "No employees found.",
         
         // Multi-car Support
         addCar: "+ Add Another Car",
@@ -188,6 +221,7 @@ const translations = {
     },
     ar: {
         // Sidebar & General
+        salariesTitle: "الرواتب",
         appName: "الأنصاري",
         appSubtitle: "مركز الخدمة",
         customers: "العملاء",
@@ -255,11 +289,37 @@ const translations = {
         deductFromCash: "خصم من دخل الكاش",
         totalLogged: "إجمالي المصاريف المسجلة",
         
-        // Categories
+        // Categories & Salaries
         rent: "إيجار",
         partsCat: "قطع غيار",
         utilities: "خدمات",
         salaries: "رواتب",
+        salariesTitle: "الرواتب",
+        salariesSubtitle: "إدارة رواتب الموظفين والسلف والخصومات",
+        addEmployee: "إضافة موظف",
+        employeeName: "الاسم",
+        employeeRole: "الوظيفة",
+        dailyRate: "الأجر اليومي",
+        weeklyTotal: "الأسبوعي (6أيام)",
+        borrows: "السلف",
+        deductions: "الخصومات",
+        bonus: "المكافآت",
+        netPay: "صافي الراتب",
+        printPayroll: "طباعة كشف الرواتب",
+        resetAllDeductions: "تصفير كل الخصومات",
+        employeesList: "قائمة الموظفين",
+        recordSalary: "تسجيل راتب",
+        recordDeduction: "خصم",
+        recordBorrow: "سلفة",
+        recordBonus: "مكافأة",
+        daysWorked: "أيام العمل",
+        bonusAmount: "مكافأة / زيادة",
+        deductionAmount: "مبلغ الخصم",
+        deductionReason: "السبب",
+        borrowAmount: "مبلغ السلفة",
+        confirmResetAll: "سيتم حذف جميع السلف والخصومات والمكافآت لكل الموظفين. هل تريد المتابعة؟",
+        save: "حفظ",
+        noData: "لا يوجد موظفين.",
         other: "أخرى",
 
         // Filters
@@ -313,6 +373,26 @@ const translations = {
         noSuppliers: "لا يوجد موردين.",
         confirmPayment: "تأكيد الدفع",
         billProcessed: "تمت المعالجة بنجاح",
+
+        // Supplier Report
+        supplierReport: "تقرير الموردين",
+        supplierReportTitle: "تقرير مدفوعات الموردين",
+        supplierReportSub: "تقرير أسبوعي ودوري للمبالغ المدفوعة للموردين والرصيد المتبقي",
+        totalPaidInPeriod: "إجمالي المدفوع في الفترة",
+        totalPurchasedInPeriod: "إجمالي المشتريات بالآجل",
+        totalRemainingOwed: "إجمالي المتبقي للموردين",
+        suppliersPaidCount: "عدد الموردين المدفوع لهم",
+        thisWeek: "هذا الأسبوع",
+        lastWeek: "الأسبوع الماضي",
+        supplierSummaryTable: "ملخص الموردين",
+        paymentLogTable: "سجل الدفعات التفصيلي",
+        noPaymentsInPeriod: "لا توجد دفعات مسجلة للموردين خلال هذه الفترة",
+        filterSupplier: "تصفية حسب المورد",
+        startDate: "تاريخ البداية",
+        endDate: "تاريخ النهاية",
+        amountPaid: "المبلغ المدفوع",
+        remainingOwed: "المبلغ المتبقي",
+        balanceAfter: "الرصيد بعد الدفعة",
         billAlreadyProcessed: "الفاتورة معالجة بالفعل",
         confirmDeleteCustomer: "هل أنت متأكد من حذف هذا العميل؟",
         duplicateCustomerError: "هذا العميل موجود بالفعل بنفس رقم الهاتف!",
@@ -411,6 +491,15 @@ function translatePage() {
     document.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
 }
+
+function t(key) {
+    const lang = getCurrentLanguage();
+    const trans = translations[lang] || translations['en'];
+    if (trans && trans[key] !== undefined) return trans[key];
+    if (translations['en'] && translations['en'][key] !== undefined) return translations['en'][key];
+    return key;
+}
+window.t = t;
 
 // Global error handler for easier debugging
 window.onerror = function(message, source, lineno, colno, error) {

@@ -514,6 +514,200 @@ function addEmployeeAdjustment(id, adjustmentObj) {
 function clearEmployeeAdjustments(id) {
   db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run('[]', id);
 }
+// --- Suppliers CRUD ---
+function getSuppliers() {
+  return db.prepare('SELECT * FROM suppliers ORDER BY id DESC').all();
+}
+
+function addSupplier(supplier) {
+  const stmt = db.prepare('INSERT INTO suppliers (name, contact_number, supplies_what, notes, pending_amount) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(supplier.name, supplier.contact_number, supplier.supplies_what, supplier.notes, supplier.pending_amount || 0);
+  return info.lastInsertRowid;
+}
+
+function updateSupplierPending(id, pending_amount) {
+  db.prepare('UPDATE suppliers SET pending_amount = ? WHERE id = ?').run(pending_amount, id);
+}
+
+function deleteSupplier(id) {
+  db.prepare('UPDATE parts SET supplier_id = NULL WHERE supplier_id = ?').run(id);
+  db.prepare('DELETE FROM supplier_transactions WHERE supplier_id = ?').run(id);
+  db.prepare('DELETE FROM suppliers WHERE id = ?').run(id);
+}
+
+function addSupplierTransaction(supplierId, type, amount, balanceAfter, note, date) {
+  const stmt = db.prepare('INSERT INTO supplier_transactions (supplier_id, type, amount, balance_after, note, date) VALUES (?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(supplierId, type, amount, balanceAfter, note || '', date);
+  return info.lastInsertRowid;
+}
+
+function getSupplierTransactions(supplierId) {
+  return db.prepare('SELECT * FROM supplier_transactions WHERE supplier_id = ? ORDER BY date DESC, id DESC').all(supplierId);
+}
+
+// --- Parts CRUD ---
+function getParts() {
+  return db.prepare(`
+    SELECT parts.*, suppliers.name as supplier_name 
+    FROM parts 
+    LEFT JOIN suppliers ON parts.supplier_id = suppliers.id
+    ORDER BY parts.name COLLATE NOCASE ASC
+  `).all();
+}
+
+function addPart(part) {
+  const stmt = db.prepare('INSERT INTO parts (name, category, quantity_in_stock, unit_price, supplier_id) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(part.name, part.category, part.quantity_in_stock, part.unit_price, part.supplier_id);
+  return info.lastInsertRowid;
+}
+
+function updatePart(id, quantity, price, name, category, supplier_id) {
+  db.prepare('UPDATE parts SET quantity_in_stock = ?, unit_price = ?, name = ?, category = ?, supplier_id = ? WHERE id = ?').run(quantity, price, name, category, supplier_id, id);
+}
+
+function updatePartInline(id, quantity, price) {
+  db.prepare('UPDATE parts SET quantity_in_stock = ?, unit_price = ? WHERE id = ?').run(quantity, price, id);
+}
+
+function deletePart(id) {
+  db.prepare('DELETE FROM parts WHERE id = ?').run(id);
+}
+
+function searchParts(term) {
+  return db.prepare(`
+    SELECT parts.*, suppliers.name as supplier_name
+    FROM parts
+    LEFT JOIN suppliers ON parts.supplier_id = suppliers.id
+    WHERE parts.name LIKE ? OR parts.category LIKE ?
+    ORDER BY parts.name COLLATE NOCASE ASC
+  `).all(`%${term}%`, `%${term}%`);
+}
+
+function deductPartStock(id, quantity) {
+  db.prepare('UPDATE parts SET quantity_in_stock = MAX(0, quantity_in_stock - ?) WHERE id = ?').run(quantity, id);
+}
+
+function addPartStock(id, quantity, new_unit_price) {
+  if (new_unit_price !== null && new_unit_price !== undefined) {
+    db.prepare('UPDATE parts SET quantity_in_stock = quantity_in_stock + ?, unit_price = ? WHERE id = ?').run(quantity, new_unit_price, id);
+  } else {
+    db.prepare('UPDATE parts SET quantity_in_stock = quantity_in_stock + ? WHERE id = ?').run(quantity, id);
+  }
+}
+
+function deleteRepairItems(repairId) {
+  db.prepare('DELETE FROM repair_items WHERE repair_id = ?').run(repairId);
+}
+
+function updateRepair(id, total, method) {
+  return db.prepare('UPDATE repairs SET total_amount = ?, payment_method = ? WHERE id = ?').run(total, method, id);
+}
+
+function updateRepairFull(id, total, description) {
+  return db.prepare('UPDATE repairs SET total_amount = ?, description = ? WHERE id = ?').run(total, description, id);
+}
+
+function updateCustomer(id, data) {
+  return db.prepare('UPDATE customers SET name = ?, phone = ?, car_name = ?, plate_number = ? WHERE id = ?')
+    .run(data.name, data.phone, data.car_name, data.plate_number, id);
+}
+
+// --- Expenses CRUD ---
+function getExpenses() {
+  return db.prepare('SELECT * FROM expenses ORDER BY date DESC').all();
+}
+
+function addExpense(expense) {
+  const fromCash = expense.from_cash !== undefined ? expense.from_cash : 1;
+  const stmt = db.prepare('INSERT INTO expenses (description, amount, category, date, from_cash) VALUES (?, ?, ?, ?, ?)');
+  const info = stmt.run(expense.description, expense.amount, expense.category, expense.date, fromCash);
+  return info.lastInsertRowid;
+}
+
+function deleteExpense(id) {
+  return db.prepare('DELETE FROM expenses WHERE id = ?').run(id);
+}
+
+function updateExpense(id, expense) {
+  const fromCash = expense.from_cash !== undefined ? expense.from_cash : 1;
+  return db.prepare('UPDATE expenses SET description = ?, amount = ?, category = ?, date = ?, from_cash = ? WHERE id = ?')
+    .run(expense.description, expense.amount, expense.category, expense.date, fromCash, id);
+}
+
+// --- Pending Bills CRUD ---
+function getPendingBills() {
+  return db.prepare(`
+    SELECT pending_bills.*, customers.name as customer_name, customers.phone as customer_phone,
+           customers.car_name, customers.plate_number
+    FROM pending_bills
+    JOIN customers ON pending_bills.customer_id = customers.id
+    ORDER BY pending_bills.date_created DESC
+  `).all();
+}
+
+function addPendingBill(bill) {
+  const stmt = db.prepare('INSERT INTO pending_bills (customer_id, description, date_created, total_amount, payment_method, odometer, notes, line_items_json, discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  const info = stmt.run(bill.customer_id, bill.description, bill.date_created, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, bill.discount || 0);
+  return info.lastInsertRowid;
+}
+
+function deletePendingBill(id) {
+  db.prepare('DELETE FROM pending_bills WHERE id = ?').run(id);
+}
+
+function updatePendingBill(id, bill) {
+  db.prepare('UPDATE pending_bills SET description=?, total_amount=?, payment_method=?, odometer=?, notes=?, line_items_json=?, discount=? WHERE id=?')
+    .run(bill.description, bill.total_amount, bill.payment_method, bill.odometer, bill.notes, bill.line_items_json, bill.discount || 0, id);
+}
+
+function getPendingBillById(id) {
+  return db.prepare(`
+    SELECT pending_bills.*, customers.name as customer_name, customers.phone as customer_phone,
+           customers.car_name, customers.plate_number
+    FROM pending_bills
+    JOIN customers ON pending_bills.customer_id = customers.id
+    WHERE pending_bills.id = ?
+  `).get(id);
+}
+
+// --- Employees CRUD ---
+function getEmployees() {
+  return db.prepare('SELECT * FROM employees ORDER BY name COLLATE NOCASE ASC').all();
+}
+
+function addEmployee(emp) {
+  const stmt = db.prepare('INSERT INTO employees (employee_id, name, role, daily_rate) VALUES (?, ?, ?, ?)');
+  const info = stmt.run(emp.employee_id, emp.name, emp.role, emp.daily_rate);
+  return info.lastInsertRowid;
+}
+
+function updateEmployee(id, emp) {
+  db.prepare('UPDATE employees SET employee_id=?, name=?, role=?, daily_rate=? WHERE id=?')
+    .run(emp.employee_id, emp.name, emp.role, emp.daily_rate, id);
+}
+
+function deleteEmployee(id) {
+  db.prepare('DELETE FROM employees WHERE id = ?').run(id);
+}
+
+function addEmployeeAdjustment(id, adjustmentObj) {
+  // adjustmentObj = { type: 'Deduction'|'Borrow', amount: 100, reason: '...', date: '...' }
+  const emp = db.prepare('SELECT pending_adjustments FROM employees WHERE id = ?').get(id);
+  if (emp) {
+    let adjs = [];
+    try {
+        if (emp.pending_adjustments) {
+            adjs = JSON.parse(emp.pending_adjustments);
+        }
+    } catch(e) {}
+    adjs.push(adjustmentObj);
+    db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run(JSON.stringify(adjs), id);
+  }
+}
+
+function clearEmployeeAdjustments(id) {
+  db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run('[]', id);
+}
 
 function clearAllEmployeeAdjustments() {
   db.prepare('UPDATE employees SET pending_adjustments = ?').run('[]');
@@ -521,6 +715,56 @@ function clearAllEmployeeAdjustments() {
 
 function updateEmployeeAdjustments(id, adjsArray) {
   db.prepare('UPDATE employees SET pending_adjustments = ? WHERE id = ?').run(JSON.stringify(adjsArray), id);
+}
+
+function getAllSupplierTransactions(startDate, endDate) {
+  let query = `
+    SELECT st.*, s.name as supplier_name, s.contact_number, s.supplies_what, s.pending_amount as current_pending
+    FROM supplier_transactions st
+    JOIN suppliers s ON st.supplier_id = s.id
+  `;
+  const params = [];
+  if (startDate && endDate) {
+    query += ` WHERE st.date >= ? AND st.date <= ?`;
+    params.push(startDate, endDate);
+  } else if (startDate) {
+    query += ` WHERE st.date >= ?`;
+    params.push(startDate);
+  } else if (endDate) {
+    query += ` WHERE st.date <= ?`;
+    params.push(endDate);
+  }
+  query += ` ORDER BY st.date DESC, st.id DESC`;
+  return db.prepare(query).all(...params);
+}
+
+function getSupplierReportData(startDate, endDate) {
+  const suppliers = db.prepare('SELECT * FROM suppliers ORDER BY name COLLATE NOCASE ASC').all();
+  
+  let txSql = `
+    SELECT st.*, s.name as supplier_name, s.contact_number, s.supplies_what
+    FROM supplier_transactions st
+    JOIN suppliers s ON st.supplier_id = s.id
+  `;
+  const params = [];
+  if (startDate && endDate) {
+    txSql += ` WHERE st.date >= ? AND st.date <= ?`;
+    params.push(startDate, endDate);
+  } else if (startDate) {
+    txSql += ` WHERE st.date >= ?`;
+    params.push(startDate);
+  } else if (endDate) {
+    txSql += ` WHERE st.date <= ?`;
+    params.push(endDate);
+  }
+  txSql += ` ORDER BY st.date DESC, st.id DESC`;
+  
+  const transactions = db.prepare(txSql).all(...params);
+  
+  return {
+    suppliers,
+    transactions
+  };
 }
 
 module.exports = {
@@ -540,6 +784,8 @@ module.exports = {
   deleteSupplier,
   addSupplierTransaction,
   getSupplierTransactions,
+  getAllSupplierTransactions,
+  getSupplierReportData,
   getParts,
   searchParts,
   addPart,

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Report - El Ansary</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        #printContainer { display: none; }
+        @media print {
+            body > * { display: none !important; }
+            #printContainer {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+        }
+        .filter-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            flex: 1;
+            min-width: 140px;
+        }
+        .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .preset-btn-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .preset-btn {
+            padding: 0.4rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #475569;
+            background: #1e293b;
+            color: #e2e8f0;
+            transition: all 0.2s;
+        }
+        .preset-btn:hover { background: #334155; border-color: #0d9488; }
+        .preset-btn.active { background: #0d9488; color: white; border-color: #0d9488; box-shadow: 0 0 10px rgba(13,148,136,0.3); }
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-chip {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .summary-chip .label { font-size: 0.75rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-bottom: 0.4rem; }
+        .summary-chip .value { font-size: 1.35rem; font-weight: 800; color: #10b981; }
+        .summary-chip.highlight { border-color: #0d9488; background: linear-gradient(135deg, #0f2924, #1e293b); }
+        .summary-chip.danger { border-color: #ef4444; background: linear-gradient(135deg, #2d1b1b, #1e293b); }
+        .summary-chip.danger .value { color: #ef4444; }
+        .results-table thead tr { background: #1e293b; }
+        .results-table thead th { padding: 0.75rem 1rem; font-size: 0.78rem; text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #334155; }
+        .results-table tbody td { padding: 0.75rem 1rem; font-size: 0.88rem; border-bottom: 1px solid #1e293b; }
+        .results-table tbody tr:hover { background: rgba(13,148,136,0.04); }
+        .section-header-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-9-11-9-11-9S0 4 0 13v3c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                </div>
+                <div class="logo-text">
+                    <h1 data-i18n="appName">El Ansary</h1>
+                    <span data-i18n="appSubtitle">SERVICE CENTER</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="customers.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <span data-i18n="customers">Customers</span>
+                </a>
+                <a href="billing.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span data-i18n="billing">Billing</span>
+                </a>
+                <a href="pending_bills.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    <span data-i18n="pendingBills">Pending Bills</span>
+                </a>
+                <a href="parts.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    <span data-i18n="parts">Parts &amp; Stock</span>
+                </a>
+                <a href="suppliers.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    <span data-i18n="suppliers">Suppliers</span>
+                </a>
+                <a href="income.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span data-i18n="income">Income</span>
+                </a>
+                <a href="expenses.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                    <span data-i18n="expenses">Expenses</span>
+                </a>
+                <a href="bills_history.html" class="nav-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span data-i18n="billsHistory">Bills History</span>
+                </a>
+                <div class="nav-group">
+                    <div class="nav-group-toggle open" id="reportsToggle">
+                        <span data-i18n="reports">Reports</span>
+                        <span class="nav-group-arrow">&#9662;</span>
+                    </div>
+                    <div class="nav-group-items open" id="reportsItems">
+                        <a href="daily_report.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            <span data-i18n="dailyReport">Daily Report</span>
+                        </a>
+                        <a href="income_report.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                            <span data-i18n="incomeReport">Income Report</span>
+                        </a>
+                        <a href="supplier_report.html" class="nav-item active">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                            <span data-i18n="supplierReport">Supplier Report</span>
+                        </a>
+                        <a href="work_order.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                            <span data-i18n="workOrder">Work Order</span>
+                        </a>
+                        <a href="inspection.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span data-i18n="inspection">Comprehensive Inspection</span>
+                        </a>
+                        <a href="estimate.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            <span data-i18n="estimate">Car Repair Estimate</span>
+                        </a>
+                        <a href="salaries.html" class="nav-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <span data-i18n="salaries">Salaries</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="lang-btn" id="langToggle" data-i18n="langToggle">العربية</button>
+                <div class="version-info" data-i18n="version">Version 1.0 — Works offline</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="page-header no-print">
+                <h2 data-i18n="supplierReportTitle">Supplier Payment Report</h2>
+                <p data-i18n="supplierReportSub">Weekly &amp; periodic report of payments made to suppliers and remaining balance</p>
+            </header>
+
+            <!-- Filter Card -->
+            <div class="filter-card no-print">
+                <!-- Preset Range Buttons -->
+                <div class="preset-btn-group">
+                    <button class="preset-btn active" id="presetThisWeek" data-preset="thisWeek" data-i18n="thisWeek">This Week</button>
+                    <button class="preset-btn" id="presetLastWeek" data-preset="lastWeek" data-i18n="lastWeek">Last Week</button>
+                    <button class="preset-btn" id="presetThisMonth" data-preset="thisMonth" data-i18n="thisMonth">This Month</button>
+                    <button class="preset-btn" id="presetAllTime" data-preset="allTime" data-i18n="allTime">All Time</button>
+                </div>
+
+                <!-- Custom Controls -->
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label data-i18n="startDate">Start Date</label>
+                        <input type="date" id="fromDate" class="form-control">
+                    </div>
+                    <div class="filter-group">
+                        <label data-i18n="endDate">End Date</label>
+                        <input type="date" id="toDate" class="form-control">
+                    </div>
+                    <div class="filter-group">
+                        <label data-i18n="filterSupplier">Filter Supplier</label>
+                        <select id="supplierSelect" class="form-control">
+                            <option value="all" data-i18n="allSuppliers">All Suppliers</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                        <button class="btn btn-primary" id="applyFilterBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <span data-i18n="search">Search</span>
+                        </button>
+                        <button class="btn btn-outline" id="printReportBtn" style="color: #ffffff; border-color: #475569;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            <span data-i18n="printReport">Print Report</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Chips -->
+            <div class="summary-strip">
+                <div class="summary-chip highlight">
+                    <div class="label" data-i18n="totalPaidInPeriod">Total Paid in Period</div>
+                    <div class="value" id="sumTotalPaid">$0.00</div>
+                </div>
+                <div class="summary-chip">
+                    <div class="label" data-i18n="totalPurchasedInPeriod">Total Added Purchases</div>
+                    <div class="value" id="sumTotalPurchased" style="color: #38bdf8;">$0.00</div>
+                </div>
+                <div class="summary-chip danger">
+                    <div class="label" data-i18n="totalRemainingOwed">Total Remaining Balance</div>
+                    <div class="value" id="sumTotalRemaining">$0.00</div>
+                </div>
+                <div class="summary-chip">
+                    <div class="label" data-i18n="suppliersPaidCount">Suppliers Paid</div>
+                    <div class="value" id="sumPaidCount" style="color: #a855f7;">0</div>
+                </div>
+            </div>
+
+            <!-- Section 1: Suppliers Overview Table -->
+            <div class="card" style="margin-bottom: 2rem;">
+                <div class="section-header-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                    <span data-i18n="supplierSummaryTable">Suppliers Summary</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table results-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="supplierName">Supplier Name</th>
+                                <th data-i18n="contactNumber">Contact Number</th>
+                                <th data-i18n="suppliesWhat">Supplies What</th>
+                                <th data-i18n="amountPaid">Amount Paid</th>
+                                <th data-i18n="totalPurchasedInPeriod">Added Purchases</th>
+                                <th data-i18n="remainingOwed">Remaining Owed</th>
+                                <th data-i18n="actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suppliersSummaryBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Section 2: Detailed Payment Log Table -->
+            <div class="card">
+                <div class="section-header-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span data-i18n="paymentLogTable">Detailed Payments Log</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table results-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="date">Date</th>
+                                <th data-i18n="supplierName">Supplier Name</th>
+                                <th data-i18n="amountPaid">Amount Paid</th>
+                                <th data-i18n="balanceAfter">Balance After</th>
+                                <th data-i18n="notes">Notes / Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentLogBody">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Print Area -->
+    <div id="printArea" style="display:none;"></div>
+
+    <script src="../js/i18n.js"></script>
+    <script src="../js/supplier_report.js"></script>
+</body>
+</html>

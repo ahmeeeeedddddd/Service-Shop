@@ -1,13 +1,9 @@
 let db;
-try {
-    db = require('../database/db.js');
-} catch (e) {
-    console.error('Failed to load database:', e);
-    alert('Database Error: ' + e.message + '\n\n' + e.stack);
-}
+try { db = require('../database/db.js'); }
+catch (e) { console.error('DB load error:', e); alert('Database Error: ' + e.message); }
 
-let editingEmployeeId = null;
-let currentEmp = null; // { id, name, role, dailyRate }
+let editingEmpId = null;
+let currentModalEmpId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     translatePage();
@@ -20,532 +16,351 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const saveEmpBtn = document.getElementById('saveEmpBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const formTitle = document.getElementById('formTitle');
-
     loadEmployees();
-
-    // ── Save / Update Employee ──────────────────────────────────────────────
-    saveEmpBtn.addEventListener('click', () => {
-        const name        = document.getElementById('empName').value.trim();
-        const role        = document.getElementById('empRole').value.trim();
-        const daily_rate  = parseFloat(document.getElementById('empDailyRate').value) || 0;
-
-        if (!name || !role) {
-            alert(getCurrentLanguage() === 'en' ? 'All fields are required!' : 'جميع الحقول مطلوبة!');
-            return;
-        }
-
-        if (editingEmployeeId) {
-            db.updateEmployee(editingEmployeeId, { name, employee_id: '', role, daily_rate });
-            editingEmployeeId = null;
-            saveEmpBtn.textContent   = getCurrentLanguage() === 'en' ? 'Save Employee'   : 'حفظ الموظف';
-            formTitle.textContent    = getCurrentLanguage() === 'en' ? 'Add Employee'    : 'إضافة موظف';
-            cancelEditBtn.style.display = 'none';
-        } else {
-            db.addEmployee({ name, employee_id: '', role, daily_rate });
-        }
-
-        clearForm();
-        loadEmployees();
-    });
-
-    cancelEditBtn.addEventListener('click', () => {
-        editingEmployeeId = null;
-        saveEmpBtn.textContent   = getCurrentLanguage() === 'en' ? 'Save Employee' : 'حفظ الموظف';
-        formTitle.textContent    = getCurrentLanguage() === 'en' ? 'Add Employee'  : 'إضافة موظف';
-        cancelEditBtn.style.display = 'none';
-        clearForm();
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // SALARY MODAL
-    // ══════════════════════════════════════════════════════════════════════════
-    const salaryModal     = document.getElementById('salaryModal');
-    const modalDaysWorked = document.getElementById('modalDaysWorked');
-    const modalRaise      = document.getElementById('modalRaise');
-    const modalNetSalary  = document.getElementById('modalNetSalary');
-    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-    const modalCancelBtn  = document.getElementById('modalCancelBtn');
-
-    function calcNetSalary() {
-        if (!currentEmp) return;
-        const days  = parseFloat(modalDaysWorked.value) || 0;
-        const raise = parseFloat(modalRaise.value) || 0;
-        const net   = (currentEmp.dailyRate * days) + raise - currentEmp.deductions;
-        modalNetSalary.textContent = `$${Math.max(0, net).toFixed(2)}`;
-    }
-
-    modalDaysWorked.addEventListener('input', calcNetSalary);
-    modalRaise.addEventListener('input', calcNetSalary);
-
-    modalConfirmBtn.addEventListener('click', () => {
-        if (!currentEmp) return;
-        const days  = parseFloat(modalDaysWorked.value) || 0;
-        const raise = parseFloat(modalRaise.value) || 0;
-        const net   = Math.max(0, (currentEmp.dailyRate * days) + raise - currentEmp.deductions);
-        const today = new Date().toISOString().split('T')[0];
-
-        let description = `Salary: ${currentEmp.name} (${currentEmp.role}) — ${days} days`;
-        if (raise > 0) description += ` + Bonus $${raise.toFixed(2)}`;
-        if (currentEmp.deductions > 0) description += ` - Deductions $${currentEmp.deductions.toFixed(2)}`;
-
-        db.addExpense({ description, amount: net, category: 'Salaries', date: today });
-        if (currentEmp.deductions > 0) {
-            db.clearEmployeeAdjustments(currentEmp.id);
-        }
-
-        const msg = getCurrentLanguage() === 'en'
-            ? `Salary of $${net.toFixed(2)} recorded for ${currentEmp.name}.`
-            : `تم تسجيل راتب ${currentEmp.name} بقيمة $${net.toFixed(2)}.`;
-        alert(msg);
-        salaryModal.classList.remove('active');
-        currentEmp = null;
-        loadEmployees();
-    });
-
-    modalCancelBtn.addEventListener('click', () => {
-        salaryModal.classList.remove('active');
-        currentEmp = null;
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // DEDUCTION MODAL
-    // ══════════════════════════════════════════════════════════════════════════
-    const deductionModal      = document.getElementById('deductionModal');
-    const deductionAmount     = document.getElementById('deductionAmount');
-    const deductionReason     = document.getElementById('deductionReason');
-    const deductionConfirmBtn = document.getElementById('deductionConfirmBtn');
-    const deductionCancelBtn  = document.getElementById('deductionCancelBtn');
-
-    deductionConfirmBtn.addEventListener('click', () => {
-        if (!currentEmp) return;
-        const amount = parseFloat(deductionAmount.value) || 0;
-        if (amount <= 0) {
-            alert('Please enter a valid deduction amount.');
-            return;
-        }
-
-        const reason = deductionReason.value.trim();
-        const today  = new Date().toISOString().split('T')[0];
-
-        db.addEmployeeAdjustment(currentEmp.id, { type: 'Deduction', amount, reason, date: today });
-
-        const msg = getCurrentLanguage() === 'en'
-            ? `Deduction of $${amount.toFixed(2)} added to ${currentEmp.name}'s balance.`
-            : `تم إضافة خصم بقيمة $${amount.toFixed(2)} على ${currentEmp.name}.`;
-        alert(msg);
-        deductionModal.classList.remove('active');
-        currentEmp = null;
-        loadEmployees();
-    });
-
-    deductionCancelBtn.addEventListener('click', () => {
-        deductionModal.classList.remove('active');
-        currentEmp = null;
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // BORROW MONEY MODAL
-    // ══════════════════════════════════════════════════════════════════════════
-    const borrowModal      = document.getElementById('borrowModal');
-    const borrowAmount     = document.getElementById('borrowAmount');
-    const borrowNote       = document.getElementById('borrowNote');
-    const borrowConfirmBtn = document.getElementById('borrowConfirmBtn');
-    const borrowCancelBtn  = document.getElementById('borrowCancelBtn');
-
-    borrowConfirmBtn.addEventListener('click', () => {
-        if (!currentEmp) return;
-        const amount = parseFloat(borrowAmount.value) || 0;
-        if (amount <= 0) {
-            alert('Please enter a valid amount.');
-            return;
-        }
-        const note  = borrowNote.value.trim();
-        const today = new Date().toISOString().split('T')[0];
-
-        // Record borrow as an expense
-        const description = `Advance/Borrow: ${currentEmp.name} (${currentEmp.role})${note ? ' — ' + note : ''}`;
-        db.addExpense({ description, amount, category: 'Salaries', date: today });
-        
-        // Also add to their pending adjustments
-        db.addEmployeeAdjustment(currentEmp.id, { type: 'Borrow', amount, reason: note, date: today });
-
-        const msg = getCurrentLanguage() === 'en'
-            ? `Advance of $${amount.toFixed(2)} recorded as an expense and subtracted from ${currentEmp.name}'s salary.`
-            : `تم تسجيل سلفة ${currentEmp.name} بقيمة $${amount.toFixed(2)} في المصاريف والخصومات.`;
-        alert(msg);
-        borrowModal.classList.remove('active');
-        currentEmp = null;
-        loadEmployees();
-    });
-
-    borrowCancelBtn.addEventListener('click', () => {
-        borrowModal.classList.remove('active');
-        currentEmp = null;
-    });
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // BONUS MODAL
-    // ══════════════════════════════════════════════════════════════════════════
-    const bonusModal      = document.getElementById('bonusModal');
-    const bonusAmount     = document.getElementById('bonusAmount');
-    const bonusReason     = document.getElementById('bonusReason');
-    const bonusConfirmBtn = document.getElementById('bonusConfirmBtn');
-    const bonusCancelBtn  = document.getElementById('bonusCancelBtn');
-
-    bonusConfirmBtn.addEventListener('click', () => {
-        if (!currentEmp) return;
-        const amount = parseFloat(bonusAmount.value) || 0;
-        if (amount <= 0) {
-            alert('Please enter a valid amount.');
-            return;
-        }
-        const reason = bonusReason.value.trim();
-        const today  = new Date().toISOString().split('T')[0];
-
-        db.addEmployeeAdjustment(currentEmp.id, { type: 'Bonus', amount, reason, date: today });
-
-        const msg = getCurrentLanguage() === 'en'
-            ? `Bonus of $${amount.toFixed(2)} recorded for ${currentEmp.name}.`
-            : `تم تسجيل مكافأة ${currentEmp.name} بقيمة $${amount.toFixed(2)}.`;
-        alert(msg);
-        bonusModal.classList.remove('active');
-        currentEmp = null;
-        loadEmployees();
-    });
-
-    bonusCancelBtn.addEventListener('click', () => {
-        bonusModal.classList.remove('active');
-        currentEmp = null;
-    });
+    
+    document.getElementById('saveEmpBtn').onclick = saveEmployee;
+    document.getElementById('cancelEmpBtn').onclick = resetForm;
+    document.getElementById('resetAllBtn').onclick = resetAllEmployees;
+    document.getElementById('printPayrollBtn').onclick = printPayroll;
+    
+    // Modal buttons
+    document.getElementById('cancelSalaryBtn').onclick = () => document.getElementById('salaryModal').classList.remove('active');
+    document.getElementById('cancelDeductionBtn').onclick = () => document.getElementById('deductionModal').classList.remove('active');
+    document.getElementById('cancelBorrowBtn').onclick = () => document.getElementById('borrowModal').classList.remove('active');
+    document.getElementById('cancelBonusBtn').onclick = () => document.getElementById('bonusModal').classList.remove('active');
+    document.getElementById('closeAdjHistoryBtn').onclick = () => document.getElementById('adjHistoryModal').classList.remove('active');
+    
+    // Modals auto-recalc
+    document.getElementById('salaryDays').addEventListener('input', recalcSalaryPreview);
+    document.getElementById('salaryBonus').addEventListener('input', recalcSalaryPreview);
+    
+    // Confirms
+    document.getElementById('confirmSalaryBtn').onclick = confirmSalary;
+    document.getElementById('confirmDeductionBtn').onclick = confirmDeduction;
+    document.getElementById('confirmBorrowBtn').onclick = confirmBorrow;
+    document.getElementById('confirmBonusBtn').onclick = confirmBonus;
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function clearForm() {
-    document.getElementById('empName').value      = '';
-    document.getElementById('empRole').value      = '';
-    document.getElementById('empDailyRate').value = '';
+function getEmpAdjustments(emp) {
+    let adjs = [];
+    try { if (emp.pending_adjustments) adjs = JSON.parse(emp.pending_adjustments); } catch(e){}
+    let borrows = 0, deductions = 0, bonus = 0;
+    adjs.forEach(a => {
+        const type = a.adj_type || a.type;
+        const amt = parseFloat(a.amount) || 0;
+        if (type === 'Borrow') borrows += amt;
+        else if (type === 'Deduction') deductions += amt;
+        else if (type === 'Bonus') bonus += amt;
+    });
+    return { borrows, deductions, bonus, adjs };
 }
 
 function loadEmployees() {
-    const list  = db.getEmployees();
-    const tbody = document.getElementById('employeesTableBody');
+    const emps = db.getEmployees();
+    const tbody = document.getElementById('empTableBody');
     tbody.innerHTML = '';
-    const lang = getCurrentLanguage();
-
-    list.forEach(emp => {
-        const tr     = document.createElement('tr');
-        const weeklyNum = parseFloat(emp.daily_rate) * 6;
-        const weekly = weeklyNum.toFixed(2);
+    
+    emps.forEach(emp => {
+        const { borrows, deductions, bonus } = getEmpAdjustments(emp);
+        const weekly = (emp.daily_rate || 0) * 6;
+        const net = weekly - borrows - deductions + bonus;
         
-        let adjs = [];
-        try {
-            if (emp.pending_adjustments) {
-                adjs = JSON.parse(emp.pending_adjustments);
-            }
-        } catch(e) {}
-        
-        let deductions = 0;
-        let borrows = 0;
-        let bonus = 0;
-        adjs.forEach(a => {
-            if (a.type === 'Borrow') borrows += parseFloat(a.amount);
-            else if (a.type === 'Bonus') bonus += parseFloat(a.amount);
-            else deductions += parseFloat(a.amount);
-        });
-
-        const netPay = (weeklyNum + bonus - borrows - deductions).toFixed(2);
-
-        // Store json string safely to pass to onclick
-        const adjsStr = encodeURIComponent(JSON.stringify(adjs));
-
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${emp.name}</td>
-            <td>${emp.role}</td>
-            <td class="font-bold">$${parseFloat(emp.daily_rate).toFixed(2)}</td>
-            <td class="font-bold">$${weekly}</td>
-            <td class="font-bold text-amber-500" style="cursor:pointer; text-decoration:underline;" onclick="openHistoryModal(${emp.id}, '${adjsStr}')">
-                -$${borrows.toFixed(2)}
-            </td>
-            <td class="font-bold text-red-500" style="cursor:pointer; text-decoration:underline;" onclick="openHistoryModal(${emp.id}, '${adjsStr}')">
-                -$${deductions.toFixed(2)}
-            </td>
-            <td class="font-bold text-emerald-500" style="cursor:pointer; text-decoration:underline;" onclick="openHistoryModal(${emp.id}, '${adjsStr}')">
-                +$${bonus.toFixed(2)}
-            </td>
-            <td class="font-bold text-teal" style="font-size: 1.05rem;">
-                $${netPay}
-            </td>
+            <td class="font-bold">${emp.name}</td>
+            <td>${emp.role || '—'}</td>
+            <td>${(emp.daily_rate || 0).toFixed(2)}</td>
+            <td class="font-bold text-teal">${weekly.toFixed(2)}</td>
+            <td class="clickable text-red" onclick="openBorrow(${emp.id})">${borrows.toFixed(2)}</td>
+            <td class="clickable text-red" onclick="openDeduction(${emp.id})">${deductions.toFixed(2)}</td>
+            <td class="clickable text-green" onclick="openBonus(${emp.id})">${bonus.toFixed(2)}</td>
+            <td class="font-bold text-teal">${net.toFixed(2)}</td>
             <td>
-                <div class="flex gap-2" style="flex-wrap:wrap;">
-                    <button class="btn btn-outline btn-sm"
-                        onclick="openSalaryModal(${emp.id}, '${emp.name}', '${emp.role}', ${emp.daily_rate}, ${deductions + borrows - bonus})"
-                        style="color:#0d9488; border-color:#0d9488;">
-                        💵 ${lang === 'en' ? 'Record Salary' : 'تسجيل الراتب'}
-                    </button>
-                    <button class="btn btn-outline btn-sm"
-                        onclick="openDeductionModal(${emp.id}, '${emp.name}', '${emp.role}', ${emp.daily_rate})"
-                        style="color:#ef4444; border-color:#fca5a5;">
-                        ➖ ${lang === 'en' ? 'Deduction' : 'خصم'}
-                    </button>
-                    <button class="btn btn-outline btn-sm"
-                        onclick="openBorrowModal(${emp.id}, '${emp.name}', '${emp.role}', ${emp.daily_rate})"
-                        style="color:#f59e0b; border-color:#fcd34d;">
-                        💸 ${lang === 'en' ? 'Borrow' : 'سلفة'}
-                    </button>
-                    <button class="btn btn-outline btn-sm"
-                        onclick="openBonusModal(${emp.id}, '${emp.name}', '${emp.role}', ${emp.daily_rate})"
-                        style="color:#10b981; border-color:#6ee7b7;">
-                        🎉 ${lang === 'en' ? 'Bonus' : 'مكافأة'}
-                    </button>
-                    <button class="btn btn-outline btn-sm"
-                        onclick="editEmployee(${emp.id}, '${emp.name}', '${emp.role}', ${emp.daily_rate})">
-                        ${lang === 'en' ? 'Edit' : 'تعديل'}
-                    </button>
-                    <button class="btn btn-outline btn-sm" style="color:red; border-color:#fee2e2;"
-                        onclick="deleteEmployee(${emp.id})">
-                        ${lang === 'en' ? 'Delete' : 'حذف'}
-                    </button>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary btn-sm" onclick="openSalary(${emp.id})" title="Record Salary">💰</button>
+                    <button class="btn btn-outline btn-sm" onclick="openAdjHistory(${emp.id})" title="History">📜</button>
+                    <button class="btn btn-outline btn-sm" onclick="editEmployee(${emp.id})">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteEmployee(${emp.id})">🗑️</button>
                 </div>
             </td>
         `;
         tbody.appendChild(tr);
     });
+    if (emps.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#64748b;">${t('noData')}</td></tr>`;
+    }
 }
 
-// ── Modal openers (global) ─────────────────────────────────────────────────
-window.openSalaryModal = function(id, name, role, dailyRate, deductions) {
-    currentEmp = { id, name, role, dailyRate, deductions: deductions || 0 };
-
-    document.getElementById('salaryModalTitle').textContent =
-        getCurrentLanguage() === 'en' ? `Record Salary — ${name}` : `تسجيل راتب — ${name}`;
-
-    document.getElementById('modalDaysWorked').value = 6;
-    document.getElementById('modalRaise').value      = 0;
+function saveEmployee() {
+    const name = document.getElementById('empName').value.trim();
+    if (!name) return alert(t('employeeName') + ' required.');
     
-    let net = (dailyRate * 6) - (deductions || 0);
-    document.getElementById('modalNetSalary').textContent = `$${Math.max(0, net).toFixed(2)}`;
-
-    document.getElementById('salaryModal').classList.add('active');
-};
-
-window.openHistoryModal = function(empId, adjsStrEncoded) {
-    const tbody = document.getElementById('historyTableBody');
-    tbody.innerHTML = '';
+    const role = document.getElementById('empRole').value.trim();
+    const rate = parseFloat(document.getElementById('empDailyRate').value) || 0;
     
-    let adjs = [];
-    try {
-        adjs = JSON.parse(decodeURIComponent(adjsStrEncoded));
-    } catch(e) {}
-    
-    if (adjs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1rem; color:#64748b;">No pending adjustments.</td></tr>';
+    if (editingEmpId) {
+        db.updateEmployee(editingEmpId, { name, role, daily_rate: rate });
     } else {
-        adjs.forEach((adj, index) => {
-            let color = '#ef4444'; // default red
-            if (adj.type === 'Borrow') color = '#f59e0b'; // amber
-            else if (adj.type === 'Bonus') color = '#10b981'; // emerald
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="padding:0.5rem; border-bottom:1px solid #f1f5f9;">${adj.date || '-'}</td>
-                <td style="padding:0.5rem; border-bottom:1px solid #f1f5f9; font-weight:bold; color:${color};">${adj.type}</td>
-                <td style="padding:0.5rem; border-bottom:1px solid #f1f5f9;">${adj.reason || '-'}</td>
-                <td style="padding:0.5rem; border-bottom:1px solid #f1f5f9; font-weight:bold;">$${parseFloat(adj.amount).toFixed(2)}</td>
-                <td style="padding:0.5rem; border-bottom:1px solid #f1f5f9; text-align:center;">
-                    <button class="btn btn-outline btn-sm" style="color:red; border-color:#fee2e2; padding: 2px 5px;"
-                        onclick="deleteAdjustment(${empId}, ${index})">🗑️</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        db.addEmployee({ name, role, daily_rate: rate });
     }
     
-    document.getElementById('historyModal').classList.add('active');
-};
+    resetForm();
+    loadEmployees();
+}
 
-window.deleteAdjustment = function(empId, index) {
-    const msg = getCurrentLanguage() === 'en' ? 'Are you sure you want to delete this adjustment?' : 'هل أنت متأكد من حذف هذا التعديل؟';
-    if (!confirm(msg)) return;
+function resetForm() {
+    editingEmpId = null;
+    document.getElementById('empName').value = '';
+    document.getElementById('empRole').value = '';
+    document.getElementById('empDailyRate').value = '0';
+    document.getElementById('empFormTitle').textContent = t('addEmployee');
+    document.getElementById('saveEmpBtn').innerHTML = t('save');
+    document.getElementById('cancelEmpBtn').style.display = 'none';
+}
+
+window.editEmployee = function(id) {
+    const emp = db.getEmployees().find(e => e.id === id);
+    if (!emp) return;
     
-    const emp = db.getEmployees().find(e => e.id === empId);
-    if (emp && emp.pending_adjustments) {
-        let adjs = [];
-        try { adjs = JSON.parse(emp.pending_adjustments); } catch(e){}
-        adjs.splice(index, 1);
-        db.updateEmployeeAdjustments(empId, adjs);
-        document.getElementById('historyModal').classList.remove('active');
-        loadEmployees();
-    }
-};
-
-document.getElementById('historyCloseBtn').addEventListener('click', () => {
-    document.getElementById('historyModal').classList.remove('active');
-});
-
-window.openDeductionModal = function(id, name, role, dailyRate) {
-    currentEmp = { id, name, role, dailyRate };
-
-    document.getElementById('deductionModalTitle').textContent =
-        getCurrentLanguage() === 'en' ? `Add Deduction — ${name}` : `إضافة خصم — ${name}`;
-
-    document.getElementById('deductionAmount').value = 0;
-    document.getElementById('deductionReason').value = '';
-
-    document.getElementById('deductionModal').classList.add('active');
-};
-
-window.openBorrowModal = function(id, name, role, dailyRate) {
-    currentEmp = { id, name, role, dailyRate };
-
-    document.getElementById('borrowModalTitle').textContent =
-        getCurrentLanguage() === 'en' ? `Record Advance — ${name}` : `تسجيل سلفة — ${name}`;
-
-    document.getElementById('borrowAmount').value = 0;
-    document.getElementById('borrowNote').value   = '';
-
-    document.getElementById('borrowModal').classList.add('active');
-};
-
-window.openBonusModal = function(id, name, role, dailyRate) {
-    currentEmp = { id, name, role, dailyRate };
-
-    document.getElementById('bonusModalTitle').textContent =
-        getCurrentLanguage() === 'en' ? `Add Bonus — ${name}` : `إضافة مكافأة — ${name}`;
-
-    document.getElementById('bonusAmount').value = 0;
-    document.getElementById('bonusReason').value = '';
-
-    document.getElementById('bonusModal').classList.add('active');
-};
-
-window.editEmployee = function(id, name, role, dailyRate) {
-    editingEmployeeId = id;
-    document.getElementById('empName').value      = name;
-    document.getElementById('empRole').value      = role;
-    document.getElementById('empDailyRate').value = dailyRate;
-
-    const saveEmpBtn    = document.getElementById('saveEmpBtn');
-    const cancelEditBtn = document.getElementById('cancelEditBtn');
-    const formTitle     = document.getElementById('formTitle');
-
-    saveEmpBtn.textContent    = getCurrentLanguage() === 'en' ? 'Update Employee' : 'تحديث الموظف';
-    formTitle.textContent     = getCurrentLanguage() === 'en' ? 'Edit Employee'   : 'تعديل موظف';
-    cancelEditBtn.style.display = 'block';
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    editingEmpId = id;
+    document.getElementById('empName').value = emp.name;
+    document.getElementById('empRole').value = emp.role || '';
+    document.getElementById('empDailyRate').value = emp.daily_rate || 0;
+    
+    document.getElementById('empFormTitle').textContent = t('edit');
+    document.getElementById('saveEmpBtn').innerHTML = t('save');
+    document.getElementById('cancelEmpBtn').style.display = 'inline-flex';
 };
 
 window.deleteEmployee = function(id) {
-    const msg = getCurrentLanguage() === 'en' ? 'Are you sure you want to delete this employee?' : 'هل أنت متأكد من حذف هذا الموظف؟';
-    if (confirm(msg)) {
-        db.deleteEmployee(id);
-        loadEmployees();
-    }
+    if (!confirm('Delete this employee?')) return;
+    db.deleteEmployee(id);
+    loadEmployees();
 };
 
-window.printSalaries = function() {
-    const lang = getCurrentLanguage();
-    const employees = db.getEmployees();
-    const shopName = lang === 'ar' ? '\u0627\u0644\u0623\u0646\u0635\u0627\u0631\u064a' : 'El Ansary Service Shop';
-    const now = new Date();
-    const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+function resetAllEmployees() {
+    if (!confirm(t('confirmResetAll'))) return;
+    db.clearAllEmployeeAdjustments();
+    loadEmployees();
+}
+
+// ─── Modals ────────────────────────────────────────────────────────────────────
+window.openSalary = function(id) {
+    currentModalEmpId = id;
+    document.getElementById('salaryDays').value = '6';
+    document.getElementById('salaryBonus').value = '0';
+    recalcSalaryPreview();
+    document.getElementById('salaryModal').classList.add('active');
+};
+
+function recalcSalaryPreview() {
+    if (!currentModalEmpId) return;
+    const emp = db.getEmployees().find(e => e.id === currentModalEmpId);
+    if (!emp) return;
     
-    let totalSalaries = 0;
+    const { borrows, deductions, bonus } = getEmpAdjustments(emp);
+    const days = parseFloat(document.getElementById('salaryDays').value) || 0;
+    const extraBonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
     
-    const rows = employees.map(emp => {
-        let adjs = [];
-        try { if (emp.pending_adjustments) adjs = JSON.parse(emp.pending_adjustments); } catch(e){}
-        let deductions = 0;
-        let borrows = 0;
-        let bonus = 0;
-        adjs.forEach(a => {
-            if (a.type === 'Borrow') borrows += parseFloat(a.amount) || 0;
-            else if (a.type === 'Bonus') bonus += parseFloat(a.amount) || 0;
-            else deductions += parseFloat(a.amount) || 0;
-        });
+    const base = (emp.daily_rate || 0) * days;
+    const totalBonus = bonus + extraBonus;
+    const net = base - deductions - borrows + totalBonus;
+    
+    document.getElementById('salaryWeeklyPreview').textContent = base.toFixed(2);
+    document.getElementById('salaryDeducPreview').textContent = deductions.toFixed(2);
+    document.getElementById('salaryBorrowPreview').textContent = borrows.toFixed(2);
+    document.getElementById('salaryBonusPreview').textContent = totalBonus.toFixed(2);
+    document.getElementById('salaryNetPreview').textContent = net.toFixed(2);
+}
+
+function confirmSalary() {
+    const emp = db.getEmployees().find(e => e.id === currentModalEmpId);
+    if (!emp) return;
+    
+    const { borrows, deductions, bonus } = getEmpAdjustments(emp);
+    const days = parseFloat(document.getElementById('salaryDays').value) || 0;
+    const extraBonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
+    
+    const base = (emp.daily_rate || 0) * days;
+    const totalBonus = bonus + extraBonus;
+    const net = base - deductions - borrows + totalBonus;
+    
+    const date = new Date().toISOString().split('T')[0];
+    db.addExpense({
+        description: `Salary: ${emp.name} (${days} days)`,
+        amount: net,
+        category: 'Salaries',
+        date: date
+    });
+    
+    db.clearEmployeeAdjustments(emp.id);
+    document.getElementById('salaryModal').classList.remove('active');
+    loadEmployees();
+}
+
+window.openDeduction = function(id) {
+    currentModalEmpId = id;
+    document.getElementById('deductionAmount').value = '0';
+    document.getElementById('deductionReason').value = '';
+    document.getElementById('deductionModal').classList.add('active');
+};
+
+function confirmDeduction() {
+    const amt = parseFloat(document.getElementById('deductionAmount').value) || 0;
+    const reason = document.getElementById('deductionReason').value.trim();
+    if (amt <= 0) return;
+    
+    const date = new Date().toISOString().split('T')[0];
+    db.addEmployeeAdjustment(currentModalEmpId, { adj_type: 'Deduction', type: 'Deduction', amount: amt, notes: reason, date });
+    document.getElementById('deductionModal').classList.remove('active');
+    loadEmployees();
+}
+
+window.openBorrow = function(id) {
+    currentModalEmpId = id;
+    document.getElementById('borrowAmount').value = '0';
+    document.getElementById('borrowNote').value = '';
+    document.getElementById('borrowModal').classList.add('active');
+};
+
+function confirmBorrow() {
+    const amt = parseFloat(document.getElementById('borrowAmount').value) || 0;
+    const note = document.getElementById('borrowNote').value.trim();
+    if (amt <= 0) return;
+    
+    const emp = db.getEmployees().find(e => e.id === currentModalEmpId);
+    const date = new Date().toISOString().split('T')[0];
+    
+    db.addEmployeeAdjustment(currentModalEmpId, { adj_type: 'Borrow', type: 'Borrow', amount: amt, notes: note, date });
+    db.addExpense({
+        description: `Borrow (سلفة): ${emp ? emp.name : ''}`,
+        amount: amt,
+        category: 'Salaries',
+        date: date
+    });
+    
+    document.getElementById('borrowModal').classList.remove('active');
+    loadEmployees();
+}
+
+window.openBonus = function(id) {
+    currentModalEmpId = id;
+    document.getElementById('bonusAmount').value = '0';
+    document.getElementById('bonusNote').value = '';
+    document.getElementById('bonusModal').classList.add('active');
+};
+
+function confirmBonus() {
+    const amt = parseFloat(document.getElementById('bonusAmount').value) || 0;
+    const note = document.getElementById('bonusNote').value.trim();
+    if (amt <= 0) return;
+    
+    const date = new Date().toISOString().split('T')[0];
+    db.addEmployeeAdjustment(currentModalEmpId, { adj_type: 'Bonus', type: 'Bonus', amount: amt, notes: note, date });
+    document.getElementById('bonusModal').classList.remove('active');
+    loadEmployees();
+}
+
+window.openAdjHistory = function(id) {
+    const emp = db.getEmployees().find(e => e.id === id);
+    if (!emp) return;
+    document.getElementById('adjHistoryTitle').textContent = emp.name + ' - History';
+    
+    const { adjs } = getEmpAdjustments(emp);
+    const tbody = document.getElementById('adjHistoryBody');
+    tbody.innerHTML = '';
+    
+    adjs.forEach((a, idx) => {
+        const type = a.adj_type || a.type;
+        let color = '';
+        if (type === 'Borrow' || type === 'Deduction') color = 'text-red';
+        if (type === 'Bonus') color = 'text-green';
         
-        const weekly = parseFloat(emp.daily_rate) * 6;
-        const net = Math.max(0, weekly + bonus - deductions - borrows);
-        totalSalaries += net;
-        
+        tbody.innerHTML += `
+            <tr>
+                <td>${a.date || ''}</td>
+                <td class="font-bold ${color}">${type}</td>
+                <td class="${color} font-bold">${(a.amount || 0).toFixed(2)}</td>
+                <td>${a.notes || a.note || a.reason || ''}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteAdj(${idx}, ${id})">×</button></td>
+            </tr>
+        `;
+    });
+    
+    document.getElementById('adjHistoryModal').classList.add('active');
+};
+
+window.deleteAdj = function(index, empId) {
+    const emp = db.getEmployees().find(e => e.id === empId);
+    if (!emp) return;
+    const { adjs } = getEmpAdjustments(emp);
+    adjs.splice(index, 1);
+    db.updateEmployeeAdjustments(empId, adjs);
+    openAdjHistory(empId);
+    loadEmployees();
+};
+
+function printPayroll() {
+    const emps = db.getEmployees();
+    let totalNet = 0;
+    
+    const rows = emps.map(e => {
+        const { borrows, deductions, bonus } = getEmpAdjustments(e);
+        const weekly = (e.daily_rate || 0) * 6;
+        const net = weekly - borrows - deductions + bonus;
+        totalNet += net;
         return `
-            <tr style="border-bottom:1px solid #e2e8f0;">
-                <td style="padding:10px; font-weight:600; color:#1e293b;">${emp.name}</td>
-                <td style="padding:10px; color:#64748b;">${emp.role || '-'}</td>
-                <td style="padding:10px; text-align:right;">${parseFloat(emp.daily_rate).toFixed(2)}</td>
-                <td style="padding:10px; text-align:right;">${weekly.toFixed(2)}</td>
-                <td style="padding:10px; text-align:right; color:#f59e0b;">${borrows > 0 ? '-' + borrows.toFixed(2) : '-'}</td>
-                <td style="padding:10px; text-align:right; color:#ef4444;">${deductions > 0 ? '-' + deductions.toFixed(2) : '-'}</td>
-                <td style="padding:10px; text-align:right; color:#10b981;">${bonus > 0 ? '+' + bonus.toFixed(2) : '-'}</td>
-                <td style="padding:10px; text-align:right; font-weight:700; color:#0d9488;">${net.toFixed(2)}</td>
-            </tr>`;
+            <tr>
+                <td style="border:1px solid #ddd;padding:6px;">${e.name}</td>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;">${(e.daily_rate || 0).toFixed(2)}</td>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;">${borrows.toFixed(2)}</td>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;">${deductions.toFixed(2)}</td>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;">${bonus.toFixed(2)}</td>
+                <td style="border:1px solid #ddd;padding:6px;text-align:center;font-weight:bold;">${net.toFixed(2)}</td>
+            </tr>
+        `;
     }).join('');
     
-    var textAlign = lang === 'ar' ? 'right' : 'left';
-    var dir = lang === 'ar' ? 'rtl' : 'ltr';
-
-    const html = `
-    <html dir="${dir}"><head><meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; font-size: 13px; margin: 30px; color: #334155; line-height:1.5; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d9488; padding-bottom: 15px; }
-        .header h1 { font-size: 1.8rem; margin: 0 0 5px 0; color: #0d9488; }
-        .header-subtitle { font-size: 1.2rem; font-weight: bold; color: #1e293b; }
-        .header-date { color: #64748b; font-size: 0.9rem; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { background: #f8fafc; padding: 12px 10px; text-align: ${textAlign}; font-size: 0.9rem; border-bottom: 2px solid #cbd5e1; color:#1e293b; }
-        td { padding: 10px; font-size: 0.9rem; }
-        .total-row { background: #f8fafc; border-top: 2px solid #0d9488; font-weight: bold; font-size:1.1rem; }
-        @media print { body { margin: 15px; } }
-    </style></head><body>
-        <div class="header">
-            <h1>${shopName}</h1>
-            <div class="header-subtitle">${lang === 'ar' ? 'تقرير الرواتب الأسبوعي' : 'Weekly Payroll Report'}</div>
-            <div class="header-date">${lang === 'ar' ? 'التاريخ:' : 'Date:'} ${dateStr}</div>
+    document.getElementById('printArea').innerHTML = `
+        <div style="font-family:'Cairo',Arial,sans-serif;direction:rtl;color:#000;padding:20px;">
+            <div style="text-align:center;border-bottom:2px solid #eab308;padding-bottom:10px;margin-bottom:15px;">
+                <h1 style="margin:0;font-size:24px;">مركز الأنصاري لصيانة السيارات</h1>
+                <h3 style="margin:5px 0;color:#0d9488;">كشف الرواتب الأسبوعي للموظفين</h3>
+                <p style="margin:0;font-weight:bold;">تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</p>
+            </div>
+            
+            <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+                <thead>
+                    <tr style="background:#fef08a;border-bottom:2px solid #ca8a04;color:#713f12;">
+                        <th style="border:1px solid #ddd;padding:8px;">اسم الموظف</th>
+                        <th style="border:1px solid #ddd;padding:8px;">اليومية</th>
+                        <th style="border:1px solid #ddd;padding:8px;">السلف</th>
+                        <th style="border:1px solid #ddd;padding:8px;">الخصومات</th>
+                        <th style="border:1px solid #ddd;padding:8px;">المكافآت</th>
+                        <th style="border:1px solid #ddd;padding:8px;">الصافي (أسبوع)</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+                <tfoot>
+                    <tr style="background:#0d9488;color:white;">
+                        <td colspan="5" style="border:1px solid #ddd;padding:10px;font-weight:bold;text-align:right;font-size:1.1rem;">إجمالي الرواتب المستحقة</td>
+                        <td style="border:1px solid #ddd;padding:10px;font-weight:bold;text-align:center;font-size:1.1rem;">${totalNet.toFixed(2)} ج.م</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <div style="margin-top:3rem;display:flex;justify-content:space-between;border-top:1px solid #ddd;padding-top:1rem;">
+                <div style="font-size:0.85rem;color:#64748b;">
+                    <p style="margin:0 0 4px 0;"><strong>للتواصل:</strong></p>
+                    <p style="margin:0;">01010103777</p>
+                    <p style="margin:0;">01010606016</p>
+                </div>
+                <div style="text-align:center;">
+                    <p style="margin:0;font-weight:bold;">توقيع المحاسب</p>
+                    <div style="margin-top:2rem;border-bottom:1px solid #94a3b8;width:140px;display:inline-block;"></div>
+                </div>
+            </div>
         </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>${lang === 'ar' ? 'اسم الموظف' : 'Employee Name'}</th>
-                    <th>${lang === 'ar' ? 'الوظيفة' : 'Role'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'يومية' : 'Daily Rate'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'أسبوعي (6 أيام)' : 'Weekly (6d)'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'سلف' : 'Borrows'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'خصومات' : 'Deductions'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'مكافآت' : 'Bonus'}</th>
-                    <th style="text-align:right;">${lang === 'ar' ? 'الصافي' : 'Net Pay'}</th>
-                </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-            <tfoot>
-                <tr class="total-row">
-                    <td colspan="7" style="padding:12px 10px; text-align:${textAlign}; color:#1e293b;">${lang === 'ar' ? 'إجمالي الرواتب المستحقة' : 'Total Payroll Due'}</td>
-                    <td style="padding:12px 10px; text-align:right; color:#0d9488;">${totalSalaries.toFixed(2)}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </body></html>`;
-    
-    const win = window.open('', '_blank', 'width=800,height=600');
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); }, 500);
-};
-
-window.resetAllDeductions = function() {
-    const lang = getCurrentLanguage();
-    const msg = lang === 'en' 
-        ? 'Are you sure you want to reset all deductions and advances to zero for the new week?\\nThis action cannot be undone.'
-        : 'هل أنت متأكد من تصفير جميع الخصومات والسلف للأسبوع الجديد؟\\nلا يمكن التراجع عن هذا الإجراء.';
-        
-    if (confirm(msg)) {
-        db.clearAllEmployeeAdjustments();
-        loadEmployees();
-        alert(lang === 'en' ? 'All deductions have been reset.' : 'تم تصفير جميع الخصومات.');
-    }
-};
-
+    `;
+    window.print();
+}

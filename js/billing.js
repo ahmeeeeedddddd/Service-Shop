@@ -243,6 +243,26 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const removeBtn = row.querySelector('.remove-item-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                const rows = lineItemsBody.querySelectorAll('tr');
+                if (rows.length > 1) {
+                    row.remove();
+                    updateGrandTotal();
+                } else {
+                    // Clear inputs if it's the last remaining row
+                    if (nameInput) nameInput.value = '';
+                    if (qtyInput) qtyInput.value = '1';
+                    if (priceInput) priceInput.value = '0';
+                    delete row.dataset.partId;
+                    delete row.dataset.autoAdded;
+                    row.querySelector('.line-subtotal').textContent = '0.00';
+                    updateGrandTotal();
+                }
+            });
+        }
+
         [qtyInput, priceInput].forEach(input => {
             if (input) {
                 input.addEventListener('input', () => {
@@ -325,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     qty: parseFloat(inputs[1].value) || 1,
                     price: parseFloat(inputs[2].value) || 0,
                     total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0),
-                    part_id: row.dataset.partId || null
+                    part_id: row.dataset.partId ? parseInt(row.dataset.partId) : null
                 });
             }
         });
@@ -418,8 +438,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 quantity: l.qty,
                 unit_price: l.price
             });
-            if (l.part_id) {
-                db.deductPartStock(l.part_id, l.qty);
+            const pId = parseInt(l.part_id);
+            if (!isNaN(pId) && pId > 0) {
+                db.deductPartStock(pId, parseFloat(l.qty) || 1);
             }
         });
 
@@ -503,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     مركز الانصاري لصيانه السيارات
                 </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: ${sectionMargin};">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem; background:#fefce8; padding: 0.85rem 1.25rem; border-radius: 8px; border: 1.5px solid #fde047; font-size: 0.95rem;">
                 <div>
                     <p style="margin: 0.25rem 0;"><strong>${t.customer}:</strong> ${selectedCustomer.name}</p>
                     <p style="margin: 0.25rem 0;"><strong>${t.phone}:</strong> ${selectedCustomer.phone}</p>
@@ -647,7 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     qty: parseFloat(inputs[1].value) || 1,
                     price: parseFloat(inputs[2].value) || 0,
                     total: (parseFloat(inputs[1].value) || 1) * (parseFloat(inputs[2].value) || 0),
-                    part_id: row.dataset.partId || null
+                    part_id: row.dataset.partId ? parseInt(row.dataset.partId) : null
                 });
             }
         });
