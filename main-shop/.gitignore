@@ -1,0 +1,4 @@
+node_modules/
+shop.db
+dist/
+*.csv

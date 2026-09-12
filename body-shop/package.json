@@ -1,0 +1,52 @@
+{
+  "name": "el-ansary-body-shop",
+  "version": "1.0.0",
+  "description": "El Ansary Body Shop — Paint & Repair Management System",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=31.7.7 --dist-url=https://electronjs.org/headers",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.elansary.bodyshop",
+    "productName": "El Ansary Body Shop",
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/logo.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    },
+    "files": [
+      "**/*",
+      "!node_modules/electron-rebuild/**",
+      "!node_modules/electron-builder/**"
+    ],
+    "asarUnpack": [
+      "**/better-sqlite3/**",
+      "**/node_modules/better-sqlite3/**"
+    ],
+    "extraResources": [
+      { "from": "database/", "to": "database/" }
+    ]
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
+    "electron-rebuild": "^3.2.9"
+  }
+}

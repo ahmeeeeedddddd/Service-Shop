@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="dailyReportTitle">Daily Report - El Ansary Body Shop</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        #printContainer { display: none; }
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            body > * { display: none !important; }
+            #printContainer {
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .no-print { display: none !important; }
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+                break-inside: avoid !important;
+            }
+            .stat-card {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+                break-inside: avoid !important;
+            }
+            table { width: 100% !important; border-collapse: collapse !important; page-break-inside: avoid; }
+            tr, td, th { page-break-inside: avoid !important; }
+            thead { display: table-header-group; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div class="shop-name"><h1 data-i18n="appName">El Ansary Body Shop</h1><div class="shop-subtitle" data-i18n="appSubtitle">BODY & PAINT</div></div>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="customers.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span data-i18n="customers">Customers</span></a>
+            <a href="billing.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span data-i18n="billing">Billing</span></a>
+            <a href="pending_bills.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span data-i18n="pendingBills">Pending Bills</span></a>
+            <a href="bill_history.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            <span data-i18n="billHistory">Bill History</span></a>
+            <a href="income.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span data-i18n="income">Income</span></a>
+            <a href="expenses.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            <span data-i18n="expenses">Expenses</span></a>
+            <a href="ohda.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+            <span>عهده</span></a>
+            <a href="suppliers.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span data-i18n="suppliers">Suppliers</span></a>
+            <a href="parts.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span data-i18n="parts">Parts & Stock</span></a>
+            <a href="car_expenses.html" class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.3 1 12.1 1 13v3c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+            <span data-i18n="carExpenses">Car Expenses</span></a>
+            <div class="nav-group">
+                <div class="nav-group-toggle open" id="reportsToggle"><span data-i18n="reports">Reports</span><span class="nav-group-arrow">&#9662;</span></div>
+                <div class="nav-group-items open" id="reportsItems">
+                    <a href="daily_report.html" class="nav-item active"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span data-i18n="dailyReport">Daily Report</span></a>
+                    <a href="salaries.html" class="nav-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span data-i18n="salaries">Salaries</span></a>
+                </div>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="lang-btn" id="langToggle" data-i18n="langToggle">English</button>
+            <div class="version-info" data-i18n="version">Body Shop v1.0 — Offline</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="page-header no-print">
+            <div class="page-header-left">
+                <h2 data-i18n="dailyReportTitle">Daily Report</h2>
+                <p data-i18n="dailyReportSubtitle">Summary of income and expenses for a selected date range</p>
+            </div>
+            <div class="flex gap-2 no-print" style="align-items:center;">
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <input type="date" id="filterStartDate" class="form-control" style="width:145px;">
+                    <span style="font-size:0.85rem;color:#64748b;">—</span>
+                    <input type="date" id="filterEndDate" class="form-control" style="width:145px;">
+                </div>
+                <button class="btn btn-primary btn-sm" id="loadReportBtn" data-i18n="filterByDate">Filter</button>
+                <button class="btn btn-outline btn-sm" id="printReportBtn" style="color:#0d9488;border-color:#0d9488;">🖨️ <span data-i18n="printReport">Print</span></button>
+            </div>
+        </header>
+
+        <!-- Report Content (Print Area) -->
+        <div id="reportArea" class="print-area">
+            <div style="text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #0d9488; padding-bottom: 0.75rem;">
+                <h1 style="color: #0d9488; margin: 0; font-size: 1.6rem;" data-i18n="appName">El Ansary Body Shop</h1>
+                <p style="margin: 0.3rem 0 0 0; color: #475569; font-size: 0.95rem;">
+                    <span data-i18n="dateRangeReport">Date Range Report</span> - <span id="displayDate">---</span>
+                </p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stat-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card accent">
+                    <span class="stat-label" data-i18n="totalIncome">Total Income</span>
+                    <div class="stat-value" id="dayIncome">0.00</div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #dc2626;">
+                    <span class="stat-label" data-i18n="totalExpenses">Total Expenses</span>
+                    <div class="stat-value text-red" id="dayExpenses">0.00</div>
+                </div>
+                <div class="stat-card" style="border-left: 4px solid #16a34a;">
+                    <span class="stat-label" data-i18n="netProfit">Net Profit</span>
+                    <div class="stat-value text-green" id="dayNet">0.00</div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Stats -->
+            <div class="stat-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="cashIncome">Cash Income</span>
+                    <div class="stat-value text-teal" id="dayCash">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="totalCash">Net Cash</span>
+                    <div class="stat-value text-teal" id="dayTotalCash">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="instapay">Instapay</span>
+                    <div class="stat-value text-teal" id="dayInstapay">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="bankAlahly">Bank Alahly</span>
+                    <div class="stat-value text-teal" id="dayAlahly">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="bankMasr">Bank Masr</span>
+                    <div class="stat-value text-teal" id="dayMasr">0.00</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label" data-i18n="vodafoneCash">Vodafone Cash</span>
+                    <div class="stat-value text-teal" id="dayVodafoneCash">0.00</div>
+                </div>
+            </div>
+
+            <!-- Ohda Summary Stats Row -->
+            <div class="stat-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card" style="background:#fffbeb;border:1.5px solid #fde047;">
+                    <span class="stat-label" style="color:#92400e;font-weight:700;">🏅 العهدة المسجلة (Ohda)</span>
+                    <div class="stat-value" id="dayOhdaTotal" style="color:#b45309;">0.00</div>
+                </div>
+                <div class="stat-card" style="background:#fffbeb;border:1.5px solid #fde047;">
+                    <span class="stat-label" style="color:#92400e;font-weight:700;">🧾 المصروف من العهدة</span>
+                    <div class="stat-value text-red" id="dayOhdaSpent">0.00</div>
+                </div>
+                <div class="stat-card" style="background:#fffbeb;border:1.5px solid #fde047;">
+                    <span class="stat-label" style="color:#92400e;font-weight:700;">💵 متبقي العهدة</span>
+                    <div class="stat-value" id="dayOhdaRemaining">0.00</div>
+                </div>
+            </div>
+
+            <!-- Income Section -->
+            <div class="report-section card" style="margin-bottom: 1.5rem;">
+                <h3 class="card-title" data-i18n="incomeTitle">Income</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="customer">Customer</th>
+                                <th data-i18n="car">Car</th>
+                                <th data-i18n="payment">Payment</th>
+                                <th data-i18n="total">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportIncomeBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- General Expenses Section -->
+            <div class="report-section card" style="margin-bottom: 1.5rem;">
+                <h3 class="card-title" data-i18n="expensesTitle">Expenses</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th data-i18n="description">Description</th>
+                                <th data-i18n="category">Category</th>
+                                <th data-i18n="total">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportExpensesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Dedicated Ohda Expenses Section -->
+            <div class="report-section card">
+                <h3 class="card-title" style="color:#92400e;">🏅 تقرير العهدة والمصروفات المخصومة منها (Ohda Expenses)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr style="background:#fef08a;color:#713f12;">
+                                <th>التاريخ</th>
+                                <th>الوصف</th>
+                                <th>الفئة</th>
+                                <th>المبلغ (ج.م)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportOhdaBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="printContainer"></div>
+
+    <script src="../js/i18n.js"></script>
+    <script src="../js/daily_report.js"></script>
+</body>
+</html>
