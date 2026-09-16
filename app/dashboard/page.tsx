@@ -175,12 +175,12 @@ export default function OwnerDashboardPage() {
   return (
     <div className="space-y-8 animate-fade-in pb-12">
       {/* Page Header */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
-            <Shield className="w-7 h-7 text-yellow-500" />
+          <h1 className="text-xl sm:text-2xl font-black text-zinc-900 tracking-tight flex flex-wrap items-center gap-2">
+            <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-yellow-500" />
             <span>{t('ownerDashboardTitle')}</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1.5">
+            <span className="text-[11px] sm:text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -188,7 +188,7 @@ export default function OwnerDashboardPage() {
               {language === 'ar' ? 'تزامن مباشر' : 'Live Sync'}
             </span>
           </h1>
-          <p className="text-xs text-zinc-500 mt-1">{t('ownerDashboardSubtitle')}</p>
+          <p className="text-[11px] sm:text-xs text-zinc-500 mt-1">{t('ownerDashboardSubtitle')}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -199,7 +199,7 @@ export default function OwnerDashboardPage() {
                 setDateMode('today');
                 loadData('today');
               }}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs ${
                 dateMode === 'today' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
               }`}
             >
@@ -210,7 +210,7 @@ export default function OwnerDashboardPage() {
                 setDateMode('all');
                 loadData('all');
               }}
-              className={`px-3.5 py-1.5 rounded-lg font-bold transition-all ${
+              className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs ${
                 dateMode === 'all' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
               }`}
             >
@@ -221,7 +221,7 @@ export default function OwnerDashboardPage() {
 
           <button
             onClick={() => loadData(dateMode)}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-zinc-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-zinc-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors ml-auto sm:ml-0"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>{language === 'ar' ? 'تحديث' : 'Refresh'}</span>
@@ -229,60 +229,60 @@ export default function OwnerDashboardPage() {
         </div>
       </div>
 
-      {/* TOP 4 MAIN KPI CARDS (as requested: Main Shop Income, Main Shop Expenses, Body Shop Ohda Received, Body Shop Ohda Spent) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+      {/* TOP 4 MAIN KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إيرادات المركز الرئيسي' : 'Main Shop Income'}</p>
-            <p className="text-2xl font-black text-emerald-600 mt-1">${metrics?.mainShop?.totalIncome?.toLocaleString() || '0'}</p>
+            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إيرادات المركز الرئيسي' : 'Main Shop Income'}</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">${metrics?.mainShop?.totalIncome?.toLocaleString() || '0'}</p>
             <p className="text-[11px] font-bold text-slate-400 mt-0.5">{metrics?.mainShop?.repairCount || 0} {language === 'ar' ? 'فواتير مقبوضة' : 'Paid Invoices'}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-emerald-50 text-emerald-600">
-            <DollarSign className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+            <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مصروفات المركز الرئيسي' : 'Main Shop Expenses'}</p>
-            <p className="text-2xl font-black text-rose-600 mt-1">${metrics?.mainShop?.totalExpenses?.toLocaleString() || '0'}</p>
+            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مصروفات المركز الرئيسي' : 'Main Shop Expenses'}</p>
+            <p className="text-xl sm:text-2xl font-black text-rose-600 mt-1">${metrics?.mainShop?.totalExpenses?.toLocaleString() || '0'}</p>
             <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'إجمالي الخصميات والمشتريات' : 'Total Operational Outflow'}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-600">
-            <TrendingDown className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-rose-50 text-rose-600">
+            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مقبوض عُهدة ورشة السمكرة' : 'Body Shop Ohda Received'}</p>
-            <p className="text-2xl font-black text-emerald-600 mt-1">${metrics?.ohda?.totalReceived?.toLocaleString() || '0'}</p>
+            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مقبوض عُهدة ورشة السمكرة' : 'Body Shop Ohda Received'}</p>
+            <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">${metrics?.ohda?.totalReceived?.toLocaleString() || '0'}</p>
             <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'إجمالي السُلف المقبوضة' : 'Total Advances Received'}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-amber-50 text-amber-600">
-            <TrendingUp className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-amber-50 text-amber-600">
+            <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'المصروف من عُهدة السمكرة' : 'Body Shop Ohda Spent'}</p>
-            <p className="text-2xl font-black text-rose-600 mt-1">${metrics?.ohda?.totalSpent?.toLocaleString() || '0'}</p>
+            <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'المصروف من عُهدة السمكرة' : 'Body Shop Ohda Spent'}</p>
+            <p className="text-xl sm:text-2xl font-black text-rose-600 mt-1">${metrics?.ohda?.totalSpent?.toLocaleString() || '0'}</p>
             <p className="text-[11px] font-bold text-slate-400 mt-0.5">
               {language === 'ar' ? 'المتبقي:' : 'Net Balance:'} ${metrics?.ohda?.netBalance?.toLocaleString() || '0'}
             </p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-yellow-400 text-zinc-950">
-            <Wallet className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-yellow-400 text-zinc-950">
+            <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
       </div>
 
-      {/* SECTION TABS FOR OWNER DETAILS */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+      {/* SECTION TABS FOR OWNER DETAILS (Horizontal scrollable on mobile) */}
+      <div className="flex overflow-x-auto gap-2 border-b border-slate-200 pb-2 scrollbar-none whitespace-nowrap -mx-2 px-2 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('daily')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === 'daily'
               ? 'bg-zinc-900 text-white shadow-md'
               : 'bg-white text-zinc-700 hover:bg-slate-100 border border-slate-200'
@@ -294,7 +294,7 @@ export default function OwnerDashboardPage() {
 
         <button
           onClick={() => setActiveTab('ohda')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === 'ohda'
               ? 'bg-zinc-900 text-white shadow-md'
               : 'bg-white text-zinc-700 hover:bg-slate-100 border border-slate-200'
@@ -306,7 +306,7 @@ export default function OwnerDashboardPage() {
 
         <button
           onClick={() => setActiveTab('carExpenses')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === 'carExpenses'
               ? 'bg-zinc-900 text-white shadow-md'
               : 'bg-white text-zinc-700 hover:bg-slate-100 border border-slate-200'
@@ -318,7 +318,7 @@ export default function OwnerDashboardPage() {
 
         <button
           onClick={() => setActiveTab('salaries')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === 'salaries'
               ? 'bg-zinc-900 text-white shadow-md'
               : 'bg-white text-zinc-700 hover:bg-slate-100 border border-slate-200'
@@ -330,7 +330,7 @@ export default function OwnerDashboardPage() {
 
         <button
           onClick={() => setActiveTab('parts')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 ${
             activeTab === 'parts'
               ? 'bg-zinc-900 text-white shadow-md'
               : 'bg-white text-zinc-700 hover:bg-slate-100 border border-slate-200'
@@ -580,22 +580,22 @@ export default function OwnerDashboardPage() {
           </div>
 
           {/* Filter row: Category dropdown + Search */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="relative w-full sm:w-auto">
               <select
                 value={partsCategory}
                 onChange={(e) => setPartsCategory(e.target.value)}
-                className="appearance-none bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 pr-9 text-xs font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                className="w-full sm:w-auto appearance-none bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 pr-9 text-xs font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
               >
                 <option value="All">{language === 'ar' ? 'جميع التصنيفات' : 'All Categories'}</option>
                 {PART_CATEGORIES.filter(c => c !== 'All').map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
-              <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-2.5 text-slate-400 pointer-events-none" />
+              <ChevronDown className="w-3.5 h-3.5 absolute right-3 rtl:right-auto rtl:left-3 top-2.5 text-slate-400 pointer-events-none" />
             </div>
 
-            <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <div className="relative flex-1 w-full max-w-full sm:max-w-sm">
               <Search className="w-4 h-4 absolute left-3.5 rtl:right-3.5 rtl:left-auto top-2.5 text-slate-400" />
               <input
                 type="text"
