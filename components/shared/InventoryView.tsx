@@ -450,86 +450,6 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4 border-t border-zinc-100">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs text-zinc-600 hover:bg-zinc-100 font-bold"
-            >
-              {t('cancel')}
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-500 shadow-md"
-            >
-              {submitting ? 'Saving...' : t('save')}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title={t('edit')}>
-        <form onSubmit={handleEditPart} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-zinc-700 mb-1">{t('partName')} *</label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-zinc-700 mb-1">{t('category')}</label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-zinc-700 mb-1">{t('quantityInStock')}</label>
-              <input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-zinc-700 mb-1">{t('unitPrice')} ($)</label>
-              <input
-                type="number"
-                value={unitPrice}
-                onChange={(e) => setUnitPrice(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-zinc-700 mb-1">{t('supplierName')}</label>
-            <select
-              value={supplierId}
-              onChange={(e) => setSupplierId(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
-            >
-              <option value="">No Supplier Selected</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4 border-t border-zinc-100">
-            <button
-              type="button"
               onClick={() => setIsEditModalOpen(false)}
               className="px-4 py-2 rounded-xl text-xs text-zinc-600 hover:bg-zinc-100 font-bold"
             >
@@ -540,7 +460,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
               disabled={submitting}
               className="px-4 py-2 rounded-xl text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-500 shadow-md"
             >
-              {submitting ? 'Updating...' : t('save')}
+              {submitting ? 'Saving...' : t('save')}
             </button>
           </div>
         </form>
