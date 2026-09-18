@@ -124,7 +124,7 @@ export default function BodyShopCarExpensesPage() {
   }, [filterPreset, startDate, endDate]);
 
   // Handle Customer Search
-  const handleCustomerSearchChange = (q: string) => {
+  const handleCustomerSearchChange = async (q: string) => {
     setCustomerSearchQuery(q);
     if (!q || q.trim().length < 2) {
       setCustomerSearchResults([]);
@@ -132,16 +132,12 @@ export default function BodyShopCarExpensesPage() {
       return;
     }
 
-    const term = q.toLowerCase().trim();
-    const filtered = customers.filter(
-      (c) =>
-        (c.name && c.name.toLowerCase().includes(term)) ||
-        (c.phone && c.phone.toLowerCase().includes(term))
-    );
+    const term = q.trim();
+    const matchingCustomers = await getCustomers(term);
 
     const groupedMap: { [key: string]: { name: string; phone: string; cars: Customer[] } } = {};
-    filtered.forEach((c) => {
-      const key = c.phone || c.name;
+    matchingCustomers.forEach((c) => {
+      const key = (c.phone && c.phone.trim()) || (c.name && c.name.trim());
       if (!groupedMap[key]) {
         groupedMap[key] = { name: c.name, phone: c.phone || '', cars: [] };
       }

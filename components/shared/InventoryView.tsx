@@ -26,6 +26,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [quantity, setQuantity] = useState('0');
+  const [costPrice, setCostPrice] = useState('0');
   const [unitPrice, setUnitPrice] = useState('0');
   const [supplierId, setSupplierId] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
@@ -80,6 +81,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
       name,
       category: category || 'Other',
       quantity_in_stock: Number(quantity) || 0,
+      cost_price: Number(costPrice) || 0,
       unit_price: Number(unitPrice) || 0,
       supplier_id: supplierId ? Number(supplierId) : null,
     });
@@ -97,6 +99,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
       name,
       category: category || 'Other',
       quantity_in_stock: Number(quantity) || 0,
+      cost_price: Number(costPrice) || 0,
       unit_price: Number(unitPrice) || 0,
       supplier_id: supplierId ? Number(supplierId) : null,
     });
@@ -117,6 +120,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
     setName('');
     setCategory('');
     setQuantity('0');
+    setCostPrice('0');
     setUnitPrice('0');
     setSupplierId('');
     setSelectedPart(null);
@@ -127,6 +131,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
     setName(part.name || '');
     setCategory(part.category || '');
     setQuantity(String(part.quantity_in_stock || 0));
+    setCostPrice(String(part.cost_price || 0));
     setUnitPrice(String(part.unit_price || 0));
     setSupplierId(part.supplier_id ? String(part.supplier_id) : '');
     setIsEditModalOpen(true);
@@ -237,6 +242,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
                         <th className="p-3">{t('id')}</th>
                         <th className="p-3">{t('partName')}</th>
                         <th className="p-3">{t('quantityInStock')}</th>
+                        <th className="p-3">{t('costPrice')} ($)</th>
                         <th className="p-3">{t('unitPrice')} ($)</th>
                         <th className="p-3">{t('supplierName')}</th>
                         <th className="p-3 text-right rtl:text-left">{t('actions')}</th>
@@ -260,6 +266,9 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
                               >
                                 {Number(p.quantity_in_stock).toLocaleString()} units
                               </span>
+                            </td>
+                            <td className="p-3 font-bold text-amber-700 bg-amber-50/50 rounded-lg">
+                              ${Number(p.cost_price || 0).toLocaleString()}
                             </td>
                             <td className="p-3 font-extrabold text-zinc-900">
                               ${Number(p.unit_price || 0).toLocaleString()}
@@ -324,14 +333,23 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-zinc-700 mb-1">{t('quantityInStock')}</label>
               <input
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 mb-1">{t('costPrice')} ($)</label>
+              <input
+                type="number"
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
               />
             </div>
             <div>
@@ -340,7 +358,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
                 type="number"
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
               />
             </div>
           </div>
@@ -410,14 +428,23 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-zinc-700 mb-1">{t('quantityInStock')}</label>
               <input
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-zinc-700 mb-1">{t('costPrice')} ($)</label>
+              <input
+                type="number"
+                value={costPrice}
+                onChange={(e) => setCostPrice(e.target.value)}
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
               />
             </div>
             <div>
@@ -426,7 +453,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
                 type="number"
                 value={unitPrice}
                 onChange={(e) => setUnitPrice(e.target.value)}
-                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
+                className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
               />
             </div>
           </div>
@@ -436,7 +463,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
             <select
               value={supplierId}
               onChange={(e) => setSupplierId(e.target.value)}
-              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500"
+              className="w-full bg-zinc-50 border border-zinc-300 rounded-xl px-3.5 py-2 text-xs text-zinc-900 focus:bg-white focus:outline-none focus:border-yellow-500 font-bold"
             >
               <option value="">No Supplier Selected</option>
               {suppliers.map((s) => (

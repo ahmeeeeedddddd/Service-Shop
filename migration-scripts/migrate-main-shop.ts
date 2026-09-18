@@ -19,12 +19,19 @@ const supabase = createClient(supabaseUrl, serviceKey, {
 });
 
 // Locate Main Shop SQLite DB
-const primaryPath = path.join(process.env.APPDATA || '', 'ElAnsaryServiceShop', 'shop.db');
-const fallbackPath = path.join(__dirname, '..', 'main-shop', 'database', 'shop.db');
-const dbPath = fs.existsSync(primaryPath) ? primaryPath : fallbackPath;
+// Priority: workspace root shop.db (most recent) → APPDATA → main-shop/database
+const workspaceRootDb = path.join(__dirname, '..', 'shop.db');
+const appdataPath = path.join(process.env.APPDATA || '', 'ElAnsaryServiceShop', 'shop.db');
+const legacyPath = path.join(__dirname, '..', 'main-shop', 'database', 'shop.db');
+
+const dbPath = fs.existsSync(workspaceRootDb)
+  ? workspaceRootDb
+  : fs.existsSync(appdataPath)
+  ? appdataPath
+  : legacyPath;
 
 if (!fs.existsSync(dbPath)) {
-  console.error(`❌ Main Shop SQLite database not found at ${primaryPath} or ${fallbackPath}`);
+  console.error(`❌ Main Shop SQLite database not found. Tried:\n  ${workspaceRootDb}\n  ${appdataPath}\n  ${legacyPath}`);
   process.exit(1);
 }
 

@@ -103,7 +103,8 @@ export const translations = {
     partName: "Part Name",
     category: "Category",
     quantityInStock: "Quantity In Stock",
-    unitPrice: "Unit Price",
+    costPrice: "Purchase Price",
+    unitPrice: "Selling Price",
 
     // Salaries
     employeeName: "Employee Name",
@@ -244,7 +245,8 @@ export const translations = {
     partName: "اسم قطعة الغيار / المادة",
     category: "التصنيف",
     quantityInStock: "الكمية بالمخزن",
-    unitPrice: "سعر الوحدة",
+    costPrice: "سعر الشراء (التكلفة)",
+    unitPrice: "سعر البيع",
 
     // Salaries
     employeeName: "اسم العامل",

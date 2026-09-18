@@ -41,6 +41,7 @@ export interface Part {
   name: string;
   category?: string | null;
   quantity_in_stock: number;
+  cost_price?: number;
   unit_price: number;
   supplier_id?: number | null;
   branch_id?: string | null;
@@ -137,16 +138,21 @@ export interface CarExpense {
 
 // ─── Customers ────────────────────────────────────────────────────────────────
 export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
-  let query = supabase.from('customers').select('*').order('name', { ascending: true });
-  if (searchQuery) {
-    query = query.or(`name.ilike.%${searchQuery}%,phone.ilike.%${searchQuery}%`);
+  if (searchQuery && searchQuery.trim()) {
+    const term = searchQuery.trim();
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`)
+      .order('name', { ascending: true })
+      .limit(50);
+    if (error) {
+      console.error('Error fetching search customers:', error);
+      return [];
+    }
+    return data || [];
   }
-  const { data, error } = await query;
-  if (error) {
-    console.error('Error fetching customers:', error);
-    return [];
-  }
-  return data || [];
+  return fetchAllRows<Customer>('customers');
 }
 
 export async function addCustomer(payload: Omit<Customer, 'id' | 'created_at'>): Promise<Customer | null> {

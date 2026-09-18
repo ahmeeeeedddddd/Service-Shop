@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "dist", "main-shop", "body-shop"]
+  "exclude": ["node_modules", "dist", "main-shop", "body-shop", "migration-scripts"]
 }
