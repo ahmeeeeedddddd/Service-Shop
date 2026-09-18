@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { getRepairs, Repair } from '@/lib/shared/queries';
 import { useTranslation } from '@/lib/i18n/context';
-import { printContent } from '@/lib/utils/print';
+import { printContent, generateReceiptHtml } from '@/lib/utils/print';
 import {
   FileSpreadsheet,
   Printer,
@@ -26,6 +26,51 @@ export default function MainShopIncomeReportPage() {
   const [toDate, setToDate] = useState('');
   const [quickRange, setQuickRange] = useState('all');
   const [customerSearch, setCustomerSearch] = useState('');
+
+  const handlePrintRepairReceipt = (r: Repair) => {
+    let lines: any[] = [];
+    if (r.repair_items && r.repair_items.length > 0) {
+      lines = r.repair_items.map((it) => ({
+        name: it.item_name || 'خدمة صيانة',
+        qty: Number(it.quantity || 1),
+        price: Number(it.unit_price || 0),
+      }));
+    } else if (r.description) {
+      lines = [{ name: r.description, qty: 1, price: Number(r.total_amount || 0) }];
+    }
+
+    let splitData: any = null;
+    if (r.notes && r.notes.includes('__SPLIT__:')) {
+      try {
+        splitData = JSON.parse(r.notes.substring(r.notes.indexOf('__SPLIT__:') + 10));
+      } catch (e) {}
+    }
+
+    const html = generateReceiptHtml(
+      {
+        id: r.id,
+        date: r.date,
+        customer: {
+          name: r.customers?.name || (language === 'ar' ? 'عميل بدون اسم' : 'Walk-in Customer'),
+          phone: r.customers?.phone,
+          car_name: r.customers?.car_name,
+          plate_number: r.customers?.plate_number,
+        },
+        payment_method: r.payment_method || 'Cash',
+        odometer: r.odometer,
+        notes: r.notes,
+        lines: lines,
+        total_amount: Number(r.total_amount || 0),
+        discount: Number(r.discount || 0),
+        paid_amount: Number(r.paid_amount || 0),
+        pending_amount: Number(r.pending_amount || 0),
+        split_data: splitData,
+      },
+      language as any
+    );
+
+    printContent(html, 'rtl');
+  };
 
   // Selected payment methods (Set of methods)
   const [selectedMethods, setSelectedMethods] = useState<string[]>([
@@ -377,18 +422,19 @@ export default function MainShopIncomeReportPage() {
                 <th className="p-3.5 text-right">{t('paid')}</th>
                 <th className="p-3.5 text-right">{t('pending')}</th>
                 <th className="p-3.5 text-right">{t('totalRevenue')}</th>
+                <th className="p-3.5 text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white font-medium text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 font-medium">
                     {t('loading')}
                   </td>
                 </tr>
               ) : filteredRepairs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 font-medium">
                     {t('noRecordsFound')}
                   </td>
                 </tr>
@@ -421,6 +467,18 @@ export default function MainShopIncomeReportPage() {
                       <td className="p-3.5 text-right font-black text-emerald-600">${paid.toFixed(2)}</td>
                       <td className="p-3.5 text-right font-bold text-rose-600">{pending > 0 ? `$${pending.toFixed(2)}` : '-'}</td>
                       <td className="p-3.5 text-right font-black text-zinc-900">${total.toFixed(2)}</td>
+                      <td className="p-3.5 text-right">
+                        {!isDeleted && (
+                          <button
+                            type="button"
+                            onClick={() => handlePrintRepairReceipt(r)}
+                            className="p-1.5 text-zinc-900 bg-slate-100 hover:bg-yellow-400 rounded-lg transition-colors font-bold inline-flex items-center gap-1"
+                            title={t('printReceipt')}
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })

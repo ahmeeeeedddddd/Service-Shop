@@ -22,6 +22,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/context';
+import { printContent, generateReceiptHtml } from '@/lib/utils/print';
 
 interface PendingBillsViewProps {
   branchId: string;
@@ -39,6 +40,45 @@ export function PendingBillsView({ branchId, branchTitle }: PendingBillsViewProp
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isProcessModalOpen, setIsProcessModalOpen] = useState(false);
+
+  const handlePrintBill = (b: PendingBill) => {
+    let lines: any[] = [];
+    if (b.line_items_json) {
+      try {
+        lines = JSON.parse(b.line_items_json).map((it: any) => ({
+          name: it.name || it.item_name || 'خدمة صيانة',
+          qty: Number(it.qty || it.quantity || 1),
+          price: Number(it.price || it.unit_price || 0),
+        }));
+      } catch (e) {}
+    }
+
+    if (lines.length === 0 && b.description) {
+      lines = [{ name: b.description, qty: 1, price: Number(b.total_amount || 0) }];
+    }
+
+    const html = generateReceiptHtml(
+      {
+        id: b.id,
+        date: b.date_created,
+        customer: {
+          name: b.customers?.name || (language === 'ar' ? 'عميل بدون اسم' : 'Walk-in Customer'),
+          phone: b.customers?.phone,
+          car_name: b.customers?.car_name,
+          plate_number: b.customers?.plate_number,
+        },
+        payment_method: b.payment_method || (language === 'ar' ? 'معلقة / آجل' : 'Pending'),
+        odometer: b.odometer,
+        notes: b.notes,
+        lines: lines,
+        total_amount: Number(b.total_amount || 0),
+        discount: Number(b.discount || 0),
+      },
+      language as any
+    );
+
+    printContent(html, 'rtl');
+  };
 
   // Edit Modal State
   const [editLines, setEditLines] = useState<{ name: string; qty: number; price: number; part_id?: number }[]>([]);
@@ -288,6 +328,13 @@ export function PendingBillsView({ branchId, branchTitle }: PendingBillsViewProp
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handlePrintBill(b)}
+                          className="p-1.5 text-zinc-900 bg-slate-100 hover:bg-yellow-400 rounded-lg transition-colors font-bold"
+                          title={t('printReceipt')}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleOpenEdit(b)}
                           className="p-1.5 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                           title={t('edit')}
@@ -361,6 +408,24 @@ export function PendingBillsView({ branchId, branchTitle }: PendingBillsViewProp
             <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-200 flex justify-between items-center text-xs font-black text-zinc-900">
               <span>{language === 'ar' ? 'إجمالي المبلغ المعلق:' : 'Total Amount:'}</span>
               <span className="text-emerald-600 text-base">${Number(selectedBill.total_amount).toFixed(2)}</span>
+            </div>
+
+            <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => handlePrintBill(selectedBill)}
+                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-zinc-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Printer className="w-4 h-4" />
+                <span>{t('printReceipt')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsViewModalOpen(false)}
+                className="px-4 py-2 text-slate-600 hover:text-zinc-900 font-bold text-xs"
+              >
+                {t('cancel')}
+              </button>
             </div>
           </div>
         </Modal>

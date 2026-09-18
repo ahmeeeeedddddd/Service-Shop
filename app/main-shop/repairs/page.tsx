@@ -17,7 +17,7 @@ import {
 } from '@/lib/shared/queries';
 import { Modal } from '@/components/shared/Modal';
 import { useTranslation } from '@/lib/i18n/context';
-import { printContent } from '@/lib/utils/print';
+import { printContent, generateReceiptHtml } from '@/lib/utils/print';
 import {
   Wrench,
   Plus,
@@ -1246,7 +1246,58 @@ export default function MainShopRepairsPage() {
               <span className="text-emerald-600 text-sm">${Number(viewRepairModal.total_amount).toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex justify-between items-center pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  let lines: any[] = [];
+                  if (viewRepairModal.repair_items && viewRepairModal.repair_items.length > 0) {
+                    lines = viewRepairModal.repair_items.map((it) => ({
+                      name: it.item_name || 'خدمة صيانة',
+                      qty: Number(it.quantity || 1),
+                      price: Number(it.unit_price || 0),
+                    }));
+                  } else if (viewRepairModal.description) {
+                    lines = [{ name: viewRepairModal.description, qty: 1, price: Number(viewRepairModal.total_amount || 0) }];
+                  }
+
+                  let splitData: any = null;
+                  if (viewRepairModal.notes && viewRepairModal.notes.includes('__SPLIT__:')) {
+                    try {
+                      splitData = JSON.parse(viewRepairModal.notes.substring(viewRepairModal.notes.indexOf('__SPLIT__:') + 10));
+                    } catch (e) {}
+                  }
+
+                  const html = generateReceiptHtml(
+                    {
+                      id: viewRepairModal.id,
+                      date: viewRepairModal.date,
+                      customer: {
+                        name: viewRepairModal.customers?.name || (language === 'ar' ? 'عميل بدون اسم' : 'Walk-in Customer'),
+                        phone: viewRepairModal.customers?.phone,
+                        car_name: viewRepairModal.customers?.car_name,
+                        plate_number: viewRepairModal.customers?.plate_number,
+                      },
+                      payment_method: viewRepairModal.payment_method || 'Cash',
+                      odometer: viewRepairModal.odometer,
+                      notes: viewRepairModal.notes,
+                      lines: lines,
+                      total_amount: Number(viewRepairModal.total_amount || 0),
+                      discount: Number(viewRepairModal.discount || 0),
+                      paid_amount: Number(viewRepairModal.paid_amount || 0),
+                      pending_amount: Number(viewRepairModal.pending_amount || 0),
+                      split_data: splitData,
+                    },
+                    language as any
+                  );
+
+                  printContent(html, 'rtl');
+                }}
+                className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-zinc-900 font-bold rounded-xl text-xs transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Printer className="w-4 h-4" />
+                <span>{t('printReceipt')}</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setViewRepairModal(null)}
