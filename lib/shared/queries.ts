@@ -259,7 +259,16 @@ export async function getParts(branchId?: string): Promise<Part[]> {
 export async function addPart(payload: Omit<Part, 'id'>): Promise<Part | null> {
   const { data, error } = await supabase.from('parts').insert([payload]).select().single();
   if (error) {
-    console.error('Error adding part:', error);
+    console.error('Error adding part:', error.message);
+    if (error.message && (error.message.includes('cost_price') || error.code === 'PGRST204')) {
+      const { cost_price, ...fallbackPayload } = payload;
+      const { data: fbData, error: fbError } = await supabase.from('parts').insert([fallbackPayload]).select().single();
+      if (fbError) {
+        console.error('Fallback add part failed:', fbError.message);
+        return null;
+      }
+      return fbData;
+    }
     return null;
   }
   return data;
@@ -268,7 +277,16 @@ export async function addPart(payload: Omit<Part, 'id'>): Promise<Part | null> {
 export async function updatePart(id: number, payload: Partial<Part>): Promise<boolean> {
   const { error } = await supabase.from('parts').update(payload).eq('id', id);
   if (error) {
-    console.error('Error updating part:', error);
+    console.error('Error updating part:', error.message);
+    if (error.message && (error.message.includes('cost_price') || error.code === 'PGRST204')) {
+      const { cost_price, ...fallbackPayload } = payload;
+      const { error: fbError } = await supabase.from('parts').update(fallbackPayload).eq('id', id);
+      if (fbError) {
+        console.error('Fallback update part failed:', fbError.message);
+        return false;
+      }
+      return true;
+    }
     return false;
   }
   return true;

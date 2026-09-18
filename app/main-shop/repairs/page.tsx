@@ -724,8 +724,9 @@ export default function MainShopRepairsPage() {
                     >
                       <option value="Cash">{t('cash')}</option>
                       <option value="Instapay">{t('instapay')}</option>
-                      <option value="Vodafone Cash">{t('vodafoneCash')}</option>
+                      <option value="Bank Masr">{t('bankMasr')}</option>
                       <option value="Bank Alahly">{t('bankAlahly')}</option>
+                      <option value="Vodafone Cash">{t('vodafoneCash')}</option>
                     </select>
                   </div>
                   <div>
@@ -753,8 +754,9 @@ export default function MainShopRepairsPage() {
                     >
                       <option value="Instapay">{t('instapay')}</option>
                       <option value="Cash">{t('cash')}</option>
-                      <option value="Vodafone Cash">{t('vodafoneCash')}</option>
+                      <option value="Bank Masr">{t('bankMasr')}</option>
                       <option value="Bank Alahly">{t('bankAlahly')}</option>
+                      <option value="Vodafone Cash">{t('vodafoneCash')}</option>
                     </select>
                   </div>
                   <div>
