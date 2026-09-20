@@ -330,16 +330,19 @@ export default function MainShopDashboardPage() {
             {language === 'ar' ? 'جميع الأوقات' : 'All Time'}
           </button>
 
+          <span className="text-zinc-500 font-bold text-xs">{language === 'ar' ? 'من:' : 'From:'}</span>
           <input
             type="date"
             value={startDate}
+            title={language === 'ar' ? 'تاريخ البداية (من)' : 'Start Date (From)'}
             onChange={(e) => setStartDate(e.target.value)}
             className="bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-zinc-900 font-semibold focus:outline-none focus:border-yellow-400"
           />
-          <span className="text-slate-400 font-bold">-</span>
+          <span className="text-zinc-500 font-bold text-xs">{language === 'ar' ? 'إلى:' : 'To:'}</span>
           <input
             type="date"
             value={endDate}
+            title={language === 'ar' ? 'تاريخ النهاية (إلى)' : 'End Date (To)'}
             onChange={(e) => setEndDate(e.target.value)}
             className="bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-zinc-900 font-semibold focus:outline-none focus:border-yellow-400"
           />

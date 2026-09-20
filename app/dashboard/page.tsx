@@ -253,19 +253,22 @@ export default function OwnerDashboardPage() {
 
               {(filterPreset === 'custom' || (startDate && endDate && filterPreset !== 'today' && filterPreset !== 'month' && filterPreset !== 'all')) && (
                 <div className="flex items-center gap-1.5 ml-1 rtl:mr-1">
+                  <span className="text-zinc-500 font-bold text-[11px]">{language === 'ar' ? 'من:' : 'From:'}</span>
                   <input
                     type="date"
                     value={startDate}
+                    title={language === 'ar' ? 'تاريخ البداية (من)' : 'Start Date (From)'}
                     onChange={(e) => {
                       setFilterPreset('custom');
                       setStartDate(e.target.value);
                     }}
                     className="bg-white border border-slate-300 rounded-xl px-2 py-1 text-zinc-900 font-semibold focus:outline-none focus:border-yellow-400 text-xs"
                   />
-                  <span className="text-slate-400 font-bold">-</span>
+                  <span className="text-zinc-500 font-bold text-[11px]">{language === 'ar' ? 'إلى:' : 'To:'}</span>
                   <input
                     type="date"
                     value={endDate}
+                    title={language === 'ar' ? 'تاريخ النهاية (إلى)' : 'End Date (To)'}
                     onChange={(e) => {
                       setFilterPreset('custom');
                       setEndDate(e.target.value);
