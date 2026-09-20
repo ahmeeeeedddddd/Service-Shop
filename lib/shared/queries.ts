@@ -352,6 +352,14 @@ export function formatEndDateForQuery(endDate?: string): string | undefined {
   return trimmed;
 }
 
+export function getTodayLocalDateStr(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ─── Expenses ─────────────────────────────────────────────────────────────────
 export async function getExpenses(branchId?: string, startDate?: string, endDate?: string): Promise<Expense[]> {
   let query = supabase.from('expenses').select('*').order('date', { ascending: false }).order('id', { ascending: false });
@@ -667,7 +675,7 @@ export async function processPendingBill(
     customer_id: bill.customer_id,
     car_id: bill.car_id,
     description: bill.description,
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayLocalDateStr(),
     total_amount: bill.total_amount,
     paid_amount: paidAmount,
     pending_amount: pendingAmount,

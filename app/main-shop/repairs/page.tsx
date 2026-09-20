@@ -10,6 +10,7 @@ import {
   addPendingBill,
   deleteRepair,
   deductPartStock,
+  getTodayLocalDateStr,
   Customer,
   CustomerCar,
   Part,
@@ -318,7 +319,7 @@ export default function MainShopRepairsPage() {
       pending_amount: pending,
       payment_method: paymentMethod,
       split_data: splitData,
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayLocalDateStr(),
       odometer,
       notes,
     });
