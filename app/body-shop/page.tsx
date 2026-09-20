@@ -173,19 +173,49 @@ export default function BodyShopDashboardPage() {
           <span>{t('filterByDate')}:</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               setStartDate(todayStr);
               setEndDate(todayStr);
             }}
-            className={`px-3 py-1.5 rounded-xl font-bold ${
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
               startDate === todayStr && endDate === todayStr
                 ? 'bg-zinc-900 text-white'
                 : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
             }`}
           >
-            {t('today')}
+            {language === 'ar' ? 'اليوم' : 'Today'}
+          </button>
+
+          <button
+            onClick={() => {
+              const d = new Date();
+              const firstDay = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+              setStartDate(firstDay);
+              setEndDate(todayStr);
+            }}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              startDate && endDate === todayStr && startDate.endsWith('-01')
+                ? 'bg-zinc-900 text-white'
+                : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
+            }`}
+          >
+            {language === 'ar' ? 'هذا الشهر' : 'This Month'}
+          </button>
+
+          <button
+            onClick={() => {
+              setStartDate('');
+              setEndDate('');
+            }}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              startDate === '' && endDate === ''
+                ? 'bg-zinc-900 text-white'
+                : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
+            }`}
+          >
+            {language === 'ar' ? 'جميع الأوقات' : 'All Time'}
           </button>
 
           <input

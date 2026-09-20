@@ -343,12 +343,21 @@ export async function getExactCount(table: string, branchId?: string): Promise<n
   return count || 0;
 }
 
+export function formatEndDateForQuery(endDate?: string): string | undefined {
+  if (!endDate) return undefined;
+  const trimmed = endDate.trim();
+  if (trimmed.length === 10) {
+    return `${trimmed} 23:59:59`;
+  }
+  return trimmed;
+}
+
 // ─── Expenses ─────────────────────────────────────────────────────────────────
 export async function getExpenses(branchId?: string, startDate?: string, endDate?: string): Promise<Expense[]> {
   let query = supabase.from('expenses').select('*').order('date', { ascending: false }).order('id', { ascending: false });
   if (branchId) query = query.eq('branch_id', branchId);
   if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
+  if (endDate) query = query.lte('date', formatEndDateForQuery(endDate)!);
   const { data, error } = await query;
   if (error) {
     console.error('Error fetching expenses:', error);
@@ -374,7 +383,7 @@ export async function getOhdaRecords(branchId: string = 'body-shop', startDate?:
     .eq('branch_id', branchId)
     .order('date', { ascending: false });
   if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
+  if (endDate) query = query.lte('date', formatEndDateForQuery(endDate)!);
   const { data, error } = await query;
   if (error) {
     console.error('Error fetching ohda records:', error);
@@ -409,7 +418,7 @@ export async function getRepairs(branchId?: string, startDate?: string, endDate?
     .order('id', { ascending: false });
   if (branchId) query = query.eq('branch_id', branchId);
   if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
+  if (endDate) query = query.lte('date', formatEndDateForQuery(endDate)!);
   const { data, error } = await query;
   if (error) {
     console.error('Error fetching repairs:', error);
@@ -534,7 +543,7 @@ export async function getCarExpenses(branchId: string = 'body-shop', startDate?:
     .eq('branch_id', branchId)
     .order('id', { ascending: false });
   if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
+  if (endDate) query = query.lte('date', formatEndDateForQuery(endDate)!);
   const { data, error } = await query;
   if (error) {
     console.error('Error fetching car expenses:', error);

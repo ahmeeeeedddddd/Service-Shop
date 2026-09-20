@@ -415,8 +415,9 @@ export default function MainShopRepairsPage() {
       name.toLowerCase().includes(search.toLowerCase()) ||
       desc.toLowerCase().includes(search.toLowerCase());
 
+    const targetEnd = endDate && endDate.length === 10 ? `${endDate} 23:59:59` : endDate;
     const matchesStart = !startDate || (r.date && r.date >= startDate);
-    const matchesEnd = !endDate || (r.date && r.date <= endDate);
+    const matchesEnd = !endDate || (r.date && r.date <= targetEnd);
 
     return matchesSearch && matchesStart && matchesEnd;
   });

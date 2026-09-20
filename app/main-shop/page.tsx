@@ -240,6 +240,16 @@ export default function MainShopDashboardPage() {
     printContent(html, 'rtl');
   };
 
+  const getFirstDayOfMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  };
+
+  const isToday = startDate === todayStr && endDate === todayStr;
+  const firstMonthDay = getFirstDayOfMonth();
+  const isMonth = startDate === firstMonthDay && endDate === todayStr;
+  const isAllTime = startDate === '' && endDate === '';
+
   return (
     <div className="space-y-8 animate-fade-in pb-12">
       {/* Page Header */}
@@ -283,19 +293,41 @@ export default function MainShopDashboardPage() {
           <span>{t('filterByDate')}:</span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => {
               setStartDate(todayStr);
               setEndDate(todayStr);
             }}
-            className={`px-3 py-1.5 rounded-xl font-bold ${
-              startDate === todayStr && endDate === todayStr
-                ? 'bg-zinc-900 text-white'
-                : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              isToday ? 'bg-zinc-900 text-white' : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
             }`}
           >
-            {t('today')}
+            {language === 'ar' ? 'اليوم' : 'Today'}
+          </button>
+
+          <button
+            onClick={() => {
+              setStartDate(firstMonthDay);
+              setEndDate(todayStr);
+            }}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              isMonth ? 'bg-zinc-900 text-white' : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
+            }`}
+          >
+            {language === 'ar' ? 'هذا الشهر' : 'This Month'}
+          </button>
+
+          <button
+            onClick={() => {
+              setStartDate('');
+              setEndDate('');
+            }}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all ${
+              isAllTime ? 'bg-zinc-900 text-white' : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
+            }`}
+          >
+            {language === 'ar' ? 'جميع الأوقات' : 'All Time'}
           </button>
 
           <input
