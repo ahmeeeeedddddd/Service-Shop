@@ -67,10 +67,22 @@ export function SuppliersView({ branchTitle }: SuppliersViewProps) {
     loadData();
   };
 
+  const sortTransactions = (list: SupplierTransaction[]): SupplierTransaction[] => {
+    return [...list].sort((a, b) => {
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateB !== dateA) return dateB.localeCompare(dateA);
+      const createdA = a.created_at || '';
+      const createdB = b.created_at || '';
+      if (createdB !== createdA) return createdB.localeCompare(createdA);
+      return (b.id || 0) - (a.id || 0);
+    });
+  };
+
   const openHistory = async (supp: Supplier) => {
     setSelectedSupplier(supp);
     const txs = await getSupplierTransactions(supp.id);
-    setTransactions(txs);
+    setTransactions(sortTransactions(txs));
     setIsHistoryModalOpen(true);
   };
 
@@ -100,7 +112,7 @@ export function SuppliersView({ branchTitle }: SuppliersViewProps) {
     if (updatedCurrent) setSelectedSupplier(updatedCurrent);
     
     const txs = await getSupplierTransactions(selectedSupplier.id);
-    setTransactions(txs);
+    setTransactions(sortTransactions(txs));
   };
 
   const totalSupplierDebt = suppliers.reduce((acc, s) => acc + (Number(s.pending_amount) || 0), 0);

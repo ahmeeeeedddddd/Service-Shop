@@ -225,7 +225,9 @@ export async function getSupplierTransactions(supplierId: number): Promise<Suppl
     .from('supplier_transactions')
     .select('*')
     .eq('supplier_id', supplierId)
-    .order('created_at', { ascending: false });
+    .order('date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false });
   if (error) {
     console.error('Error fetching supplier transactions:', error);
     return [];
@@ -760,9 +762,8 @@ export async function clearAllEmployeeAdjustments(branchId?: string): Promise<bo
 
 // ─── Combined Owner Dashboard Metrics ──────────────────────────────────────────
 export async function getOwnerDashboardMetrics(startDate?: string, endDate?: string) {
-  const todayStr = new Date().toISOString().split('T')[0];
-  const start = startDate !== undefined ? startDate : todayStr;
-  const end = endDate !== undefined ? endDate : todayStr;
+  const start = startDate || undefined;
+  const end = endDate || undefined;
 
   try {
     const [
@@ -776,13 +777,13 @@ export async function getOwnerDashboardMetrics(startDate?: string, endDate?: str
       parts,
       customerCount,
     ] = await Promise.all([
-      getRepairs('main-shop', start || undefined, end || undefined),
-      getRepairs('body-shop', start || undefined, end || undefined),
-      getExpenses('main-shop', start || undefined, end || undefined),
-      getExpenses('body-shop', start || undefined, end || undefined),
+      getRepairs('main-shop', start, end),
+      getRepairs('body-shop', start, end),
+      getExpenses('main-shop', start, end),
+      getExpenses('body-shop', start, end),
       getSuppliers(),
-      getOhdaRecords('body-shop', start || undefined, end || undefined),
-      getCarExpenses('body-shop', start || undefined, end || undefined),
+      getOhdaRecords('body-shop', start, end),
+      getCarExpenses('body-shop', start, end),
       getParts(),
       getExactCount('customers'),
     ]);

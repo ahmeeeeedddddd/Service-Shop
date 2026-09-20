@@ -42,21 +42,26 @@ export default function OwnerDashboardPage() {
   const [activeTab, setActiveTab] = useState<'daily' | 'ohda' | 'carExpenses' | 'parts' | 'salaries'>('daily');
   const [partsSearch, setPartsSearch] = useState('');
   const [partsCategory, setPartsCategory] = useState('All');
-  const [dateMode, setDateMode] = useState<'today' | 'all'>('today');
+  const todayStr = new Date().toISOString().split('T')[0];
+  const getFirstDayOfMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  };
+
+  const [filterPreset, setFilterPreset] = useState<'today' | 'month' | 'custom' | 'all'>('today');
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
   const [activeSalaryBranch, setActiveSalaryBranch] = useState<'main-shop' | 'body-shop'>('main-shop');
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const dateModeRef = React.useRef(dateMode);
+  const datesRef = React.useRef({ startDate, endDate });
 
   useEffect(() => {
-    dateModeRef.current = dateMode;
-  }, [dateMode]);
+    datesRef.current = { startDate, endDate };
+  }, [startDate, endDate]);
 
-  const loadData = async (mode = dateModeRef.current, isSilent = false) => {
+  const loadData = async (start = datesRef.current.startDate, end = datesRef.current.endDate, isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const start = mode === 'today' ? todayStr : '';
-      const end = mode === 'today' ? todayStr : '';
       const data = await getOwnerDashboardMetrics(start, end);
       setMetrics(data);
     } catch (err) {
@@ -67,26 +72,26 @@ export default function OwnerDashboardPage() {
   };
 
   useEffect(() => {
-    loadData(dateMode, false);
+    loadData(startDate, endDate, false);
 
     // Supabase Realtime subscription for live sync across all logged-in sessions
     const channel = supabase
       .channel('owner_dashboard_sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'repairs' }, () => loadData(dateModeRef.current, true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => loadData(dateModeRef.current, true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ohda_records' }, () => loadData(dateModeRef.current, true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'car_expenses' }, () => loadData(dateModeRef.current, true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'parts' }, () => loadData(dateModeRef.current, true))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'salaries' }, () => loadData(dateModeRef.current, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'repairs' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'expenses' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ohda_records' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'car_expenses' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'parts' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'salaries' }, () => loadData(datesRef.current.startDate, datesRef.current.endDate, true))
       .subscribe();
 
     // 5-second polling interval for guaranteed automatic background sync
     const intervalId = setInterval(() => {
-      loadData(dateModeRef.current, true);
+      loadData(datesRef.current.startDate, datesRef.current.endDate, true);
     }, 5000);
 
     // Re-sync when tab regains focus
-    const handleFocus = () => loadData(dateModeRef.current, true);
+    const handleFocus = () => loadData(datesRef.current.startDate, datesRef.current.endDate, true);
     window.addEventListener('focus', handleFocus);
 
     return () => {
@@ -94,7 +99,7 @@ export default function OwnerDashboardPage() {
       clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [dateMode]);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (
@@ -193,34 +198,87 @@ export default function OwnerDashboardPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {activeTab !== 'salaries' && (
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs">
-            <button
-              onClick={() => {
-                setDateMode('today');
-                loadData('today');
-              }}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs ${
-                dateMode === 'today' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
-              }`}
-            >
-              {language === 'ar' ? 'اليوم فقط' : "Today Only"}
-            </button>
-            <button
-              onClick={() => {
-                setDateMode('all');
-                loadData('all');
-              }}
-              className={`px-3 py-1.5 rounded-lg font-bold transition-all text-xs ${
-                dateMode === 'all' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
-              }`}
-            >
-              {language === 'ar' ? 'جميع الأوقات' : 'All Time'}
-            </button>
-          </div>
+            <div className="flex flex-wrap items-center bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-xs gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterPreset('today');
+                  setStartDate(todayStr);
+                  setEndDate(todayStr);
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs ${
+                  filterPreset === 'today' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'اليوم' : 'Today'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const firstDay = getFirstDayOfMonth();
+                  setFilterPreset('month');
+                  setStartDate(firstDay);
+                  setEndDate(todayStr);
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs ${
+                  filterPreset === 'month' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'هذا الشهر' : 'This Month'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterPreset('all');
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs ${
+                  filterPreset === 'all' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'جميع الأوقات' : 'All Time'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterPreset('custom');
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs ${
+                  filterPreset === 'custom' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-700 hover:bg-slate-200'
+                }`}
+              >
+                {language === 'ar' ? 'مخصص' : 'Custom'}
+              </button>
+
+              {(filterPreset === 'custom' || (startDate && endDate && filterPreset !== 'today' && filterPreset !== 'month' && filterPreset !== 'all')) && (
+                <div className="flex items-center gap-1.5 ml-1 rtl:mr-1">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setFilterPreset('custom');
+                      setStartDate(e.target.value);
+                    }}
+                    className="bg-white border border-slate-300 rounded-xl px-2 py-1 text-zinc-900 font-semibold focus:outline-none focus:border-yellow-400 text-xs"
+                  />
+                  <span className="text-slate-400 font-bold">-</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setFilterPreset('custom');
+                      setEndDate(e.target.value);
+                    }}
+                    className="bg-white border border-slate-300 rounded-xl px-2 py-1 text-zinc-900 font-semibold focus:outline-none focus:border-yellow-400 text-xs"
+                  />
+                </div>
+              )}
+            </div>
           )}
 
           <button
-            onClick={() => loadData(dateMode)}
+            onClick={() => loadData(startDate, endDate, false)}
             className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-zinc-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors ml-auto sm:ml-0"
           >
             <RefreshCw className="w-3.5 h-3.5" />
