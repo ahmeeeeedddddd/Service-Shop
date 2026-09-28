@@ -249,7 +249,12 @@ export async function addSupplierTransaction(payload: Omit<SupplierTransaction, 
 // ─── Inventory / Parts ────────────────────────────────────────────────────────
 export async function getParts(branchId?: string): Promise<Part[]> {
   let query = supabase.from('parts').select('*').order('name', { ascending: true });
-  if (branchId) query = query.eq('branch_id', branchId);
+  if (branchId === 'body-shop') {
+    query = query.eq('branch_id', 'body-shop');
+  } else {
+    // Main shop or general view: include main-shop and NULL/unassigned branch parts
+    query = query.or('branch_id.eq.main-shop,branch_id.is.null');
+  }
   const { data, error } = await query;
   if (error) {
     console.error('Error fetching parts:', error);

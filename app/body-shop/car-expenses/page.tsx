@@ -168,6 +168,11 @@ export default function BodyShopCarExpensesPage() {
     setCustomerSearchQuery('');
   };
 
+  const PUTTY_KEYWORDS = ['ستوك', 'معجون', 'putty', 'stok', 'stock'];
+  const FIBER_KEYWORDS = ['فيبر', 'فايبر', 'fiber', 'fibre', 'fiberglass'];
+  const FILLER_KEYWORDS = ['فيلر', 'فيلار', 'filler'];
+  const VARNISH_KEYWORDS = ['ورنيش', 'ورنيشات', 'varnish', 'clearcoat', 'clear coat'];
+
   // Stock Unit Price Lookup Helper
   const findPartPrice = (keywords: string[]) => {
     const matched = parts.find((p) => {
@@ -180,7 +185,7 @@ export default function BodyShopCarExpensesPage() {
   // Auto calculate material costs when quantities change
   const handlePuttyQtyChange = (qty: number) => {
     setMatPuttyAmt(qty);
-    const unitPrice = findPartPrice(['ستوك', 'معجون', 'putty']);
+    const unitPrice = findPartPrice(PUTTY_KEYWORDS);
     if (unitPrice > 0) {
       setMatPuttyCost(qty * unitPrice);
     }
@@ -188,7 +193,7 @@ export default function BodyShopCarExpensesPage() {
 
   const handleFiberQtyChange = (qty: number) => {
     setMatFiberAmt(qty);
-    const unitPrice = findPartPrice(['فيبر', 'fiber']);
+    const unitPrice = findPartPrice(FIBER_KEYWORDS);
     if (unitPrice > 0) {
       setMatFiberCost(qty * unitPrice);
     }
@@ -196,7 +201,7 @@ export default function BodyShopCarExpensesPage() {
 
   const handleFillerQtyChange = (qty: number) => {
     setMatFillerAmt(qty);
-    const unitPrice = findPartPrice(['فيلر', 'filler']);
+    const unitPrice = findPartPrice(FILLER_KEYWORDS);
     if (unitPrice > 0) {
       setMatFillerCost(qty * unitPrice);
     }
@@ -204,7 +209,7 @@ export default function BodyShopCarExpensesPage() {
 
   const handleVarnishQtyChange = (qty: number) => {
     setMatVarnishAmt(qty);
-    const unitPrice = findPartPrice(['ورنيش', 'varnish']);
+    const unitPrice = findPartPrice(VARNISH_KEYWORDS);
     if (unitPrice > 0) {
       setMatVarnishCost(qty * unitPrice);
     }
@@ -273,10 +278,10 @@ export default function BodyShopCarExpensesPage() {
     };
 
     await Promise.all([
-      deductMaterialStock(['ستوك', 'معجون', 'putty'], matPuttyAmt),
-      deductMaterialStock(['فيبر', 'fiber'], matFiberAmt),
-      deductMaterialStock(['فيلر', 'filler'], matFillerAmt),
-      deductMaterialStock(['ورنيش', 'varnish'], matVarnishAmt),
+      deductMaterialStock(PUTTY_KEYWORDS, matPuttyAmt),
+      deductMaterialStock(FIBER_KEYWORDS, matFiberAmt),
+      deductMaterialStock(FILLER_KEYWORDS, matFillerAmt),
+      deductMaterialStock(VARNISH_KEYWORDS, matVarnishAmt),
     ]);
 
     resetAddForm();
@@ -585,7 +590,7 @@ export default function BodyShopCarExpensesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Putty */}
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'معجون (ستوك)' : 'Putty'}</span>
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'معجون ستوك (Putty)' : 'Putty (معجون / ستوك)'}</span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
@@ -612,7 +617,7 @@ export default function BodyShopCarExpensesPage() {
 
                 {/* Fiber */}
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'فيبرجلاس' : 'Fiber'}</span>
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'فيبرجلاس (Fiber)' : 'Fiber (فيبر / فيبرجلاس)'}</span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
@@ -639,7 +644,7 @@ export default function BodyShopCarExpensesPage() {
 
                 {/* Filler */}
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'فيلر' : 'Filler'}</span>
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'فيلر (Filler)' : 'Filler (فيلر)'}</span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
@@ -666,7 +671,7 @@ export default function BodyShopCarExpensesPage() {
 
                 {/* Varnish */}
                 <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'ورنيش' : 'Varnish'}</span>
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'ورنيش (Varnish)' : 'Varnish (ورنيش)'}</span>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
