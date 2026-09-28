@@ -248,14 +248,7 @@ export async function addSupplierTransaction(payload: Omit<SupplierTransaction, 
 
 // ─── Inventory / Parts ────────────────────────────────────────────────────────
 export async function getParts(branchId?: string): Promise<Part[]> {
-  let query = supabase.from('parts').select('*').order('name', { ascending: true });
-  if (branchId === 'body-shop') {
-    query = query.eq('branch_id', 'body-shop');
-  } else {
-    // Main shop or general view: include main-shop and NULL/unassigned branch parts
-    query = query.or('branch_id.eq.main-shop,branch_id.is.null');
-  }
-  const { data, error } = await query;
+  const { data, error } = await supabase.from('parts').select('*').order('name', { ascending: true });
   if (error) {
     console.error('Error fetching parts:', error);
     return [];
@@ -264,11 +257,12 @@ export async function getParts(branchId?: string): Promise<Part[]> {
 }
 
 export async function addPart(payload: Omit<Part, 'id'>): Promise<Part | null> {
-  const { data, error } = await supabase.from('parts').insert([payload]).select().single();
+  const { branch_id, ...cleanPayload } = payload as any;
+  const { data, error } = await supabase.from('parts').insert([cleanPayload]).select().single();
   if (error) {
     console.error('Error adding part:', error.message);
     if (error.message && (error.message.includes('cost_price') || error.code === 'PGRST204')) {
-      const { cost_price, ...fallbackPayload } = payload;
+      const { cost_price, ...fallbackPayload } = cleanPayload;
       const { data: fbData, error: fbError } = await supabase.from('parts').insert([fallbackPayload]).select().single();
       if (fbError) {
         console.error('Fallback add part failed:', fbError.message);

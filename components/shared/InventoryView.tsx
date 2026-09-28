@@ -77,13 +77,20 @@ export function InventoryView({ branchTitle, branchId }: InventoryViewProps) {
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
 
+  const BODY_SHOP_KEYWORDS = ['ستوك', 'معجون', 'putty', 'فيبر', 'فايبر', 'fiber', 'فيلر', 'filler', 'ورنيش', 'varnish'];
+
   const filteredParts = parts.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.category && p.category.toLowerCase().includes(search.toLowerCase()));
 
+    if (isBodyShop) {
+      const nameLower = p.name.toLowerCase();
+      const isBodyShopItem = (p.category && p.category.toLowerCase() === 'body shop') || BODY_SHOP_KEYWORDS.some((k) => nameLower.includes(k));
+      return matchesSearch && isBodyShopItem;
+    }
+
     const matchesCategory =
-      isBodyShop ||
       selectedCategoryFilter === 'all' ||
       (p.category && p.category.toLowerCase() === selectedCategoryFilter.toLowerCase());
 
