@@ -1,5 +1,6 @@
-import { redirect } from 'next/navigation';
+import { SalariesView } from '@/components/shared/SalariesView';
 
 export default function BodyShopSalariesPage() {
-  redirect('/body-shop');
+  return <SalariesView branchId="body-shop" branchTitle="Body & Paint Shop" />;
 }
+

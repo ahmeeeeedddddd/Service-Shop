@@ -3,14 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { Part, getParts, addPart, updatePart, deletePart, Supplier, getSuppliers } from '@/lib/shared/queries';
 import { Modal } from './Modal';
-import { Package, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Edit, Trash2, Printer } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/context';
+import { printContent } from '@/lib/utils/print';
 
 interface InventoryViewProps {
   branchTitle: string;
+  branchId?: string;
 }
 
-export function InventoryView({ branchTitle }: InventoryViewProps) {
+export function InventoryView({ branchTitle, branchId }: InventoryViewProps) {
   const { t, language } = useTranslation();
   const [parts, setParts] = useState<Part[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -31,17 +33,39 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
   const [supplierId, setSupplierId] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
+  const isBodyShop = branchId === 'body-shop';
+
   const loadData = async () => {
     setLoading(true);
-    const [partsData, suppsData] = await Promise.all([getParts(), getSuppliers()]);
-    setParts(partsData);
+    const [partsData, suppsData] = await Promise.all([
+      getParts(branchId),
+      getSuppliers(),
+    ]);
+
+    if (isBodyShop && partsData.length === 0) {
+      // Seed initial default body-shop materials if empty
+      const defaultMaterials = [
+        { name: 'ستوك (معجون)', category: 'Body Shop', quantity_in_stock: 10, unit_price: 15, cost_price: 10, branch_id: 'body-shop' },
+        { name: 'فيبرجلاس', category: 'Body Shop', quantity_in_stock: 10, unit_price: 20, cost_price: 12, branch_id: 'body-shop' },
+        { name: 'فيلر', category: 'Body Shop', quantity_in_stock: 10, unit_price: 18, cost_price: 11, branch_id: 'body-shop' },
+        { name: 'ورنيش', category: 'Body Shop', quantity_in_stock: 10, unit_price: 25, cost_price: 16, branch_id: 'body-shop' },
+      ];
+      for (const mat of defaultMaterials) {
+        await addPart(mat);
+      }
+      const refreshedParts = await getParts(branchId);
+      setParts(refreshedParts);
+    } else {
+      setParts(partsData);
+    }
+
     setSuppliers(suppsData);
     setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [branchId]);
 
   const CATEGORIES = [
     { key: 'Mechanical', ar: 'ميكانيكا', en: 'Mechanical' },
@@ -59,6 +83,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
       (p.category && p.category.toLowerCase().includes(search.toLowerCase()));
 
     const matchesCategory =
+      isBodyShop ||
       selectedCategoryFilter === 'all' ||
       (p.category && p.category.toLowerCase() === selectedCategoryFilter.toLowerCase());
 
@@ -68,10 +93,66 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
   // Group parts by category
   const groupedPartsMap: { [cat: string]: Part[] } = {};
   filteredParts.forEach((p) => {
-    const cat = p.category || 'Other';
+    const cat = isBodyShop ? 'مخزون ورشة السمكرة والدهان' : (p.category || 'Other');
     if (!groupedPartsMap[cat]) groupedPartsMap[cat] = [];
     groupedPartsMap[cat].push(p);
   });
+
+  const handlePrintCategory = (catName: string, catParts: Part[]) => {
+    const catObj = CATEGORIES.find((c) => c.key.toLowerCase() === catName.toLowerCase());
+    const displayCatName = catObj ? `${catObj.ar} (${catObj.en})` : catName;
+    const todayStr = new Date().toLocaleDateString('ar-EG');
+    const totalValue = catParts.reduce((acc, p) => acc + (Number(p.quantity_in_stock || 0) * Number(p.unit_price || 0)), 0);
+
+    const html = `
+      <div style="direction: rtl; font-family: system-ui, sans-serif; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ca8a04; padding-bottom: 15px;">
+          <h2 style="font-size: 22px; font-weight: bold; margin: 0; color: #1e293b;">${branchTitle}</h2>
+          <h3 style="font-size: 16px; margin: 5px 0; color: #ca8a04;">تقرير كشف المخزون قسم: ${displayCatName}</h3>
+          <p style="font-size: 12px; color: #64748b; margin: 0;">تاريخ الإصدار: ${todayStr}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; text-align: right; font-size: 13px;">
+          <thead>
+            <tr style="background-color: #0f172a; color: white;">
+              <th style="padding: 10px; border: 1px solid #0f172a;">#</th>
+              <th style="padding: 10px; border: 1px solid #0f172a;">اسم القطعة / الخامة</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">الكمية المتوفرة بالمخزن</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">سعر التكلفة ($)</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">سعر البيع / الوحدة ($)</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">إجمالي القيمة ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${catParts
+              .map((p) => {
+                const itemVal = Number(p.quantity_in_stock || 0) * Number(p.unit_price || 0);
+                return `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">#${p.id}</td>
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">${p.name}</td>
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${p.quantity_in_stock}</td>
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">$${Number(p.cost_price || 0).toFixed(2)}</td>
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">$${Number(p.unit_price || 0).toFixed(2)}</td>
+                  <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: #16a34a;">$${itemVal.toFixed(2)}</td>
+                </tr>
+              `;
+              })
+              .join('')}
+            <tr style="background-color: #fef08a; font-weight: bold; border-top: 2px solid #ca8a04;">
+              <td colspan="5" style="padding: 10px; border: 1px solid #cbd5e1; text-align: right;">إجمالي قيمة المخزون لهذا القسم:</td>
+              <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; font-size: 14px; color: #000;">$${totalValue.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 12px; font-weight: bold; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+          تواصل: 01010103777 / 01010606016
+        </div>
+      </div>
+    `;
+    printContent(html, 'rtl');
+  };
 
   const handleCreatePart = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,11 +160,12 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
     setSubmitting(true);
     await addPart({
       name,
-      category: category || 'Other',
+      category: isBodyShop ? 'Body Shop' : (category || 'Other'),
       quantity_in_stock: Number(quantity) || 0,
       cost_price: Number(costPrice) || 0,
       unit_price: Number(unitPrice) || 0,
       supplier_id: supplierId ? Number(supplierId) : null,
+      branch_id: branchId || null,
     });
     setSubmitting(false);
     resetForm();
@@ -97,7 +179,7 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
     setSubmitting(true);
     await updatePart(selectedPart.id, {
       name,
-      category: category || 'Other',
+      category: isBodyShop ? 'Body Shop' : (category || 'Other'),
       quantity_in_stock: Number(quantity) || 0,
       cost_price: Number(costPrice) || 0,
       unit_price: Number(unitPrice) || 0,
@@ -177,21 +259,23 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
             />
           </div>
 
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-            <span className="font-bold text-zinc-700 whitespace-nowrap">{t('category')}:</span>
-            <select
-              value={selectedCategoryFilter}
-              onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-              className="w-full sm:w-auto bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 font-bold text-zinc-900 focus:outline-none focus:border-yellow-500"
-            >
-              <option value="all">جميع التصنيفات (All)</option>
-              {CATEGORIES.map((c) => (
-                <option key={c.key} value={c.key}>
-                  {c.ar} ({c.en})
-                </option>
-              ))}
-            </select>
-          </div>
+          {!isBodyShop && (
+            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+              <span className="font-bold text-zinc-700 whitespace-nowrap">{t('category')}:</span>
+              <select
+                value={selectedCategoryFilter}
+                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                className="w-full sm:w-auto bg-zinc-50 border border-zinc-300 rounded-xl px-3 py-2 font-bold text-zinc-900 focus:outline-none focus:border-yellow-500"
+              >
+                <option value="all">جميع التصنيفات (All)</option>
+                {CATEGORIES.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.ar} ({c.en})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-xs font-bold whitespace-nowrap">
@@ -230,9 +314,21 @@ export function InventoryView({ branchTitle }: InventoryViewProps) {
                     <Package className="w-4 h-4 text-yellow-500" />
                     <span>{displayCatName}</span>
                   </h3>
-                  <span className="text-[11px] font-bold text-zinc-600 bg-white px-2.5 py-0.5 rounded-full border border-zinc-200">
-                    {catParts.length} {catParts.length === 1 ? 'عنصر' : 'عناصر'}
-                  </span>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePrintCategory(catName, catParts)}
+                      className="flex items-center gap-1 text-[11px] font-bold text-zinc-900 bg-yellow-400 hover:bg-yellow-500 px-2.5 py-1 rounded-lg transition-colors shadow-sm"
+                      title={language === 'ar' ? 'طباعة هذا التصنيف' : 'Print Category'}
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>{language === 'ar' ? 'طباعة هذا القسم' : 'Print Category'}</span>
+                    </button>
+
+                    <span className="text-[11px] font-bold text-zinc-600 bg-white px-2.5 py-0.5 rounded-full border border-zinc-200">
+                      {catParts.length} {catParts.length === 1 ? 'عنصر' : 'عناصر'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">

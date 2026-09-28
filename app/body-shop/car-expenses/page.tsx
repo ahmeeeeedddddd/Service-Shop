@@ -11,6 +11,7 @@ import {
   getCustomerCars,
   CustomerCar,
   getParts,
+  updatePart,
   Part,
 } from '@/lib/shared/queries';
 import { Modal } from '@/components/shared/Modal';
@@ -94,7 +95,7 @@ export default function BodyShopCarExpensesPage() {
     const [ceData, custData, partData] = await Promise.all([
       getCarExpenses('body-shop', start, end),
       getCustomers(),
-      getParts(),
+      getParts('body-shop'),
     ]);
     setCarExpenses(ceData);
     setCustomers(custData);
@@ -256,6 +257,27 @@ export default function BodyShopCarExpensesPage() {
       details_json: JSON.stringify(detailsObj),
       branch_id: 'body-shop',
     });
+
+    // Deduct stock from inventory for used materials
+    const currentParts = await getParts('body-shop');
+    const deductMaterialStock = async (keywords: string[], qtyUsed: number) => {
+      if (qtyUsed <= 0) return;
+      const matched = currentParts.find((p) => {
+        const nameLower = p.name.toLowerCase();
+        return keywords.some((k) => nameLower.includes(k.toLowerCase()));
+      });
+      if (matched) {
+        const newStock = Math.max(0, (matched.quantity_in_stock || 0) - qtyUsed);
+        await updatePart(matched.id, { quantity_in_stock: newStock });
+      }
+    };
+
+    await Promise.all([
+      deductMaterialStock(['ستوك', 'معجون', 'putty'], matPuttyAmt),
+      deductMaterialStock(['فيبر', 'fiber'], matFiberAmt),
+      deductMaterialStock(['فيلر', 'filler'], matFillerAmt),
+      deductMaterialStock(['ورنيش', 'varnish'], matVarnishAmt),
+    ]);
 
     resetAddForm();
     setIsAddModalOpen(false);

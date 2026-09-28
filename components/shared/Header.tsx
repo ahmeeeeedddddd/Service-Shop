@@ -69,6 +69,7 @@ export function Header() {
     { label: t('partsInventory'), href: '/body-shop/inventory' },
     { label: t('suppliersAccount'), href: '/body-shop/suppliers' },
     { label: t('dailyExpenses'), href: '/body-shop/expenses' },
+    { label: t('employeeSalaries'), href: '/body-shop/salaries' },
   ];
 
   return (
