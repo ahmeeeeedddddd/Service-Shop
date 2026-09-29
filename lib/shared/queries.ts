@@ -138,21 +138,21 @@ export interface CarExpense {
 
 // ─── Customers ────────────────────────────────────────────────────────────────
 export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
+  let query = supabase.from('customers').select('*').order('id', { ascending: false });
+
   if (searchQuery && searchQuery.trim()) {
     const term = searchQuery.trim();
-    const { data, error } = await supabase
-      .from('customers')
-      .select('*')
-      .or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`)
-      .order('name', { ascending: true })
-      .limit(50);
-    if (error) {
-      console.error('Error fetching search customers:', error);
-      return [];
-    }
-    return data || [];
+    query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(100);
+  } else {
+    query = query.limit(200);
   }
-  return fetchAllRows<Customer>('customers');
+
+  const { data, error } = await query;
+  if (error) {
+    console.error('Error fetching customers:', error);
+    return [];
+  }
+  return data || [];
 }
 
 export async function addCustomer(payload: Omit<Customer, 'id' | 'created_at'>): Promise<Customer | null> {

@@ -14,7 +14,16 @@ export function CustomersView({ branchTitle }: CustomersViewProps) {
   const { t } = useTranslation();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -48,16 +57,16 @@ export function CustomersView({ branchTitle }: CustomersViewProps) {
     setLoadingHistory(false);
   };
 
-  const loadData = async () => {
+  const loadData = async (queryTerm: string = debouncedSearch) => {
     setLoading(true);
-    const data = await getCustomers(search);
+    const data = await getCustomers(queryTerm);
     setCustomers(data);
     setLoading(false);
   };
 
   useEffect(() => {
-    loadData();
-  }, [search]);
+    loadData(debouncedSearch);
+  }, [debouncedSearch]);
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();

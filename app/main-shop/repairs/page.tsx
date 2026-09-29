@@ -92,6 +92,7 @@ export default function MainShopRepairsPage() {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [currentBillData, setCurrentBillData] = useState<any | null>(null);
   const [isBillProcessed, setIsBillProcessed] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewRepairModal, setViewRepairModal] = useState<Repair | null>(null);
 
   // Table row input references for auto-focusing
@@ -329,50 +330,55 @@ export default function MainShopRepairsPage() {
   };
 
   const handleConfirmAndSaveRepair = async () => {
-    if (isBillProcessed) {
-      alert(t('billAlreadyProcessed'));
+    if (isSubmitting || isBillProcessed) {
+      if (isBillProcessed) alert(t('billAlreadyProcessed'));
       return;
     }
     if (!currentBillData) return;
 
-    let finalNotes = currentBillData.notes || '';
-    if (currentBillData.split_data) {
-      finalNotes = (finalNotes ? finalNotes + '\n' : '') + '__SPLIT__:' + JSON.stringify(currentBillData.split_data);
-    }
-
-    const repairPayload = {
-      customer_id: currentBillData.customer.id || null,
-      description: currentBillData.lines.map((l: any) => l.name).join(', '),
-      date: currentBillData.date,
-      total_amount: currentBillData.net_total,
-      paid_amount: currentBillData.paid_amount,
-      pending_amount: currentBillData.pending_amount,
-      discount: currentBillData.discount,
-      payment_method: currentBillData.payment_method,
-      odometer: currentBillData.odometer,
-      notes: finalNotes,
-      branch_id: 'main-shop',
-    };
-
-    const itemsPayload = currentBillData.lines.map((l: any) => ({
-      item_name: l.name,
-      quantity: l.qty,
-      unit_price: l.price,
-    }));
-
-    const result = await addRepair(repairPayload, itemsPayload);
-    if (result) {
-      // Deduct stock for parts
-      for (const line of currentBillData.lines) {
-        if (line.part_id) {
-          await deductPartStock(line.part_id, line.qty);
-        }
+    setIsSubmitting(true);
+    try {
+      let finalNotes = currentBillData.notes || '';
+      if (currentBillData.split_data) {
+        finalNotes = (finalNotes ? finalNotes + '\n' : '') + '__SPLIT__:' + JSON.stringify(currentBillData.split_data);
       }
 
-      setIsBillProcessed(true);
-      alert(t('billProcessed'));
-      resetForm();
-      loadData();
+      const repairPayload = {
+        customer_id: currentBillData.customer.id || null,
+        description: currentBillData.lines.map((l: any) => l.name).join(', '),
+        date: currentBillData.date,
+        total_amount: currentBillData.net_total,
+        paid_amount: currentBillData.paid_amount,
+        pending_amount: currentBillData.pending_amount,
+        discount: currentBillData.discount,
+        payment_method: currentBillData.payment_method,
+        odometer: currentBillData.odometer,
+        notes: finalNotes,
+        branch_id: 'main-shop',
+      };
+
+      const itemsPayload = currentBillData.lines.map((l: any) => ({
+        item_name: l.name,
+        quantity: l.qty,
+        unit_price: l.price,
+      }));
+
+      const result = await addRepair(repairPayload, itemsPayload);
+      if (result) {
+        // Deduct stock for parts
+        for (const line of currentBillData.lines) {
+          if (line.part_id) {
+            await deductPartStock(line.part_id, line.qty);
+          }
+        }
+
+        setIsBillProcessed(true);
+        alert(t('billProcessed'));
+        resetForm();
+        loadData();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1182,15 +1188,15 @@ export default function MainShopRepairsPage() {
                 <button
                   type="button"
                   onClick={handleConfirmAndSaveRepair}
-                  disabled={isBillProcessed}
+                  disabled={isBillProcessed || isSubmitting}
                   className={`px-6 py-2.5 rounded-xl font-bold text-xs text-zinc-900 transition-all flex items-center gap-2 ${
-                    isBillProcessed
+                    isBillProcessed || isSubmitting
                       ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
                       : 'bg-yellow-400 hover:bg-yellow-500 shadow-md shadow-yellow-400/20'
                   }`}
                 >
                   <CheckCircle className="w-4 h-4" />
-                  <span>{isBillProcessed ? t('billAlreadyProcessed') : t('confirmAndSave')}</span>
+                  <span>{isSubmitting ? (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : isBillProcessed ? t('billAlreadyProcessed') : t('confirmAndSave')}</span>
                 </button>
               </div>
             </div>
