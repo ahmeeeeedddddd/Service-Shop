@@ -247,40 +247,90 @@ export async function addSupplierTransaction(payload: Omit<SupplierTransaction, 
 }
 
 // ─── Inventory / Parts ────────────────────────────────────────────────────────
+function parsePartCategoryAndCost(p: Part): Part {
+  if (!p) return p;
+  let costPrice = p.cost_price || 0;
+  let cleanCategory = p.category || '';
+
+  if (cleanCategory.includes('|cost:')) {
+    const parts = cleanCategory.split('|cost:');
+    cleanCategory = parts[0];
+    if (!costPrice && parts[1]) {
+      costPrice = parseFloat(parts[1]) || 0;
+    }
+  }
+
+  return {
+    ...p,
+    category: cleanCategory,
+    cost_price: costPrice,
+  };
+}
+
 export async function getParts(branchId?: string): Promise<Part[]> {
   const { data, error } = await supabase.from('parts').select('*').order('name', { ascending: true });
   if (error) {
     console.error('Error fetching parts:', error);
     return [];
   }
-  return data || [];
+  return (data || []).map(parsePartCategoryAndCost);
 }
 
 export async function addPart(payload: Omit<Part, 'id'>): Promise<Part | null> {
   const { branch_id, ...cleanPayload } = payload as any;
-  const { data, error } = await supabase.from('parts').insert([cleanPayload]).select().single();
+  const cost = cleanPayload.cost_price || 0;
+
+  let categoryWithCost = cleanPayload.category || '';
+  if (cost > 0 && !categoryWithCost.includes('|cost:')) {
+    categoryWithCost = `${categoryWithCost}|cost:${cost}`;
+  }
+
+  const payloadWithEncodedCategory = {
+    ...cleanPayload,
+    category: categoryWithCost,
+  };
+
+  const { data, error } = await supabase.from('parts').insert([payloadWithEncodedCategory]).select().single();
   if (error) {
     console.error('Error adding part:', error.message);
     if (error.message && (error.message.includes('cost_price') || error.code === 'PGRST204')) {
-      const { cost_price, ...fallbackPayload } = cleanPayload;
+      const { cost_price, ...fallbackPayload } = payloadWithEncodedCategory;
       const { data: fbData, error: fbError } = await supabase.from('parts').insert([fallbackPayload]).select().single();
       if (fbError) {
         console.error('Fallback add part failed:', fbError.message);
         return null;
       }
-      return fbData;
+      return fbData ? parsePartCategoryAndCost(fbData) : null;
     }
     return null;
   }
-  return data;
+  return data ? parsePartCategoryAndCost(data) : null;
 }
 
 export async function updatePart(id: number, payload: Partial<Part>): Promise<boolean> {
-  const { error } = await supabase.from('parts').update(payload).eq('id', id);
+  const cost = payload.cost_price !== undefined ? payload.cost_price : undefined;
+
+  let updatedPayload = { ...payload } as any;
+  if (cost !== undefined) {
+    let cat: string = payload.category ?? '';
+    if (payload.category === undefined) {
+      const { data: existing } = await supabase.from('parts').select('category').eq('id', id).single();
+      cat = existing?.category || '';
+    }
+    if (cat.includes('|cost:')) {
+      cat = cat.split('|cost:')[0];
+    }
+    if (cost > 0) {
+      cat = `${cat}|cost:${cost}`;
+    }
+    updatedPayload.category = cat;
+  }
+
+  const { error } = await supabase.from('parts').update(updatedPayload).eq('id', id);
   if (error) {
     console.error('Error updating part:', error.message);
     if (error.message && (error.message.includes('cost_price') || error.code === 'PGRST204')) {
-      const { cost_price, ...fallbackPayload } = payload;
+      const { cost_price, ...fallbackPayload } = updatedPayload;
       const { error: fbError } = await supabase.from('parts').update(fallbackPayload).eq('id', id);
       if (fbError) {
         console.error('Fallback update part failed:', fbError.message);
