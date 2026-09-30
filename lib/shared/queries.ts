@@ -627,6 +627,15 @@ export async function deleteCarExpense(id: number): Promise<boolean> {
   return true;
 }
 
+export async function updateCarExpense(id: number, payload: Partial<CarExpense>): Promise<boolean> {
+  const { error } = await supabase.from('car_expenses').update(payload).eq('id', id);
+  if (error) {
+    console.error('Error updating car expense:', error);
+    return false;
+  }
+  return true;
+}
+
 export async function deleteOhdaRecord(id: number): Promise<boolean> {
   const { error } = await supabase.from('ohda_records').delete().eq('id', id);
   if (error) {

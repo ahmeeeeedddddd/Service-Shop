@@ -5,6 +5,7 @@ import {
   CarExpense,
   getCarExpenses,
   addCarExpense,
+  updateCarExpense,
   deleteCarExpense,
   Customer,
   getCustomers,
@@ -21,6 +22,7 @@ import {
   Search,
   Users,
   Eye,
+  Edit,
   Filter,
   Car,
   Printer,
@@ -51,6 +53,7 @@ export default function BodyShopCarExpensesPage() {
 
   // Add / Edit Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Customer Autocomplete state
@@ -254,42 +257,76 @@ export default function BodyShopCarExpensesPage() {
       other_purchases: otherPurchases,
     };
 
-    await addCarExpense({
+    const payload = {
       customer_id: selectedCustomer ? selectedCustomer.id : null,
       car_info: carInfoInput || (language === 'ar' ? 'سيارة ورشة سمكرة' : 'Body Repair Vehicle'),
       total_cost: total,
       date: date || new Date().toISOString().split('T')[0],
       details_json: JSON.stringify(detailsObj),
       branch_id: 'body-shop',
-    });
-
-    // Deduct stock from inventory for used materials
-    const currentParts = await getParts('body-shop');
-    const deductMaterialStock = async (keywords: string[], qtyUsed: number) => {
-      if (qtyUsed <= 0) return;
-      const matched = currentParts.find((p) => {
-        const nameLower = p.name.toLowerCase();
-        return keywords.some((k) => nameLower.includes(k.toLowerCase()));
-      });
-      if (matched) {
-        const newStock = Math.max(0, (matched.quantity_in_stock || 0) - qtyUsed);
-        await updatePart(matched.id, { quantity_in_stock: newStock });
-      }
     };
 
-    await Promise.all([
-      deductMaterialStock(PUTTY_KEYWORDS, matPuttyAmt),
-      deductMaterialStock(FIBER_KEYWORDS, matFiberAmt),
-      deductMaterialStock(FILLER_KEYWORDS, matFillerAmt),
-      deductMaterialStock(VARNISH_KEYWORDS, matVarnishAmt),
-    ]);
+    if (editingExpenseId) {
+      await updateCarExpense(editingExpenseId, payload);
+    } else {
+      await addCarExpense(payload);
+
+      // Deduct stock from inventory for used materials on new records
+      const currentParts = await getParts('body-shop');
+      const deductMaterialStock = async (keywords: string[], qtyUsed: number) => {
+        if (qtyUsed <= 0) return;
+        const matched = currentParts.find((p) => {
+          const nameLower = p.name.toLowerCase();
+          return keywords.some((k) => nameLower.includes(k.toLowerCase()));
+        });
+        if (matched) {
+          const newStock = Math.max(0, (matched.quantity_in_stock || 0) - qtyUsed);
+          await updatePart(matched.id, { quantity_in_stock: newStock });
+        }
+      };
+
+      await Promise.all([
+        deductMaterialStock(PUTTY_KEYWORDS, matPuttyAmt),
+        deductMaterialStock(FIBER_KEYWORDS, matFiberAmt),
+        deductMaterialStock(FILLER_KEYWORDS, matFillerAmt),
+        deductMaterialStock(VARNISH_KEYWORDS, matVarnishAmt),
+      ]);
+    }
 
     resetAddForm();
     setIsAddModalOpen(false);
     loadData();
   };
 
+  const handleEditClick = (ce: CarExpense) => {
+    setEditingExpenseId(ce.id);
+    setSelectedCustomer(ce.customers || null);
+    setCustomerNameInput(ce.customers?.name || '');
+    setCustomerPhoneInput(ce.customers?.phone || '');
+    setCarInfoInput(ce.car_info || '');
+    setDate(ce.date || new Date().toISOString().split('T')[0]);
+
+    try {
+      const details = JSON.parse(ce.details_json || '{}');
+      setMatBodyWork(Number(details.body_work || 0));
+      setMatPuttyAmt(Number(details.putty?.qty || 0));
+      setMatPuttyCost(Number(details.putty?.cost || 0));
+      setMatFiberAmt(Number(details.fiber?.qty || 0));
+      setMatFiberCost(Number(details.fiber?.cost || 0));
+      setMatFillerAmt(Number(details.filler?.qty || 0));
+      setMatFillerCost(Number(details.filler?.cost || 0));
+      setMatPaintCost(Number(details.paint?.cost || 0));
+      setMatVarnishAmt(Number(details.varnish?.qty || 0));
+      setMatVarnishCost(Number(details.varnish?.cost || 0));
+      setMatBooth(Number(details.paint_booth || 0));
+      setOtherPurchases(Array.isArray(details.other_purchases) ? details.other_purchases : []);
+    } catch (e) {}
+
+    setIsAddModalOpen(true);
+  };
+
   const resetAddForm = () => {
+    setEditingExpenseId(null);
     setSelectedCustomer(null);
     setCustomerNameInput('');
     setCustomerPhoneInput('');
@@ -466,6 +503,13 @@ export default function BodyShopCarExpensesPage() {
                         <Eye className="w-4 h-4" />
                       </button>
                       <button
+                        onClick={() => handleEditClick(ce)}
+                        className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                        title={language === 'ar' ? 'تعديل المقايسة' : 'Edit Expense'}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
                         onClick={() => handleDelete(ce.id)}
                         className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                         title={t('delete')}
@@ -481,9 +525,25 @@ export default function BodyShopCarExpensesPage() {
         )}
       </div>
 
-      {/* NEW CAR JOB EXPENSE MODAL */}
+      {/* NEW / EDIT CAR JOB EXPENSE MODAL */}
       {isAddModalOpen && (
-        <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title={language === 'ar' ? 'حاسبة ومصروفات عمل السيارة' : 'Car Job Cost Calculator'} maxWidth="4xl">
+        <Modal
+          isOpen={isAddModalOpen}
+          onClose={() => {
+            setIsAddModalOpen(false);
+            resetAddForm();
+          }}
+          title={
+            editingExpenseId
+              ? language === 'ar'
+                ? `تعديل مقايسة السيارة #${editingExpenseId}`
+                : `Edit Car Job Expense #${editingExpenseId}`
+              : language === 'ar'
+              ? 'حاسبة ومصروفات عمل السيارة'
+              : 'Car Job Cost Calculator'
+          }
+          maxWidth="4xl"
+        >
           <form onSubmit={handleSaveCarExpense} className="space-y-6 text-xs">
             {/* Customer Search Autocomplete */}
             <div className="relative">
