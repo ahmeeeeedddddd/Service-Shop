@@ -62,6 +62,7 @@ export function Header() {
 
   const bodyShopLinks = [
     { label: language === 'ar' ? 'الرئيسية' : 'Overview', href: '/body-shop' },
+    { label: t('repairsAndInvoices'), href: '/body-shop/repairs' },
     { label: t('carExpensesAndJobs'), href: '/body-shop/car-expenses' },
     { label: t('ohdaRecords'), href: '/body-shop/ohda' },
     { label: t('pendingBills'), href: '/body-shop/pending-bills' },
