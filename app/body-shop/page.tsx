@@ -62,207 +62,232 @@ export default function BodyShopDashboardPage() {
   const netOhdaBalance = totalOhdaReceived - totalOhdaSpent;
 
   const handlePrintDailyReport = () => {
-    // 1. Ohda Received Rows
-    let ohdaReceivedRowsHtml = '';
-    if (ohdaRecords.length === 0) {
-      ohdaReceivedRowsHtml = '<tr><td colSpan="3" style="text-align:center; padding: 10px; color:#94a3b8;">لا توجد إيداعات عُهدة في هذه الفترة</td></tr>';
-    } else {
-      ohdaReceivedRowsHtml = ohdaRecords
-        .map(
-          (o) => `
-        <tr>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${o.date || '-'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${o.notes || 'إيداع عُهدة'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold; color: #16a34a; text-align: left;">$${Number(o.amount || 0).toFixed(2)}</td>
-        </tr>
-      `
-        )
-        .join('');
-    }
-
-    // 2. Ohda Expenses Rows vs Cash Expenses Rows
     const ohdaExpensesList = expenses.filter((e) => e.from_ohda !== false);
     const cashExpensesList = expenses.filter((e) => e.from_ohda === false);
 
-    let ohdaExpensesRowsHtml = '';
-    if (ohdaExpensesList.length === 0) {
-      ohdaExpensesRowsHtml = '<tr><td colSpan="4" style="text-align:center; padding: 10px; color:#94a3b8;">لا توجد مصروفات عُهدة</td></tr>';
-    } else {
-      ohdaExpensesRowsHtml = ohdaExpensesList
-        .map(
-          (e) => `
-        <tr>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${e.date || '-'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">${e.description || '-'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${e.category || 'عام'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold; color: #dc2626; text-align: left;">$${Number(e.amount || 0).toFixed(2)}</td>
-        </tr>
-      `
-        )
-        .join('');
-    }
-
-    let cashExpensesRowsHtml = '';
-    if (cashExpensesList.length === 0) {
-      cashExpensesRowsHtml = '<tr><td colSpan="4" style="text-align:center; padding: 10px; color:#94a3b8;">لا توجد مصروفات خزينة خارجية</td></tr>';
-    } else {
-      cashExpensesRowsHtml = cashExpensesList
-        .map(
-          (e) => `
-        <tr>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${e.date || '-'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">${e.description || '-'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0;">${e.category || 'عام'}</td>
-          <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold; color: #dc2626; text-align: left;">$${Number(e.amount || 0).toFixed(2)}</td>
-        </tr>
-      `
-        )
-        .join('');
-    }
-
-    // 3. Car Expenses with detailed items breakdown
-    let carExpensesRowsHtml = '';
-    if (carExpenses.length === 0) {
-      carExpensesRowsHtml = '<tr><td colSpan="5" style="text-align:center; padding: 10px; color:#94a3b8;">لا توجد مقايسات أو أعمال سيارات في هذه الفترة</td></tr>';
-    } else {
-      carExpensesRowsHtml = carExpenses
-        .map((ce) => {
-          let itemsBreakdown = '-';
-          if (ce.details_json) {
-            try {
-              const d = JSON.parse(ce.details_json);
-              const partsStr: string[] = [];
-              if (d.body_work > 0) partsStr.push(`سمكرة: $${d.body_work}`);
-              if (d.putty?.cost > 0) partsStr.push(`معجون/ستوك (${d.putty.qty || 1}): $${d.putty.cost}`);
-              if (d.fiber?.cost > 0) partsStr.push(`فيبر (${d.fiber.qty || 1}): $${d.fiber.cost}`);
-              if (d.filler?.cost > 0) partsStr.push(`فيلر (${d.filler.qty || 1}): $${d.filler.cost}`);
-              if (d.paint?.cost > 0) partsStr.push(`بوهية: $${d.paint.cost}`);
-              if (d.varnish?.cost > 0) partsStr.push(`ورنيش (${d.varnish.qty || 1}): $${d.varnish.cost}`);
-              if (d.paint_booth > 0) partsStr.push(`فرن: $${d.paint_booth}`);
-              if (d.other_purchases && Array.isArray(d.other_purchases)) {
-                d.other_purchases.forEach((op: any) => {
-                  if (op.cost > 0) partsStr.push(`${op.name || 'مشتريات'}: $${op.cost}`);
-                });
-              }
-              if (partsStr.length > 0) itemsBreakdown = partsStr.join(' | ');
-            } catch (err) {
-              itemsBreakdown = ce.details_json;
-            }
-          }
-
-          return `
-            <tr>
-              <td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">#${ce.id}</td>
-              <td style="padding: 8px; border: 1px solid #e2e8f0;">${ce.customers?.name || 'عميل'}</td>
-              <td style="padding: 8px; border: 1px solid #e2e8f0;">${ce.car_info || '-'}</td>
-              <td style="padding: 8px; border: 1px solid #e2e8f0; font-size: 11px; color: #334155;">${itemsBreakdown}</td>
-              <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${Number(ce.total_cost || 0).toFixed(2)}</td>
-            </tr>
-          `;
-        })
-        .join('');
-    }
-
+    const totalOhdaSpentSum = ohdaExpensesList.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
     const totalCashExpensesSum = cashExpensesList.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
 
+    // ─── Row builders ────────────────────────────────────────────────────────
+    const ohdaReceivedRowsHtml =
+      ohdaRecords.length === 0
+        ? `<tr><td colspan="3" style="text-align:center;padding:14px;color:#94a3b8;font-style:italic;">لا توجد إيداعات عُهدة في هذه الفترة</td></tr>`
+        : ohdaRecords
+            .map(
+              (o, i) =>
+                `<tr style="background:${i % 2 === 1 ? '#f0fdf4' : '#fff'}">
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${o.date || '-'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${o.notes || 'إيداع عُهدة'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;color:#16a34a;text-align:left;">$${Number(o.amount || 0).toFixed(2)}</td>
+                </tr>`
+            )
+            .join('');
+
+    const ohdaExpensesRowsHtml =
+      ohdaExpensesList.length === 0
+        ? `<tr><td colspan="4" style="text-align:center;padding:14px;color:#94a3b8;font-style:italic;">لا توجد مصروفات عُهدة</td></tr>`
+        : ohdaExpensesList
+            .map(
+              (e, i) =>
+                `<tr style="background:${i % 2 === 1 ? '#fff5f5' : '#fff'}">
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${e.date || '-'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;">${e.description || '-'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${e.category || 'عام'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;color:#dc2626;text-align:left;">$${Number(e.amount || 0).toFixed(2)}</td>
+                </tr>`
+            )
+            .join('');
+
+    const cashExpensesRowsHtml =
+      cashExpensesList.length === 0
+        ? `<tr><td colspan="4" style="text-align:center;padding:14px;color:#94a3b8;font-style:italic;">لا توجد مصروفات خزينة خارجية</td></tr>`
+        : cashExpensesList
+            .map(
+              (e, i) =>
+                `<tr style="background:${i % 2 === 1 ? '#f8fafc' : '#fff'}">
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${e.date || '-'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;">${e.description || '-'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;">${e.category || 'عام'}</td>
+                  <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;color:#dc2626;text-align:left;">$${Number(e.amount || 0).toFixed(2)}</td>
+                </tr>`
+            )
+            .join('');
+
+    const carExpensesRowsHtml =
+      carExpenses.length === 0
+        ? `<tr><td colspan="5" style="text-align:center;padding:14px;color:#94a3b8;font-style:italic;">لا توجد مقايسات أو أعمال سيارات في هذه الفترة</td></tr>`
+        : carExpenses
+            .map((ce, i) => {
+              let itemsBreakdown = '-';
+              if (ce.details_json) {
+                try {
+                  const d = JSON.parse(ce.details_json);
+                  const partsStr: string[] = [];
+                  if (d.body_work > 0) partsStr.push(`سمكرة: $${d.body_work}`);
+                  if (d.putty?.cost > 0) partsStr.push(`معجون (${d.putty.qty || 1}): $${d.putty.cost}`);
+                  if (d.fiber?.cost > 0) partsStr.push(`فيبر (${d.fiber.qty || 1}): $${d.fiber.cost}`);
+                  if (d.filler?.cost > 0) partsStr.push(`فيلر (${d.filler.qty || 1}): $${d.filler.cost}`);
+                  if (d.paint?.cost > 0) partsStr.push(`بوهية: $${d.paint.cost}`);
+                  if (d.varnish?.cost > 0) partsStr.push(`ورنيش (${d.varnish.qty || 1}): $${d.varnish.cost}`);
+                  if (d.hardener?.cost > 0) partsStr.push(`مصلب ورنيش (${d.hardener.qty || 1}): $${d.hardener.cost}`);
+                  if (d.thinner?.cost > 0) partsStr.push(`تنر (${d.thinner.qty || 1}): $${d.thinner.cost}`);
+                  if (d.paint_booth > 0) partsStr.push(`فرن: $${d.paint_booth}`);
+                  if (d.other_purchases && Array.isArray(d.other_purchases)) {
+                    d.other_purchases.forEach((op: any) => {
+                      if (op.cost > 0) partsStr.push(`${op.name || 'مشتريات'}: $${op.cost}`);
+                    });
+                  }
+                  if (partsStr.length > 0) itemsBreakdown = partsStr.join(' · ');
+                } catch {
+                  itemsBreakdown = '-';
+                }
+              }
+              return `<tr style="background:${i % 2 === 1 ? '#f0fdfe' : '#fff'}">
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;color:#0d9488;">#${ce.id}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;">${ce.customers?.name || 'عميل'}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;">${ce.car_info || '-'}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;font-size:11px;color:#475569;line-height:1.6;">${itemsBreakdown}</td>
+                <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:bold;color:#16a34a;">$${Number(ce.total_cost || 0).toFixed(2)}</td>
+              </tr>`;
+            })
+            .join('');
+
+    // ─── Section banner helper ───────────────────────────────────────────────
+    const banner = (num: string, title: string, accent: string, light: string) =>
+      `<div style="display:flex;align-items:stretch;border-radius:10px 10px 0 0;overflow:hidden;margin-top:32px;">
+        <div style="background:${accent};color:#fff;font-size:16px;font-weight:900;padding:11px 20px;display:flex;align-items:center;justify-content:center;min-width:50px;">${num}</div>
+        <div style="background:${light};color:${accent};font-size:14px;font-weight:800;padding:11px 18px;flex:1;display:flex;align-items:center;border-right:3px solid ${accent};">${title}</div>
+      </div>`;
+
+    const th = (accent: string) =>
+      `padding:10px 10px;border:1px solid ${accent};background:${accent};color:#fff;font-weight:bold;font-size:12px;`;
+
+    const totalRow = (cols: number, amount: string, color: string, bg: string) =>
+      `<tr style="background:${bg};font-weight:bold;">
+        <td colspan="${cols}" style="padding:9px 10px;border:1px solid #e2e8f0;font-size:13px;">الإجمالي</td>
+        <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:left;color:${color};font-size:14px;font-weight:900;">${amount}</td>
+      </tr>`;
+
+    const tblStyle = `width:100%;border-collapse:collapse;text-align:right;font-size:12px;border-radius:0 0 10px 10px;overflow:hidden;`;
+
     const html = `
-      <div style="direction: rtl; font-family: system-ui, sans-serif; padding: 20px;">
-        <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d9488; padding-bottom: 15px;">
-          <h2 style="font-size: 24px; font-weight: bold; margin: 0; color: #0d9488;">مركز الأنصاري - ورشة السمكرة والدهان</h2>
-          <h3 style="font-size: 16px; margin: 5px 0; color: #475569;">التقرير التفصيلي اليومي الشامل</h3>
-          <p style="font-size: 13px; color: #64748b; margin: 0;">الفترة: من ${startDate || 'البداية'} إلى ${endDate || 'اليوم'}</p>
-        </div>
+      <div style="direction:rtl;padding:28px 32px;color:#1e293b;max-width:920px;margin:0 auto;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
 
-        {/* Summary KPI Box */}
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 25px;">
-          <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; background: #f8fafc;">
-            <div style="font-size: 11px; color: #64748b; font-weight: bold;">إجمالي مقبوضات العُهدة</div>
-            <div style="font-size: 18px; font-weight: bold; color: #16a34a; margin-top: 4px;">$${totalOhdaReceived.toFixed(2)}</div>
-          </div>
-          <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; background: #f8fafc;">
-            <div style="font-size: 11px; color: #64748b; font-weight: bold;">إجمالي مصروفات العُهدة</div>
-            <div style="font-size: 18px; font-weight: bold; color: #dc2626; margin-top: 4px;">$${totalOhdaSpent.toFixed(2)}</div>
-          </div>
-          <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; background: #fef08a;">
-            <div style="font-size: 11px; color: #854d0e; font-weight: bold;">صافي رصيد العُهدة Mtabaqy</div>
-            <div style="font-size: 18px; font-weight: bold; color: #000; margin-top: 4px;">$${netOhdaBalance.toFixed(2)}</div>
-          </div>
-          <div style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; background: #f8fafc;">
-            <div style="font-size: 11px; color: #64748b; font-weight: bold;">إجمالي مقايسات السيارات</div>
-            <div style="font-size: 18px; font-weight: bold; color: #0d9488; margin-top: 4px;">$${totalCarJobsCost.toFixed(2)}</div>
+        <!-- ═══ HEADER ═══ -->
+        <div style="text-align:center;margin-bottom:24px;padding-bottom:18px;border-bottom:3px solid #0d9488;">
+          <div style="font-size:11px;color:#64748b;font-weight:bold;letter-spacing:1.5px;margin-bottom:6px;">ورشة السمكرة والدهان</div>
+          <div style="font-size:28px;font-weight:900;color:#0f172a;">الأنصاري لإصلاح الهياكل</div>
+          <div style="font-size:14px;color:#0d9488;margin-top:4px;font-weight:700;">التقرير التفصيلي الشامل</div>
+          <div style="display:inline-block;margin-top:10px;padding:5px 16px;background:#f1f5f9;border-radius:20px;font-size:12px;color:#475569;font-weight:bold;border:1px solid #e2e8f0;">
+            الفترة: ${startDate || 'البداية'} &nbsp;←&nbsp; ${endDate || 'اليوم'}
           </div>
         </div>
 
-        {/* 1. Ohda Receipts Section */}
-        <h4 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #0d9488;">1. إيداعات ومقبوضات العُهدة:</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: right; font-size: 12px;">
+        <!-- ═══ KPI ROW 1 ═══ -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;">
+          <div style="padding:18px 14px;border-radius:14px;border:2px solid #bbf7d0;background:#f0fdf4;text-align:center;">
+            <div style="font-size:11px;color:#166534;font-weight:700;margin-bottom:8px;">إجمالي الدخل (إيداعات العُهدة)</div>
+            <div style="font-size:26px;font-weight:900;color:#16a34a;">$${totalOhdaReceived.toFixed(2)}</div>
+          </div>
+          <div style="padding:18px 14px;border-radius:14px;border:2px solid #fecaca;background:#fef2f2;text-align:center;">
+            <div style="font-size:11px;color:#991b1b;font-weight:700;margin-bottom:8px;">إجمالي المصاريف</div>
+            <div style="font-size:26px;font-weight:900;color:#dc2626;">$${totalOhdaSpentSum.toFixed(2)}</div>
+          </div>
+          <div style="padding:18px 14px;border-radius:14px;border:2px solid #fde68a;background:#fefce8;text-align:center;">
+            <div style="font-size:11px;color:#854d0e;font-weight:700;margin-bottom:8px;">صافي الربح (رصيد العُهدة)</div>
+            <div style="font-size:26px;font-weight:900;color:#92400e;">$${netOhdaBalance.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <!-- ═══ KPI ROW 2 ═══ -->
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:6px;">
+          <div style="padding:16px;border-radius:12px;border:2px solid #a5f3fc;background:#f0fdfe;text-align:center;">
+            <div style="font-size:11px;color:#0e7490;font-weight:700;margin-bottom:6px;">إجمالي مقايسات وتكاليف السيارات</div>
+            <div style="font-size:22px;font-weight:900;color:#0d9488;">$${totalCarJobsCost.toFixed(2)}</div>
+          </div>
+          <div style="padding:16px;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;text-align:center;">
+            <div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:6px;">مصروفات الخزينة المباشرة</div>
+            <div style="font-size:22px;font-weight:900;color:#475569;">$${totalCashExpensesSum.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <!-- ═══ SECTION 1: OHDA DEPOSITS ═══ -->
+        ${banner('1', 'إيداعات ومقبوضات العُهدة', '#10b981', '#ecfdf5')}
+        <table style="${tblStyle}">
           <thead>
-            <tr style="background: #0f172a; color: white;">
-              <th style="padding: 8px; border: 1px solid #0f172a;">التاريخ</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">الملاحظات / البيان</th>
-              <th style="padding: 8px; border: 1px solid #0f172a; text-align: left;">المبلغ المقبوض ($)</th>
+            <tr>
+              <th style="${th('#10b981')}">التاريخ</th>
+              <th style="${th('#10b981')}">الملاحظات / البيان</th>
+              <th style="${th('#10b981')};text-align:left;">المبلغ المقبوض ($)</th>
             </tr>
           </thead>
           <tbody>
             ${ohdaReceivedRowsHtml}
+            ${ohdaRecords.length > 0 ? totalRow(2, `$${totalOhdaReceived.toFixed(2)}`, '#16a34a', '#dcfce7') : ''}
           </tbody>
         </table>
 
-        {/* 2. Ohda Expenses Section */}
-        <h4 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #dc2626;">2. المصروفات المخصومة من العُهدة:</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: right; font-size: 12px;">
+        <!-- ═══ SECTION 2: OHDA EXPENSES ═══ -->
+        ${banner('2', 'المصروفات المخصومة من العُهدة', '#ef4444', '#fef2f2')}
+        <table style="${tblStyle}">
           <thead>
-            <tr style="background: #0f172a; color: white;">
-              <th style="padding: 8px; border: 1px solid #0f172a;">التاريخ</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">وصف المصروف</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">التصنيف</th>
-              <th style="padding: 8px; border: 1px solid #0f172a; text-align: left;">المبلغ ($)</th>
+            <tr>
+              <th style="${th('#ef4444')}">التاريخ</th>
+              <th style="${th('#ef4444')}">وصف المصروف</th>
+              <th style="${th('#ef4444')}">التصنيف</th>
+              <th style="${th('#ef4444')};text-align:left;">المبلغ ($)</th>
             </tr>
           </thead>
           <tbody>
             ${ohdaExpensesRowsHtml}
+            ${ohdaExpensesList.length > 0 ? totalRow(3, `$${totalOhdaSpentSum.toFixed(2)}`, '#dc2626', '#fee2e2') : ''}
           </tbody>
         </table>
 
-        {/* 3. Cash Expenses Section */}
-        {cashExpensesList.length > 0 && (
-          <>
-            <h4 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #475569;">3. مصروفات الخزينة والمباشرة:</h4>
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; text-align: right; font-size: 12px;">
-              <thead>
-                <tr style="background: #334155; color: white;">
-                  <th style="padding: 8px; border: 1px solid #334155;">التاريخ</th>
-                  <th style="padding: 8px; border: 1px solid #334155;">وصف المصروف</th>
-                  <th style="padding: 8px; border: 1px solid #334155;">التصنيف</th>
-                  <th style="padding: 8px; border: 1px solid #334155; text-align: left;">المبلغ ($)</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${cashExpensesRowsHtml}
-              </tbody>
-            </table>
-          </>
-        )}
-
-        {/* 4. Car Expenses & Jobs Breakdown */}
-        <h4 style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #0d9488;">4. تفاصيل مقايسات وخامات عمل السيارات:</h4>
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; text-align: right; font-size: 12px;">
+        <!-- ═══ SECTION 3: CASH EXPENSES ═══ -->
+        ${banner('3', 'مصروفات الخزينة والمباشرة', '#6b7280', '#f9fafb')}
+        <table style="${tblStyle}">
           <thead>
-            <tr style="background: #0f172a; color: white;">
-              <th style="padding: 8px; border: 1px solid #0f172a;">#</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">العميل</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">بيانات السيارة</th>
-              <th style="padding: 8px; border: 1px solid #0f172a;">تفاصيل الخامات والمصنعيات المكونة</th>
-              <th style="padding: 8px; border: 1px solid #0f172a; text-align: left;">التكلفة الإجمالية ($)</th>
+            <tr>
+              <th style="${th('#6b7280')}">التاريخ</th>
+              <th style="${th('#6b7280')}">وصف المصروف</th>
+              <th style="${th('#6b7280')}">التصنيف</th>
+              <th style="${th('#6b7280')};text-align:left;">المبلغ ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cashExpensesRowsHtml}
+            ${cashExpensesList.length > 0 ? totalRow(3, `$${totalCashExpensesSum.toFixed(2)}`, '#374151', '#f1f5f9') : ''}
+          </tbody>
+        </table>
+
+        <!-- ═══ SECTION 4: CAR JOBS ═══ -->
+        ${banner('4', 'تفاصيل مقايسات وخامات أعمال السيارات', '#0d9488', '#f0fdfe')}
+        <table style="${tblStyle}">
+          <thead>
+            <tr>
+              <th style="${th('#0d9488')}">#</th>
+              <th style="${th('#0d9488')}">العميل</th>
+              <th style="${th('#0d9488')}">بيانات السيارة</th>
+              <th style="${th('#0d9488')}">تفاصيل الخامات والمصنعيات</th>
+              <th style="${th('#0d9488')};text-align:left;">التكلفة ($)</th>
             </tr>
           </thead>
           <tbody>
             ${carExpensesRowsHtml}
+            ${carExpenses.length > 0 ? totalRow(4, `$${totalCarJobsCost.toFixed(2)}`, '#0d9488', '#ccfbf1') : ''}
           </tbody>
         </table>
 
-        <div style="margin-top: 30px; text-align: center; font-size: 12px; font-weight: bold; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-          تواصل: 01010103777 / 01010606016
+        <!-- ═══ FOOTER ═══ -->
+        <div style="margin-top:40px;padding-top:16px;border-top:2px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:11px;color:#64748b;line-height:1.7;">
+            <div style="font-weight:800;color:#0d9488;font-size:12px;">مركز الأنصاري - ورشة السمكرة والدهان</div>
+            <div>📞 01010103777 &nbsp;/&nbsp; 01010606016</div>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;text-align:left;">
+            تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}
+          </div>
         </div>
       </div>
     `;
