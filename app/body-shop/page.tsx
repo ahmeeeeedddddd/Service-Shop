@@ -121,22 +121,24 @@ export default function BodyShopDashboardPage() {
       PayByParts:     { border: '#fb923c', bg: '#fff7ed', text: '#c2410c', val: '#ea580c' },
     };
 
-    // Collect all pm methods that have non-zero values
-    const pmOrder = ['Cash', 'Instapay', 'Vodafone Cash', 'Bank Alahly', 'Bank Masr', 'SplitPayment', 'PayByParts'];
-    // Also add any unknown methods
-    Object.keys(pmMap).forEach((k) => { if (!pmOrder.includes(k)) pmOrder.push(k); });
-    const activePM = pmOrder.filter((m) => (pmMap[m] || 0) > 0);
+    // Always show these 5 core payment method boxes
+    const corePaymentMethods = ['Cash', 'Instapay', 'Vodafone Cash', 'Bank Alahly', 'Bank Masr'];
+    // Also include extra methods if they have values
+    const extraMethods = ['SplitPayment', 'PayByParts'];
+    const shownMethods = [
+      ...corePaymentMethods,
+      ...extraMethods.filter((m) => (pmMap[m] || 0) > 0),
+      ...Object.keys(pmMap).filter((k) => !corePaymentMethods.includes(k) && !extraMethods.includes(k)),
+    ];
 
-    // Build payment method KPI cards HTML
-    const pmCardsHtml = activePM.length === 0
-      ? `<div style="text-align:center;color:#94a3b8;font-style:italic;padding:12px;">لا توجد فواتير مسجلة في هذه الفترة</div>`
-      : activePM.map((m) => {
-          const c = pmColors[m] || { border: '#e2e8f0', bg: '#f8fafc', text: '#374151', val: '#374151' };
-          return `<div style="padding:14px 10px;border-radius:12px;border:2px solid ${c.border};background:${c.bg};text-align:center;">
-            <div style="font-size:10px;color:${c.text};font-weight:800;margin-bottom:6px;">${pmLabel[m] || m}</div>
-            <div style="font-size:20px;font-weight:900;color:${c.val};">$${(pmMap[m] || 0).toFixed(2)}</div>
-          </div>`;
-        }).join('');
+    // Build payment method KPI cards HTML — always shown with $0.00 when empty
+    const pmCardsHtml = shownMethods.map((m) => {
+      const c = pmColors[m] || { border: '#e2e8f0', bg: '#f8fafc', text: '#374151', val: '#374151' };
+      return `<div style="padding:14px 10px;border-radius:12px;border:2px solid ${c.border};background:${c.bg};text-align:center;">
+        <div style="font-size:10px;color:${c.text};font-weight:800;margin-bottom:6px;">${pmLabel[m] || m}</div>
+        <div style="font-size:20px;font-weight:900;color:${c.val};">$${(pmMap[m] || 0).toFixed(2)}</div>
+      </div>`;
+    }).join('');
 
     // Build repairs rows HTML
     const repairsRowsHtml = printActiveRepairs.length === 0
@@ -258,7 +260,7 @@ export default function BodyShopDashboardPage() {
     const tblStyle = `width:100%;border-collapse:collapse;text-align:right;font-size:12px;border-radius:0 0 10px 10px;overflow:hidden;`;
 
     // Column count for PM cards grid
-    const pmCols = Math.min(activePM.length, 4);
+    const pmCols = Math.min(shownMethods.length, 5);
 
     const html = `
       <div style="direction:rtl;padding:28px 32px;color:#1e293b;max-width:960px;margin:0 auto;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
@@ -310,13 +312,12 @@ export default function BodyShopDashboardPage() {
         </div>
 
         <!-- ═══ PAYMENT METHOD BOXES ═══ -->
-        ${activePM.length > 0 ? `
         <div style="margin-top:18px;margin-bottom:4px;">
           <div style="font-size:12px;font-weight:800;color:#4c1d95;margin-bottom:10px;padding-right:4px;">💳 توزيع الدخل على طرق الدفع (الفواتير والإصلاحات)</div>
           <div style="display:grid;grid-template-columns:repeat(${pmCols},1fr);gap:10px;">
             ${pmCardsHtml}
           </div>
-        </div>` : ''}
+        </div>
 
         <!-- ═══ SECTION 0: REPAIRS / INVOICES ═══ -->
         ${banner('أ', 'دخل الفواتير والإصلاحات (بودي شوب)', '#7c3aed', '#faf5ff')}
