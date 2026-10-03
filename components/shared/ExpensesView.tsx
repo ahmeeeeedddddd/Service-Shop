@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Expense, getExpenses, addExpense, deleteExpense } from '@/lib/shared/queries';
 import { Modal } from './Modal';
-import { DollarSign, Plus, Trash2, Calendar, Filter, X } from 'lucide-react';
+import { DollarSign, Plus, Trash2, Calendar, Filter, X, Printer } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/context';
+import { printContent } from '@/lib/utils/print';
 
 interface ExpensesViewProps {
   branchId: string;
@@ -12,7 +13,7 @@ interface ExpensesViewProps {
 }
 
 export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -89,6 +90,111 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
 
   const totalExpenseSum = expenses.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
 
+  const handlePrintExpenses = () => {
+    const isAr = language === 'ar';
+    const todayStr = new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US');
+
+    let dateRangeText = isAr ? 'جميع الفترات' : 'All Time';
+    if (filterPreset === 'today') {
+      dateRangeText = isAr ? `تاريخ اليوم (${new Date().toISOString().split('T')[0]})` : `Today (${new Date().toISOString().split('T')[0]})`;
+    } else if (filterPreset === 'month') {
+      dateRangeText = isAr ? 'الشهر الحالي' : 'This Month';
+    } else if (filterPreset === 'custom') {
+      dateRangeText = `${startDate || (isAr ? 'البداية' : 'Start')} ${isAr ? 'إلى' : 'to'} ${endDate || (isAr ? 'الآن' : 'Now')}`;
+    }
+
+    const rowsHtml = expenses
+      .map((e) => {
+        const sourceText = e.from_ohda
+          ? isAr ? 'من العُهدة' : 'Ohda'
+          : e.from_cash
+          ? isAr ? 'من الخزينة' : 'Cash Till'
+          : isAr ? 'أخرى' : 'Other';
+
+        return `
+          <tr style="border-bottom: 1px solid #e2e8f0; font-size: 12px;">
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; font-weight: bold; text-align: center;">#${e.id}</td>
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; font-weight: bold;">${e.description || (isAr ? 'مصروف عام' : 'General Expense')}</td>
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center;">${e.category || (isAr ? 'عام' : 'General')}</td>
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold; color: #475569;">${sourceText}</td>
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: center; color: #64748b;">${e.date || 'N/A'}</td>
+            <td style="padding: 8px 10px; border: 1px solid #cbd5e1; text-align: right; font-weight: 900; color: #e11d48;">$${Number(e.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const html = `
+      <div style="direction: ${isAr ? 'rtl' : 'ltr'}; font-family: system-ui, -apple-system, sans-serif; color: #09090b; padding: 10px;">
+        <!-- Header Banner -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ca8a04; padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="text-align: ${isAr ? 'right' : 'left'}; font-size: 11px; font-weight: bold; color: #64748b; line-height: 1.5;">
+            ${isAr ? 'مركز الأنصاري لصيانة وإصلاح السيارات' : 'El Ansary Car Service Center'}<br />
+            ${branchTitle}
+          </div>
+          <div style="text-align: center;">
+            <h2 style="font-size: 20px; font-weight: 900; margin: 0; color: #09090b;">${isAr ? 'تقرير المصروفات التشغيلية' : 'Operating Expenses Report'}</h2>
+            <div style="font-size: 13px; font-weight: bold; color: #ca8a04; margin-top: 4px;">${isAr ? 'الفترة' : 'Period'}: ${dateRangeText}</div>
+          </div>
+          <div style="text-align: ${isAr ? 'left' : 'right'}; font-size: 11px; color: #64748b; font-weight: bold;">
+            ${isAr ? 'تاريخ الطباعة' : 'Print Date'}:<br />${todayStr}
+          </div>
+        </div>
+
+        <!-- Summary Stats Card -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background-color: #fefce8; border: 2px solid #fde047; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;">
+          <div>
+            <span style="font-size: 12px; font-weight: bold; color: #854d0e;">${isAr ? 'إجمالي عدد المصروفات المسجلة:' : 'Total Logged Expense Items:'}</span>
+            <span style="font-size: 14px; font-weight: 900; color: #09090b; margin-${isAr ? 'right' : 'left'}: 6px;">${expenses.length}</span>
+          </div>
+          <div>
+            <span style="font-size: 13px; font-weight: bold; color: #854d0e;">${isAr ? 'إجمالي قيمة المصروفات:' : 'Total Expense Amount:'}</span>
+            <span style="font-size: 18px; font-weight: 900; color: #e11d48; margin-${isAr ? 'right' : 'left'}: 8px;">$${totalExpenseSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        </div>
+
+        <!-- Expenses Table -->
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #0f172a; color: #ffffff; font-weight: bold; font-size: 12px; text-align: ${isAr ? 'right' : 'left'};">
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">#</th>
+              <th style="padding: 10px; border: 1px solid #0f172a;">${isAr ? 'البيان / الوصف' : 'Description'}</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">${isAr ? 'التصنيف' : 'Category'}</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">${isAr ? 'المصدر' : 'Source'}</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: center;">${isAr ? 'التاريخ' : 'Date'}</th>
+              <th style="padding: 10px; border: 1px solid #0f172a; text-align: right;">${isAr ? 'المبلغ ($)' : 'Amount ($)'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml.length > 0 ? rowsHtml : `
+              <tr>
+                <td colspan="6" style="padding: 20px; text-align: center; color: #64748b; font-weight: bold;">
+                  ${isAr ? 'لا توجد مصروفات مسجلة في هذه الفترة' : 'No expenses logged for this period'}
+                </td>
+              </tr>
+            `}
+            <tr style="background-color: #fef08a; font-weight: bold; border-top: 2px solid #ca8a04;">
+              <td colspan="5" style="padding: 10px; border: 1px solid #cbd5e1; text-align: ${isAr ? 'left' : 'right'}; font-size: 13px;">${isAr ? 'المجموع الإجمالي للمصروفات:' : 'Total Expenses Sum:'}</td>
+              <td style="padding: 10px; border: 1px solid #cbd5e1; text-align: right; font-size: 15px; color: #e11d48; font-weight: 900;">$${totalExpenseSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Signatures & Footer -->
+        <div style="margin-top: 30px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+          <div>${isAr ? 'توقيع المحاسب المسئول' : 'Accountant Signature'}: __________________</div>
+          <div>${isAr ? 'اعتماد مدير الفرع / المالك' : 'Manager / Owner Approval'}: __________________</div>
+        </div>
+
+        <div style="text-align: center; font-size: 10px; color: #94a3b8; margin-top: 20px; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+          تواصل: 01010103777 / 01010606016 - ${isAr ? 'مركز الأنصاري لصيانة السيارات' : 'El Ansary Car Service Center'}
+        </div>
+      </div>
+    `;
+
+    printContent(html, isAr ? 'rtl' : 'ltr');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header & Actions */}
@@ -103,13 +209,24 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
           <p className="text-xs text-zinc-500 mt-1">{t('expensesSubtitle') || 'Log and filter operating shop expenses'}</p>
         </div>
 
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="inline-flex items-center space-x-2 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-black bg-yellow-400 hover:bg-yellow-500 shadow-md shadow-yellow-400/20 transition-all self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>{t('logExpense') || t('addNew')}</span>
-        </button>
+        <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <button
+            onClick={handlePrintExpenses}
+            className="inline-flex items-center space-x-2 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-zinc-900 bg-white hover:bg-zinc-100 border border-zinc-300 shadow-sm transition-all"
+            title={language === 'ar' ? 'طباعة تقرير المصروفات' : 'Print Expenses Report'}
+          >
+            <Printer className="w-4 h-4 text-amber-600" />
+            <span>{language === 'ar' ? 'طباعة التقرير' : 'Print Report'}</span>
+          </button>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center space-x-2 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-black bg-yellow-400 hover:bg-yellow-500 shadow-md shadow-yellow-400/20 transition-all"
+          >
+            <Plus className="w-4 h-4" />
+            <span>{t('logExpense') || t('addNew')}</span>
+          </button>
+        </div>
       </div>
 
       {/* Date Filter Bar */}
