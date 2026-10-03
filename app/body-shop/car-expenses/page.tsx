@@ -85,6 +85,12 @@ export default function BodyShopCarExpensesPage() {
   const [matVarnishAmt, setMatVarnishAmt] = useState<number>(0);
   const [matVarnishCost, setMatVarnishCost] = useState<number>(0);
 
+  const [matHardenerAmt, setMatHardenerAmt] = useState<number>(0);
+  const [matHardenerCost, setMatHardenerCost] = useState<number>(0);
+
+  const [matThinnerAmt, setMatThinnerAmt] = useState<number>(0);
+  const [matThinnerCost, setMatThinnerCost] = useState<number>(0);
+
   const [matBooth, setMatBooth] = useState<number>(0);
 
   const [otherPurchases, setOtherPurchases] = useState<OtherPurchase[]>([]);
@@ -175,6 +181,8 @@ export default function BodyShopCarExpensesPage() {
   const FIBER_KEYWORDS = ['فيبر', 'فايبر', 'fiber', 'fibre', 'fiberglass'];
   const FILLER_KEYWORDS = ['فيلر', 'فيلار', 'filler'];
   const VARNISH_KEYWORDS = ['ورنيش', 'ورنيشات', 'varnish', 'clearcoat', 'clear coat'];
+  const HARDENER_KEYWORDS = ['مصلب', 'hardener', 'hardner', 'curing'];
+  const THINNER_KEYWORDS = ['تنر', 'thinner', 'solvent', 'تينر'];
 
   // Stock Unit Price Lookup Helper
   const findPartPrice = (keywords: string[]) => {
@@ -218,9 +226,25 @@ export default function BodyShopCarExpensesPage() {
     }
   };
 
+  const handleHardenerQtyChange = (qty: number) => {
+    setMatHardenerAmt(qty);
+    const unitPrice = findPartPrice(HARDENER_KEYWORDS);
+    if (unitPrice > 0) {
+      setMatHardenerCost(qty * unitPrice);
+    }
+  };
+
+  const handleThinnerQtyChange = (qty: number) => {
+    setMatThinnerAmt(qty);
+    const unitPrice = findPartPrice(THINNER_KEYWORDS);
+    if (unitPrice > 0) {
+      setMatThinnerCost(qty * unitPrice);
+    }
+  };
+
   // Calculate Total Cost Sum
   const calculateTotalCost = () => {
-    let sum = matBodyWork + matPuttyCost + matFiberCost + matFillerCost + matPaintCost + matVarnishCost + matBooth;
+    let sum = matBodyWork + matPuttyCost + matFiberCost + matFillerCost + matPaintCost + matVarnishCost + matHardenerCost + matThinnerCost + matBooth;
     otherPurchases.forEach((op) => {
       sum += Number(op.cost || 0);
     });
@@ -253,6 +277,8 @@ export default function BodyShopCarExpensesPage() {
       filler: { qty: matFillerAmt, cost: matFillerCost },
       paint: { cost: matPaintCost },
       varnish: { qty: matVarnishAmt, cost: matVarnishCost },
+      hardener: { qty: matHardenerAmt, cost: matHardenerCost },
+      thinner: { qty: matThinnerAmt, cost: matThinnerCost },
       paint_booth: matBooth,
       other_purchases: otherPurchases,
     };
@@ -290,6 +316,8 @@ export default function BodyShopCarExpensesPage() {
         deductMaterialStock(FIBER_KEYWORDS, matFiberAmt),
         deductMaterialStock(FILLER_KEYWORDS, matFillerAmt),
         deductMaterialStock(VARNISH_KEYWORDS, matVarnishAmt),
+        deductMaterialStock(HARDENER_KEYWORDS, matHardenerAmt),
+        deductMaterialStock(THINNER_KEYWORDS, matThinnerAmt),
       ]);
     }
 
@@ -318,6 +346,10 @@ export default function BodyShopCarExpensesPage() {
       setMatPaintCost(Number(details.paint?.cost || 0));
       setMatVarnishAmt(Number(details.varnish?.qty || 0));
       setMatVarnishCost(Number(details.varnish?.cost || 0));
+      setMatHardenerAmt(Number(details.hardener?.qty || 0));
+      setMatHardenerCost(Number(details.hardener?.cost || 0));
+      setMatThinnerAmt(Number(details.thinner?.qty || 0));
+      setMatThinnerCost(Number(details.thinner?.cost || 0));
       setMatBooth(Number(details.paint_booth || 0));
       setOtherPurchases(Array.isArray(details.other_purchases) ? details.other_purchases : []);
     } catch (e) {}
@@ -341,6 +373,10 @@ export default function BodyShopCarExpensesPage() {
     setMatPaintCost(0);
     setMatVarnishAmt(0);
     setMatVarnishCost(0);
+    setMatHardenerAmt(0);
+    setMatHardenerCost(0);
+    setMatThinnerAmt(0);
+    setMatThinnerCost(0);
     setMatBooth(0);
     setOtherPurchases([]);
   };
@@ -627,6 +663,7 @@ export default function BodyShopCarExpensesPage() {
                   <input
                     type="number"
                     min="0"
+                    step="any"
                     value={matBodyWork}
                     onChange={(e) => setMatBodyWork(Number(e.target.value))}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-zinc-900"
@@ -639,6 +676,7 @@ export default function BodyShopCarExpensesPage() {
                   <input
                     type="number"
                     min="0"
+                    step="any"
                     value={matBooth}
                     onChange={(e) => setMatBooth(Number(e.target.value))}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-zinc-900"
@@ -657,6 +695,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matPuttyAmt}
                         onChange={(e) => handlePuttyQtyChange(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
@@ -667,6 +706,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matPuttyCost}
                         onChange={(e) => setMatPuttyCost(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
@@ -684,6 +724,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matFiberAmt}
                         onChange={(e) => handleFiberQtyChange(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
@@ -694,6 +735,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matFiberCost}
                         onChange={(e) => setMatFiberCost(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
@@ -711,6 +753,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matFillerAmt}
                         onChange={(e) => handleFillerQtyChange(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
@@ -721,6 +764,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matFillerCost}
                         onChange={(e) => setMatFillerCost(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
@@ -738,6 +782,7 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matVarnishAmt}
                         onChange={(e) => handleVarnishQtyChange(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
@@ -748,8 +793,67 @@ export default function BodyShopCarExpensesPage() {
                       <input
                         type="number"
                         min="0"
+                        step="any"
                         value={matVarnishCost}
                         onChange={(e) => setMatVarnishCost(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hardener (مصلب ورنيش) */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'مصلب ورنيش (Hardener)' : 'Varnish Hardener (مصلب ورنيش)'}</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={matHardenerAmt}
+                        onChange={(e) => handleHardenerQtyChange(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'التكلفة ($)' : 'Cost ($)'}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={matHardenerCost}
+                        onChange={(e) => setMatHardenerCost(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Thinner (تنر) */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <span className="font-bold text-zinc-900">{language === 'ar' ? 'تنر (Thinner)' : 'Thinner (تنر)'}</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'الكمية' : 'Qty'}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={matThinnerAmt}
+                        onChange={(e) => handleThinnerQtyChange(Number(e.target.value))}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-center"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-slate-500 font-bold block">{language === 'ar' ? 'التكلفة ($)' : 'Cost ($)'}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={matThinnerCost}
+                        onChange={(e) => setMatThinnerCost(Number(e.target.value))}
                         className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1 font-bold text-right text-emerald-600"
                       />
                     </div>
@@ -763,6 +867,7 @@ export default function BodyShopCarExpensesPage() {
                 <input
                   type="number"
                   min="0"
+                  step="any"
                   value={matPaintCost}
                   onChange={(e) => setMatPaintCost(Number(e.target.value))}
                   className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 font-bold text-zinc-900"
@@ -795,6 +900,8 @@ export default function BodyShopCarExpensesPage() {
                     <input
                       type="number"
                       placeholder="Cost"
+                      min="0"
+                      step="any"
                       value={op.cost}
                       onChange={(e) => handleOtherPurchaseChange(idx, 'cost', Number(e.target.value))}
                       className="w-28 bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 font-bold text-right"
@@ -861,6 +968,8 @@ export default function BodyShopCarExpensesPage() {
                           if (details.filler?.cost > 0) rows.push({ name: `${language === 'ar' ? 'فيلر' : 'Filler'} (${details.filler.qty || 1} qty)`, cost: details.filler.cost });
                           if (details.paint?.cost > 0) rows.push({ name: language === 'ar' ? 'بوهية / دهانات' : 'Paint', cost: details.paint.cost });
                           if (details.varnish?.cost > 0) rows.push({ name: `${language === 'ar' ? 'ورنيش' : 'Varnish'} (${details.varnish.qty || 1} qty)`, cost: details.varnish.cost });
+                          if (details.hardener?.cost > 0) rows.push({ name: `${language === 'ar' ? 'مصلب ورنيش' : 'Varnish Hardener'} (${details.hardener.qty || 1} qty)`, cost: details.hardener.cost });
+                          if (details.thinner?.cost > 0) rows.push({ name: `${language === 'ar' ? 'تنر' : 'Thinner'} (${details.thinner.qty || 1} qty)`, cost: details.thinner.cost });
                           if (details.paint_booth > 0) rows.push({ name: language === 'ar' ? 'فرن الدهان' : 'Paint Booth', cost: details.paint_booth });
 
                           if (details.other_purchases && Array.isArray(details.other_purchases)) {
@@ -909,6 +1018,8 @@ export default function BodyShopCarExpensesPage() {
                     if (details.filler?.cost > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">فيلر (${details.filler.qty || 1})</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.filler.cost}</td></tr>`;
                     if (details.paint?.cost > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">بوهية / دهانات</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.paint.cost}</td></tr>`;
                     if (details.varnish?.cost > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">ورنيش (${details.varnish.qty || 1})</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.varnish.cost}</td></tr>`;
+                    if (details.hardener?.cost > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">مصلب ورنيش (${details.hardener.qty || 1})</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.hardener.cost}</td></tr>`;
+                    if (details.thinner?.cost > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">تنر (${details.thinner.qty || 1})</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.thinner.cost}</td></tr>`;
                     if (details.paint_booth > 0) rowsHtml += `<tr><td style="padding: 8px; border: 1px solid #e2e8f0; font-weight: bold;">فرن الدهان</td><td style="padding: 8px; border: 1px solid #e2e8f0; text-align: left; font-weight: bold; color: #16a34a;">$${details.paint_booth}</td></tr>`;
                     if (details.other_purchases && Array.isArray(details.other_purchases)) {
                       details.other_purchases.forEach((op: any) => {
