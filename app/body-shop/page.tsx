@@ -7,9 +7,11 @@ import {
   getCarExpenses,
   getExpenses,
   getOhdaRecords,
+  getRepairs,
   CarExpense,
   Expense,
   OhdaRecord,
+  Repair,
 } from '@/lib/shared/queries';
 import {
   Car,
@@ -36,6 +38,7 @@ export default function BodyShopDashboardPage() {
   const [carExpenses, setCarExpenses] = useState<CarExpense[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [ohdaRecords, setOhdaRecords] = useState<OhdaRecord[]>([]);
+  const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,14 +47,16 @@ export default function BodyShopDashboardPage() {
 
   async function loadData() {
     setLoading(true);
-    const [ceData, eData, oData] = await Promise.all([
+    const [ceData, eData, oData, rData] = await Promise.all([
       getCarExpenses('body-shop', startDate, endDate),
       getExpenses('body-shop', startDate, endDate),
       getOhdaRecords('body-shop', startDate, endDate),
+      getRepairs('body-shop', startDate, endDate),
     ]);
     setCarExpenses(ceData);
     setExpenses(eData);
     setOhdaRecords(oData);
+    setRepairs(rData);
     setLoading(false);
   }
 
@@ -61,12 +66,94 @@ export default function BodyShopDashboardPage() {
   const totalOhdaSpent = expenses.filter((e) => e.from_ohda !== false).reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
   const netOhdaBalance = totalOhdaReceived - totalOhdaSpent;
 
+  // Repairs / invoice calculations
+  const activeRepairs = repairs.filter((r) => r.payment_method !== 'Deleted');
+  const totalRepairsIncome = activeRepairs.reduce((acc, r) => acc + (Number(r.paid_amount) || 0), 0);
+  const totalRepairsPending = activeRepairs.reduce((acc, r) => acc + (Number(r.pending_amount) || 0), 0);
+
+  // Payment method breakdown
+  const pmTotals: Record<string, number> = {};
+  activeRepairs.forEach((r) => {
+    const method = r.payment_method || 'Cash';
+    if (method === 'PayByParts' || method === 'SplitPayment') {
+      // For PayByParts we count the paid_amount; for SplitPayment same
+      pmTotals[method] = (pmTotals[method] || 0) + (Number(r.paid_amount) || 0);
+    } else {
+      pmTotals[method] = (pmTotals[method] || 0) + (Number(r.paid_amount) || 0);
+    }
+  });
+
   const handlePrintDailyReport = () => {
     const ohdaExpensesList = expenses.filter((e) => e.from_ohda !== false);
     const cashExpensesList = expenses.filter((e) => e.from_ohda === false);
 
     const totalOhdaSpentSum = ohdaExpensesList.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
     const totalCashExpensesSum = cashExpensesList.reduce((acc, e) => acc + (Number(e.amount) || 0), 0);
+
+    // ─── Payment method breakdown (for KPI boxes) ────────────────────────────
+    const printActiveRepairs = repairs.filter((r) => r.payment_method !== 'Deleted');
+    const printTotalIncome = printActiveRepairs.reduce((acc, r) => acc + (Number(r.paid_amount) || 0), 0);
+    const printTotalPending = printActiveRepairs.reduce((acc, r) => acc + (Number(r.pending_amount) || 0), 0);
+
+    const pmMap: Record<string, number> = {};
+    printActiveRepairs.forEach((r) => {
+      const m = r.payment_method || 'Cash';
+      pmMap[m] = (pmMap[m] || 0) + (Number(r.paid_amount) || 0);
+    });
+
+    const pmLabel: Record<string, string> = {
+      Cash: 'نقدي',
+      Instapay: 'انستاباي',
+      'Vodafone Cash': 'فودافون كاش',
+      'Bank Alahly': 'بنك الأهلي',
+      'Bank Masr': 'بنك مصر',
+      SplitPayment: 'دفع مجزأ',
+      PayByParts: 'دفع على دفعات',
+    };
+
+    const pmColors: Record<string, { border: string; bg: string; text: string; val: string }> = {
+      Cash:           { border: '#4ade80', bg: '#f0fdf4', text: '#15803d', val: '#16a34a' },
+      Instapay:       { border: '#818cf8', bg: '#eef2ff', text: '#4338ca', val: '#4f46e5' },
+      'Vodafone Cash':{ border: '#f87171', bg: '#fef2f2', text: '#b91c1c', val: '#dc2626' },
+      'Bank Alahly':  { border: '#fbbf24', bg: '#fefce8', text: '#92400e', val: '#d97706' },
+      'Bank Masr':    { border: '#60a5fa', bg: '#eff6ff', text: '#1d4ed8', val: '#2563eb' },
+      SplitPayment:   { border: '#c084fc', bg: '#faf5ff', text: '#7e22ce', val: '#9333ea' },
+      PayByParts:     { border: '#fb923c', bg: '#fff7ed', text: '#c2410c', val: '#ea580c' },
+    };
+
+    // Collect all pm methods that have non-zero values
+    const pmOrder = ['Cash', 'Instapay', 'Vodafone Cash', 'Bank Alahly', 'Bank Masr', 'SplitPayment', 'PayByParts'];
+    // Also add any unknown methods
+    Object.keys(pmMap).forEach((k) => { if (!pmOrder.includes(k)) pmOrder.push(k); });
+    const activePM = pmOrder.filter((m) => (pmMap[m] || 0) > 0);
+
+    // Build payment method KPI cards HTML
+    const pmCardsHtml = activePM.length === 0
+      ? `<div style="text-align:center;color:#94a3b8;font-style:italic;padding:12px;">لا توجد فواتير مسجلة في هذه الفترة</div>`
+      : activePM.map((m) => {
+          const c = pmColors[m] || { border: '#e2e8f0', bg: '#f8fafc', text: '#374151', val: '#374151' };
+          return `<div style="padding:14px 10px;border-radius:12px;border:2px solid ${c.border};background:${c.bg};text-align:center;">
+            <div style="font-size:10px;color:${c.text};font-weight:800;margin-bottom:6px;">${pmLabel[m] || m}</div>
+            <div style="font-size:20px;font-weight:900;color:${c.val};">$${(pmMap[m] || 0).toFixed(2)}</div>
+          </div>`;
+        }).join('');
+
+    // Build repairs rows HTML
+    const repairsRowsHtml = printActiveRepairs.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:14px;color:#94a3b8;font-style:italic;">لا توجد فواتير مسجلة في هذه الفترة</td></tr>`
+      : printActiveRepairs.map((r, i) => {
+          const method = r.payment_method || 'Cash';
+          const c = pmColors[method] || { border: '#e2e8f0', bg: '#f8fafc', text: '#374151', val: '#374151' };
+          return `<tr style="background:${i % 2 === 1 ? '#f5f3ff' : '#fff'}">
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;color:#7c3aed;">#${r.id}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;font-weight:bold;">${r.customers?.name || 'عميل نقدي'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">${r.date || '-'}</td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;">
+              <span style="background:${c.bg};color:${c.text};border:1px solid ${c.border};border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;">${pmLabel[method] || method}</span>
+            </td>
+            <td style="padding:9px 10px;border:1px solid #e2e8f0;text-align:left;font-weight:bold;color:#7c3aed;">$${Number(r.paid_amount || 0).toFixed(2)}</td>
+          </tr>`;
+        }).join('');
 
     // ─── Row builders ────────────────────────────────────────────────────────
     const ohdaReceivedRowsHtml =
@@ -170,8 +257,11 @@ export default function BodyShopDashboardPage() {
 
     const tblStyle = `width:100%;border-collapse:collapse;text-align:right;font-size:12px;border-radius:0 0 10px 10px;overflow:hidden;`;
 
+    // Column count for PM cards grid
+    const pmCols = Math.min(activePM.length, 4);
+
     const html = `
-      <div style="direction:rtl;padding:28px 32px;color:#1e293b;max-width:920px;margin:0 auto;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+      <div style="direction:rtl;padding:28px 32px;color:#1e293b;max-width:960px;margin:0 auto;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
 
         <!-- ═══ HEADER ═══ -->
         <div style="text-align:center;margin-bottom:24px;padding-bottom:18px;border-bottom:3px solid #0d9488;">
@@ -183,10 +273,10 @@ export default function BodyShopDashboardPage() {
           </div>
         </div>
 
-        <!-- ═══ KPI ROW 1 ═══ -->
+        <!-- ═══ KPI ROW 1: Ohda + Expenses ═══ -->
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:14px;">
           <div style="padding:18px 14px;border-radius:14px;border:2px solid #bbf7d0;background:#f0fdf4;text-align:center;">
-            <div style="font-size:11px;color:#166534;font-weight:700;margin-bottom:8px;">إجمالي الدخل (إيداعات العُهدة)</div>
+            <div style="font-size:11px;color:#166534;font-weight:700;margin-bottom:8px;">إجمالي إيداعات العُهدة</div>
             <div style="font-size:26px;font-weight:900;color:#16a34a;">$${totalOhdaReceived.toFixed(2)}</div>
           </div>
           <div style="padding:18px 14px;border-radius:14px;border:2px solid #fecaca;background:#fef2f2;text-align:center;">
@@ -194,22 +284,57 @@ export default function BodyShopDashboardPage() {
             <div style="font-size:26px;font-weight:900;color:#dc2626;">$${totalOhdaSpentSum.toFixed(2)}</div>
           </div>
           <div style="padding:18px 14px;border-radius:14px;border:2px solid #fde68a;background:#fefce8;text-align:center;">
-            <div style="font-size:11px;color:#854d0e;font-weight:700;margin-bottom:8px;">صافي الربح (رصيد العُهدة)</div>
+            <div style="font-size:11px;color:#854d0e;font-weight:700;margin-bottom:8px;">رصيد العُهدة المتبقي</div>
             <div style="font-size:26px;font-weight:900;color:#92400e;">$${netOhdaBalance.toFixed(2)}</div>
           </div>
         </div>
 
-        <!-- ═══ KPI ROW 2 ═══ -->
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:6px;">
+        <!-- ═══ KPI ROW 2: Repairs Income + Car Jobs ═══ -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:6px;">
+          <div style="padding:16px;border-radius:12px;border:2px solid #c4b5fd;background:#faf5ff;text-align:center;">
+            <div style="font-size:10px;color:#6d28d9;font-weight:700;margin-bottom:6px;">دخل الفواتير والإصلاحات</div>
+            <div style="font-size:20px;font-weight:900;color:#7c3aed;">$${printTotalIncome.toFixed(2)}</div>
+          </div>
+          <div style="padding:16px;border-radius:12px;border:2px solid #fca5a5;background:#fef2f2;text-align:center;">
+            <div style="font-size:10px;color:#b91c1c;font-weight:700;margin-bottom:6px;">مستحقات (باقي فواتير)</div>
+            <div style="font-size:20px;font-weight:900;color:#dc2626;">$${printTotalPending.toFixed(2)}</div>
+          </div>
           <div style="padding:16px;border-radius:12px;border:2px solid #a5f3fc;background:#f0fdfe;text-align:center;">
-            <div style="font-size:11px;color:#0e7490;font-weight:700;margin-bottom:6px;">إجمالي مقايسات وتكاليف السيارات</div>
-            <div style="font-size:22px;font-weight:900;color:#0d9488;">$${totalCarJobsCost.toFixed(2)}</div>
+            <div style="font-size:10px;color:#0e7490;font-weight:700;margin-bottom:6px;">إجمالي تكاليف مقايسات السيارات</div>
+            <div style="font-size:20px;font-weight:900;color:#0d9488;">$${totalCarJobsCost.toFixed(2)}</div>
           </div>
           <div style="padding:16px;border-radius:12px;border:2px solid #e2e8f0;background:#f8fafc;text-align:center;">
-            <div style="font-size:11px;color:#475569;font-weight:700;margin-bottom:6px;">مصروفات الخزينة المباشرة</div>
-            <div style="font-size:22px;font-weight:900;color:#475569;">$${totalCashExpensesSum.toFixed(2)}</div>
+            <div style="font-size:10px;color:#475569;font-weight:700;margin-bottom:6px;">مصروفات الخزينة المباشرة</div>
+            <div style="font-size:20px;font-weight:900;color:#475569;">$${totalCashExpensesSum.toFixed(2)}</div>
           </div>
         </div>
+
+        <!-- ═══ PAYMENT METHOD BOXES ═══ -->
+        ${activePM.length > 0 ? `
+        <div style="margin-top:18px;margin-bottom:4px;">
+          <div style="font-size:12px;font-weight:800;color:#4c1d95;margin-bottom:10px;padding-right:4px;">💳 توزيع الدخل على طرق الدفع (الفواتير والإصلاحات)</div>
+          <div style="display:grid;grid-template-columns:repeat(${pmCols},1fr);gap:10px;">
+            ${pmCardsHtml}
+          </div>
+        </div>` : ''}
+
+        <!-- ═══ SECTION 0: REPAIRS / INVOICES ═══ -->
+        ${banner('أ', 'دخل الفواتير والإصلاحات (بودي شوب)', '#7c3aed', '#faf5ff')}
+        <table style="${tblStyle}">
+          <thead>
+            <tr>
+              <th style="${th('#7c3aed')}">#</th>
+              <th style="${th('#7c3aed')}">العميل</th>
+              <th style="${th('#7c3aed')}">التاريخ</th>
+              <th style="${th('#7c3aed')}">طريقة الدفع</th>
+              <th style="${th('#7c3aed')};text-align:left;">المبلغ المحصل ($)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${repairsRowsHtml}
+            ${printActiveRepairs.length > 0 ? totalRow(4, `$${printTotalIncome.toFixed(2)}`, '#7c3aed', '#ede9fe') : ''}
+          </tbody>
+        </table>
 
         <!-- ═══ SECTION 1: OHDA DEPOSITS ═══ -->
         ${banner('1', 'إيداعات ومقبوضات العُهدة', '#10b981', '#ecfdf5')}
