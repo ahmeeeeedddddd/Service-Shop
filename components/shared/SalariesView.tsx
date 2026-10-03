@@ -254,6 +254,10 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
   };
 
   // Totals Calculation for Branch
+  const totalGrossPayroll = employees.reduce((acc, emp) => {
+    return acc + (emp.daily_rate || 0) * 6;
+  }, 0);
+
   const totalWeeklySalaries = employees.reduce((acc, emp) => {
     const { borrows, deductions, bonuses } = getEmpAdjustments(emp);
     const base = (emp.daily_rate || 0) * 6;
@@ -276,6 +280,7 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
               <th style="padding: 10px; border: 1px solid #cbd5e1;">الاسم</th>
               <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">اليومية ($)</th>
               <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">الراتب (6d)</th>
+              <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center; background:#eff6ff; color:#1d4ed8;">الإجمالي قبل التعديلات ($)</th>
               <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">السلف ($)</th>
               <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">الخصومات ($)</th>
               <th style="padding: 10px; border: 1px solid #cbd5e1; text-align: center;">المكافآت ($)</th>
@@ -287,12 +292,14 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
               .map((emp) => {
                 const { borrows, deductions, bonuses } = getEmpAdjustments(emp);
                 const base = (emp.daily_rate || 0) * 6;
+                const gross = base + bonuses; // base + bonuses before deductions/borrows
                 const net = base - borrows - deductions + bonuses;
                 return `
                 <tr style="border-bottom: 1px solid #e2e8f0;">
                   <td style="padding: 10px; border: 1px solid #e2e8f0; font-weight: bold;">${emp.name}</td>
                   <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center;">$${(emp.daily_rate || 0).toFixed(2)}</td>
                   <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center;">$${base.toFixed(2)}</td>
+                  <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center; color:#1d4ed8; font-weight:bold;">$${gross.toFixed(2)}</td>
                   <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center; color: #dc2626;">$${borrows.toFixed(2)}</td>
                   <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center; color: #dc2626;">$${deductions.toFixed(2)}</td>
                   <td style="padding: 10px; border: 1px solid #e2e8f0; text-align: center; color: #16a34a;">$${bonuses.toFixed(2)}</td>
@@ -301,8 +308,14 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
               `;
               })
               .join('')}
+            <tr style="background-color:#eff6ff; font-weight: bold; border-top: 2px solid #2563eb;">
+              <td colspan="3" style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">إجمالي الرواتب الأساسية (قبل أي تعديلات):</td>
+              <td style="padding: 12px; border: 1px solid #cbd5e1; text-align: center; font-size: 15px; color:#1d4ed8;">$${totalGrossPayroll.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td colspan="3" style="border: 1px solid #cbd5e1;"></td>
+              <td style="border: 1px solid #cbd5e1;"></td>
+            </tr>
             <tr style="background-color: #fef08a; font-weight: bold; border-top: 2px solid #ca8a04;">
-              <td colspan="6" style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">إجمالي الرواتب المستحقة للصرف:</td>
+              <td colspan="7" style="padding: 12px; border: 1px solid #cbd5e1; text-align: right;">إجمالي الرواتب المستحقة للصرف (بعد التعديلات):</td>
               <td style="padding: 12px; border: 1px solid #cbd5e1; text-align: center; font-size: 15px; color: #000;">$${totalWeeklySalaries.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           </tbody>
@@ -418,14 +431,25 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
         </form>
       </div>
 
-      {/* Summary Stat */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إجمالي المرتبات الأسبوعية المستحقة (6 أيام)' : 'Total Net Weekly Payroll'}</p>
-          <p className="text-3xl font-black text-emerald-600 mt-1">${totalWeeklySalaries.toLocaleString()}</p>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إجمالي الرواتب الأساسية (قبل التعديلات)' : 'Total Gross Payroll (Before Adjustments)'}</p>
+            <p className="text-3xl font-black text-blue-600 mt-1">${totalGrossPayroll.toLocaleString()}</p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-blue-50 text-blue-600">
+            <DollarSign className="w-7 h-7" />
+          </div>
         </div>
-        <div className="p-3.5 rounded-2xl bg-zinc-900 text-yellow-400">
-          <DollarSign className="w-7 h-7" />
+        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إجمالي المرتبات الأسبوعية المستحقة (بعد التعديلات)' : 'Total Net Weekly Payroll'}</p>
+            <p className="text-3xl font-black text-emerald-600 mt-1">${totalWeeklySalaries.toLocaleString()}</p>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-zinc-900 text-yellow-400">
+            <DollarSign className="w-7 h-7" />
+          </div>
         </div>
       </div>
 
@@ -439,6 +463,7 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
                 <th className="p-3.5">{t('roleSpecialty')}</th>
                 <th className="p-3.5 text-right">{t('dailyRate')}</th>
                 <th className="p-3.5 text-right">{language === 'ar' ? 'الراتب الأسبوعي (6 أيام)' : 'Weekly Rate (6d)'}</th>
+                <th className="p-3.5 text-right text-blue-300">{language === 'ar' ? 'الإجمالي قبل التعديلات' : 'Gross (Before Adj.)'}</th>
                 <th className="p-3.5 text-right text-rose-400 cursor-pointer" title={language === 'ar' ? 'اضغط لإضافة سلفة' : 'Click to add borrow'}>
                   {language === 'ar' ? 'السُلف (-)' : 'Borrows (-)'}
                 </th>
@@ -455,13 +480,13 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
             <tbody className="divide-y divide-slate-100 bg-white font-medium text-zinc-800">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-500 font-medium">
+                  <td colSpan={10} className="p-8 text-center text-slate-500 font-medium">
                     {t('loading')}
                   </td>
                 </tr>
               ) : employees.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="p-8 text-center text-slate-500 font-medium">
+                  <td colSpan={10} className="p-8 text-center text-slate-500 font-medium">
                     {t('noRecordsFound')}
                   </td>
                 </tr>
@@ -469,6 +494,7 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
                 employees.map((emp) => {
                   const { borrows, deductions, bonuses } = getEmpAdjustments(emp);
                   const weeklyRate = (emp.daily_rate || 0) * 6;
+                  const grossBeforeAdj = weeklyRate + bonuses;
                   const netPayable = weeklyRate - borrows - deductions + bonuses;
 
                   return (
@@ -477,7 +503,7 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
                       <td className="p-3.5 text-slate-500">{emp.role || '—'}</td>
                       <td className="p-3.5 text-right font-semibold">${Number(emp.daily_rate || 0).toFixed(2)}</td>
                       <td className="p-3.5 text-right font-bold text-zinc-900">${weeklyRate.toFixed(2)}</td>
-
+                      <td className="p-3.5 text-right font-black text-blue-600 bg-blue-50/40">${grossBeforeAdj.toFixed(2)}</td>
                       {/* Clickable adjustment columns */}
                       <td
                         onClick={() => {
