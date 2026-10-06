@@ -184,8 +184,15 @@ export function CustomersView({ branchTitle }: CustomersViewProps) {
             className="w-full bg-zinc-50 border border-zinc-300 rounded-xl pl-10 pr-4 rtl:pr-10 rtl:pl-4 py-2 text-xs text-zinc-900 placeholder-zinc-400 focus:bg-white focus:outline-none focus:border-yellow-500"
           />
         </div>
-        <div className="text-xs text-zinc-600 font-bold">
-          {t('totalCustomers')}: <span className="text-zinc-900 font-extrabold">{customers.length}</span>
+        <div className="text-right rtl:text-left">
+          <div className="text-xs text-zinc-600 font-bold">
+            {t('totalCustomers')}: <span className="text-zinc-900 font-extrabold">{customers.length}</span>
+          </div>
+          {!search && (
+            <p className="text-[11px] text-zinc-400 mt-0.5">
+              عرض أحدث 50 عميل فقط — ابحث للعثور على أي عميل في قاعدة البيانات
+            </p>
+          )}
         </div>
       </div>
 
@@ -466,15 +473,15 @@ export function CustomersView({ branchTitle }: CustomersViewProps) {
         <Modal
           isOpen={isHistoryModalOpen}
           onClose={() => setIsHistoryModalOpen(false)}
-          title={`سجل صيانة العميل / Repair History - ${selectedCustomer.name}`}
+          title={`سجل صيانة العميل / Repair History — ${selectedCustomer.name}`}
           maxWidth="2xl"
         >
           <div className="space-y-4 text-xs">
-            <div className="p-3 bg-zinc-100 rounded-xl border border-zinc-200 flex justify-between items-center font-bold text-zinc-800">
-              <div>
-                <span>الهاتف: {selectedCustomer.phone || 'N/A'}</span>
-                <span className="mx-3">|</span>
-                <span>السيارة: {selectedCustomer.car_name || 'N/A'} ({selectedCustomer.plate_number || 'N/A'})</span>
+            {/* Customer summary bar */}
+            <div className="p-3 bg-zinc-100 rounded-2xl border border-zinc-200 flex flex-wrap gap-3 justify-between items-center font-bold text-zinc-800">
+              <div className="flex flex-wrap gap-4">
+                <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-zinc-500" />{selectedCustomer.phone || 'N/A'}</span>
+                <span className="flex items-center gap-1"><Car className="w-3.5 h-3.5 text-zinc-500" />{selectedCustomer.car_name || 'N/A'} — {selectedCustomer.plate_number || 'N/A'}</span>
               </div>
               <span className="px-2.5 py-0.5 rounded-full bg-yellow-400 text-black text-[11px]">
                 {customerRepairs.length} فواتير مسجلة
@@ -482,55 +489,97 @@ export function CustomersView({ branchTitle }: CustomersViewProps) {
             </div>
 
             {loadingHistory ? (
-              <div className="text-center py-8 text-zinc-500 font-bold">جاري تحميل سجل الصيانة...</div>
+              <div className="flex justify-center items-center py-10 gap-2 text-zinc-500 font-bold">
+                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-yellow-400"></div>
+                جاري تحميل سجل الصيانة...
+              </div>
             ) : customerRepairs.length === 0 ? (
-              <div className="text-center py-8 text-zinc-400 bg-slate-50 rounded-xl">
+              <div className="text-center py-10 text-zinc-400 bg-slate-50 rounded-2xl font-bold">
                 لا توجد فواتير صيانة سابقة لـ {selectedCustomer.name}
               </div>
             ) : (
-              <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-slate-200">
-                <table className="w-full text-left rtl:text-right">
-                  <thead className="bg-zinc-900 text-white font-bold sticky top-0">
-                    <tr>
-                      <th className="p-2.5">#</th>
-                      <th className="p-2.5">التاريخ</th>
-                      <th className="p-2.5">الوصف / الخدمات</th>
-                      <th className="p-2.5">طريقة الدفع</th>
-                      <th className="p-2.5 text-right">الإجمالي</th>
-                      <th className="p-2.5 text-right">المدفوع</th>
-                      <th className="p-2.5 text-right">المتبقي</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 bg-white">
-                    {customerRepairs.map((r) => {
-                      const total = Number(r.total_amount || 0);
-                      const paid = Number(r.paid_amount || 0);
-                      const pending = Number(r.pending_amount || 0);
-                      return (
-                        <tr key={r.id} className="hover:bg-yellow-50/40">
-                          <td className="p-2.5 font-bold text-zinc-900">#{r.id}</td>
-                          <td className="p-2.5 text-zinc-600 font-semibold">{r.date || 'N/A'}</td>
-                          <td className="p-2.5 font-bold text-zinc-900">{r.description || '-'}</td>
-                          <td className="p-2.5">
-                            <span className="px-2 py-0.5 rounded bg-slate-100 font-bold text-[10px] text-zinc-700">
-                              {r.payment_method || 'Cash'}
-                            </span>
-                          </td>
-                          <td className="p-2.5 text-right font-bold text-zinc-900">${total.toFixed(2)}</td>
-                          <td className="p-2.5 text-right font-black text-emerald-600">${paid.toFixed(2)}</td>
-                          <td className="p-2.5 text-right font-bold text-rose-600">
-                            {pending > 0 ? `$${pending.toFixed(2)}` : '$0.00'}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-1">
+                {customerRepairs.map((r) => {
+                  const total   = Number(r.total_amount  || 0);
+                  const paid    = Number(r.paid_amount   || 0);
+                  const pending = Number(r.pending_amount || 0);
+                  const isPending = pending > 0;
+
+                  return (
+                    <div
+                      key={r.id}
+                      className={`rounded-2xl border ${isPending ? 'border-rose-200 bg-rose-50/40' : 'border-emerald-200 bg-emerald-50/30'} p-4 space-y-3`}
+                    >
+                      {/* Top row: invoice # + date + status badge */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-zinc-900 text-sm">#{r.id}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isPending ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}`}>
+                            {isPending ? 'آجل / Pending' : 'مدفوع / Paid'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                          <span className="text-zinc-500 font-semibold">{r.date || 'N/A'}</span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {r.description && (
+                        <div className="p-2.5 bg-white rounded-xl border border-zinc-200">
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase mb-1">الخدمات / Services</p>
+                          <p className="font-bold text-zinc-900 leading-relaxed">{r.description}</p>
+                        </div>
+                      )}
+
+                      {/* Meta row: payment method + odometer */}
+                      <div className="flex flex-wrap gap-2">
+                        {r.payment_method && (
+                          <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 font-bold text-[11px] text-zinc-700">
+                            💳 {r.payment_method}
+                          </span>
+                        )}
+                        {r.odometer && (
+                          <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 font-bold text-[11px] text-blue-700">
+                            🛣 عداد: {r.odometer} كم
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Notes */}
+                      {r.notes && !r.notes.startsWith('__SPLIT__') && (
+                        <div className="p-2.5 bg-yellow-50 rounded-xl border border-yellow-200">
+                          <p className="text-[10px] font-bold text-yellow-700 uppercase mb-0.5">ملاحظات / Notes</p>
+                          <p className="text-zinc-800 font-semibold leading-relaxed">{r.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Financials */}
+                      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-zinc-200">
+                        <div className="text-center">
+                          <p className="text-[10px] text-zinc-400 font-bold uppercase">الإجمالي</p>
+                          <p className="font-black text-zinc-900">${total.toFixed(2)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-emerald-500 font-bold uppercase">المدفوع</p>
+                          <p className="font-black text-emerald-600">${paid.toFixed(2)}</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-[10px] text-rose-400 font-bold uppercase">المتبقي</p>
+                          <p className={`font-black ${pending > 0 ? 'text-rose-600' : 'text-zinc-400'}`}>
+                            ${pending.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
         </Modal>
       )}
+
     </div>
   );
 }

@@ -141,8 +141,12 @@ export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
   let query = supabase.from('customers').select('*').order('id', { ascending: false });
 
   if (searchQuery && searchQuery.trim()) {
+    // Server-side filter — searches entire DB, no meaningful cap
     const term = searchQuery.trim();
-    query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(500);
+    query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(5000);
+  } else {
+    // No search: load only the 50 most recent to keep initial load fast
+    query = query.limit(50);
   }
 
   const { data, error } = await query;
