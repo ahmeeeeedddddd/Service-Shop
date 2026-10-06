@@ -60,7 +60,9 @@ export interface ReceiptData {
 export function generateReceiptHtml(data: ReceiptData, language: 'ar' | 'en' = 'ar'): string {
   const isAr = language === 'ar';
   const subtotal = data.lines.reduce((acc, l) => acc + (l.qty * l.price), 0);
-  const netTotal = Math.max(0, (data.total_amount || subtotal) - (data.discount || 0));
+  // total_amount is already the net (post-discount) value stored in DB.
+  // We only use it directly; the discount row is shown for info only.
+  const netTotal = data.total_amount ?? Math.max(0, subtotal - (data.discount || 0));
 
   const itemsHtml = data.lines.map(l => `
     <tr>
@@ -121,8 +123,8 @@ export function generateReceiptHtml(data: ReceiptData, language: 'ar' | 'en' = '
       <!-- Totals -->
       <div style="max-width: 280px; ${isAr ? 'margin-right: auto;' : 'margin-left: auto;'} margin-bottom: 20px; font-size: 12px; line-height: 1.8;">
         <div style="display: flex; justify-content: space-between; font-weight: 600;">
-          <span>${isAr ? 'المجموع:' : 'Total:'}</span>
-          <span>$${(data.total_amount || subtotal).toFixed(2)}</span>
+          <span>${isAr ? 'المجموع:' : 'Subtotal:'}</span>
+          <span>$${subtotal.toFixed(2)}</span>
         </div>
         ${(data.discount && data.discount > 0) ? `
           <div style="display: flex; justify-content: space-between; font-weight: bold; color: #e11d48;">

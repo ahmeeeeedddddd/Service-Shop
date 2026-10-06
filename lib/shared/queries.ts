@@ -142,9 +142,7 @@ export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
 
   if (searchQuery && searchQuery.trim()) {
     const term = searchQuery.trim();
-    query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(100);
-  } else {
-    query = query.limit(200);
+    query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(500);
   }
 
   const { data, error } = await query;
