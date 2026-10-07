@@ -528,8 +528,19 @@ export default function BodyShopDashboardPage() {
       </div>
 
       {/* Financial KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div className="bg-white rounded-2xl p-5 border border-purple-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-purple-600 uppercase">{language === 'ar' ? 'إيرادات الفواتير والإصلاحات' : 'Repairs Income'}</p>
+            <p className="text-2xl font-black text-purple-700 mt-1">${totalRepairsIncome.toLocaleString()}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{activeRepairs.length} {language === 'ar' ? 'فواتير' : 'invoices'}</p>
+          </div>
+          <div className="p-3 rounded-2xl bg-purple-50 text-purple-600">
+            <FileText className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 border border-emerald-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase">{t('ohdaReceived')}</p>
             <p className="text-2xl font-black text-emerald-600 mt-1">${totalOhdaReceived.toLocaleString()}</p>
@@ -539,7 +550,7 @@ export default function BodyShopDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-rose-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase">{t('ohdaSpent')}</p>
             <p className="text-2xl font-black text-rose-600 mt-1">${totalOhdaSpent.toLocaleString()}</p>
@@ -549,7 +560,7 @@ export default function BodyShopDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase">{t('remainingOhdaBalance')}</p>
             <p className="text-2xl font-black text-zinc-900 mt-1">${netOhdaBalance.toLocaleString()}</p>
@@ -559,20 +570,131 @@ export default function BodyShopDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="bg-white rounded-2xl p-5 border border-cyan-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase">{t('carJobsLogged')}</p>
             <p className="text-2xl font-black text-zinc-900 mt-1">{carExpenses.length}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">${totalCarJobsCost.toLocaleString()}</p>
           </div>
-          <div className="p-3 rounded-2xl bg-zinc-900 text-yellow-400">
+          <div className="p-3 rounded-2xl bg-cyan-50 text-cyan-700">
             <Car className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'فواتير معلقة ومستحقات' : 'Pending Bills'}</p>
+            <p className="text-2xl font-black text-amber-600 mt-1">${totalRepairsPending.toLocaleString()}</p>
+          </div>
+          <div className="p-3 rounded-2xl bg-amber-50 text-amber-600">
+            <TrendingDown className="w-6 h-6" />
           </div>
         </div>
       </div>
 
+      {/* Payment Method Breakdown Box */}
+      {activeRepairs.length > 0 && (
+        <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+          <p className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+            <span>💳</span>
+            <span>{language === 'ar' ? 'توزيع دخل الفواتير حسب طريقة الدفع:' : 'Income Breakdown by Payment Method:'}</span>
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {[
+              { id: 'Cash', label: 'نقدي (كاش)', color: 'bg-emerald-50 border-emerald-200 text-emerald-800' },
+              { id: 'Instapay', label: 'انستاباي (Instapay)', color: 'bg-indigo-50 border-indigo-200 text-indigo-800' },
+              { id: 'Vodafone Cash', label: 'فودافون كاش', color: 'bg-rose-50 border-rose-200 text-rose-800' },
+              { id: 'Bank Alahly', label: 'البنك الأهلي', color: 'bg-amber-50 border-amber-200 text-amber-800' },
+              { id: 'Bank Masr', label: 'بنك مصر', color: 'bg-blue-50 border-blue-200 text-blue-800' },
+            ].map((pm) => (
+              <div key={pm.id} className={`p-3 rounded-2xl border ${pm.color} text-center space-y-1`}>
+                <p className="text-[11px] font-bold opacity-80">{pm.label}</p>
+                <p className="text-lg font-black">${(pmTotals[pm.id] || 0).toLocaleString()}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
+      {/* SECTION 1: Customer Repairs & Invoices Table */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-purple-600" />
+            <span>{language === 'ar' ? 'فواتير وإصلاحات العملاء' : 'Customer Repairs & Invoices'} ({activeRepairs.length})</span>
+          </h2>
+          <Link
+            href="/body-shop/repairs"
+            className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1"
+          >
+            <span>{language === 'ar' ? 'عرض كافة الفواتير' : 'View All Invoices'}</span>
+            <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
+          </Link>
+        </div>
 
-      {/* Recent Car Expenses Table */}
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-purple-950 text-white font-bold uppercase tracking-wider">
+              <tr>
+                <th className="p-3.5">{t('id')}</th>
+                <th className="p-3.5">{t('customer')}</th>
+                <th className="p-3.5">{language === 'ar' ? 'طريقة الدفع' : 'Payment Method'}</th>
+                <th className="p-3.5">{language === 'ar' ? 'الخدمات / الوصف' : 'Services'}</th>
+                <th className="p-3.5 text-right">{language === 'ar' ? 'المبلغ المدفوع' : 'Paid Amount'} ($)</th>
+                <th className="p-3.5 text-right">{language === 'ar' ? 'المتبقي' : 'Pending'} ($)</th>
+                <th className="p-3.5">{t('date')}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white font-medium text-zinc-800">
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                    {t('loading')}
+                  </td>
+                </tr>
+              ) : activeRepairs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                    {language === 'ar' ? 'لا توجد فواتير عملاء مسجلة في هذه الفترة' : 'No customer invoices found for this period'}
+                  </td>
+                </tr>
+              ) : (
+                activeRepairs.map((r) => {
+                  const pm = r.payment_method || 'Cash';
+                  const pmBadgeColor =
+                    pm === 'Instapay'
+                      ? 'bg-indigo-100 text-indigo-800 border-indigo-200'
+                      : pm === 'Vodafone Cash'
+                      ? 'bg-rose-100 text-rose-800 border-rose-200'
+                      : pm === 'Bank Alahly' || pm === 'Bank Masr'
+                      ? 'bg-amber-100 text-amber-800 border-amber-200'
+                      : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+
+                  return (
+                    <tr key={r.id} className="hover:bg-purple-50/30 transition-colors">
+                      <td className="p-3.5 font-bold text-purple-700">#{r.id}</td>
+                      <td className="p-3.5 font-bold text-zinc-900">{r.customers?.name || t('walkInCustomer')}</td>
+                      <td className="p-3.5">
+                        <span className={`px-2.5 py-1 rounded-full border text-[11px] font-bold ${pmBadgeColor}`}>
+                          {pm}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-slate-600 max-w-xs truncate">{r.description || '-'}</td>
+                      <td className="p-3.5 text-right font-black text-emerald-700">${Number(r.paid_amount || 0).toLocaleString()}</td>
+                      <td className="p-3.5 text-right font-bold text-amber-600">
+                        {Number(r.pending_amount || 0) > 0 ? `$${Number(r.pending_amount).toLocaleString()}` : '-'}
+                      </td>
+                      <td className="p-3.5 text-slate-500">{r.date || 'N/A'}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SECTION 2: Recent Car Expenses Table */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2">

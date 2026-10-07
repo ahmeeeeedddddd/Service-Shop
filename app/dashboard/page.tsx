@@ -290,13 +290,13 @@ export default function OwnerDashboardPage() {
         </div>
       </div>
 
-      {/* TOP 4 MAIN KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* TOP 5 MAIN KPI CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'إيرادات المركز الرئيسي' : 'Main Shop Income'}</p>
             <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">${metrics?.mainShop?.totalIncome?.toLocaleString() || '0'}</p>
-            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{metrics?.mainShop?.repairCount || 0} {language === 'ar' ? 'فواتير مقبوضة' : 'Paid Invoices'}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{metrics?.mainShop?.repairCount || 0} {language === 'ar' ? 'فواتير' : 'Invoices'}</p>
           </div>
           <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
             <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -307,10 +307,21 @@ export default function OwnerDashboardPage() {
           <div>
             <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مصروفات المركز الرئيسي' : 'Main Shop Expenses'}</p>
             <p className="text-xl sm:text-2xl font-black text-rose-600 mt-1">${metrics?.mainShop?.totalExpenses?.toLocaleString() || '0'}</p>
-            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'إجمالي الخصميات والمشتريات' : 'Total Operational Outflow'}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'خصميات ومشتريات' : 'Outflow'}</p>
           </div>
           <div className="p-3 rounded-2xl bg-rose-50 text-rose-600">
             <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-purple-200 shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-[11px] sm:text-xs font-bold text-purple-700 uppercase">{language === 'ar' ? 'فواتير ورشة السمكرة' : 'Body Shop Repairs Income'}</p>
+            <p className="text-xl sm:text-2xl font-black text-purple-700 mt-1">${metrics?.bodyShop?.totalIncome?.toLocaleString() || '0'}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{metrics?.bodyShop?.repairCount || 0} {language === 'ar' ? 'فواتير عملاء' : 'Customer Invoices'}</p>
+          </div>
+          <div className="p-3 rounded-2xl bg-purple-50 text-purple-600">
+            <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
@@ -318,7 +329,7 @@ export default function OwnerDashboardPage() {
           <div>
             <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'مقبوض عُهدة ورشة السمكرة' : 'Body Shop Ohda Received'}</p>
             <p className="text-xl sm:text-2xl font-black text-emerald-600 mt-1">${metrics?.ohda?.totalReceived?.toLocaleString() || '0'}</p>
-            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'إجمالي السُلف المقبوضة' : 'Total Advances Received'}</p>
+            <p className="text-[11px] font-bold text-slate-400 mt-0.5">{language === 'ar' ? 'سُلف مقبوضة' : 'Advances'}</p>
           </div>
           <div className="p-3 rounded-2xl bg-amber-50 text-amber-600">
             <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -330,7 +341,7 @@ export default function OwnerDashboardPage() {
             <p className="text-[11px] sm:text-xs font-bold text-slate-500 uppercase">{language === 'ar' ? 'المصروف من عُهدة السمكرة' : 'Body Shop Ohda Spent'}</p>
             <p className="text-xl sm:text-2xl font-black text-rose-600 mt-1">${metrics?.ohda?.totalSpent?.toLocaleString() || '0'}</p>
             <p className="text-[11px] font-bold text-slate-400 mt-0.5">
-              {language === 'ar' ? 'المتبقي:' : 'Net Balance:'} ${metrics?.ohda?.netBalance?.toLocaleString() || '0'}
+              {language === 'ar' ? 'المتبقي:' : 'Net:'} ${metrics?.ohda?.netBalance?.toLocaleString() || '0'}
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-yellow-400 text-zinc-950">
@@ -473,23 +484,65 @@ export default function OwnerDashboardPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+              <div className="p-3 bg-purple-50 rounded-2xl border border-purple-200">
+                <p className="text-[11px] font-bold text-purple-700">{language === 'ar' ? 'إيرادات فواتير العملاء' : 'Customer Bills Income'}</p>
+                <p className="text-base font-black text-purple-700 mt-1">${metrics?.bodyShop?.totalIncome?.toFixed(2) || '0.00'}</p>
+              </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
                 <p className="text-[11px] font-bold text-slate-500">{language === 'ar' ? 'عُهدة مقبوضة' : 'Ohda Received'}</p>
-                <p className="text-base font-black text-emerald-600 mt-1">${metrics?.ohda?.totalReceived?.toFixed(2)}</p>
+                <p className="text-base font-black text-emerald-600 mt-1">${metrics?.ohda?.totalReceived?.toFixed(2) || '0.00'}</p>
               </div>
               <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
                 <p className="text-[11px] font-bold text-slate-500">{language === 'ar' ? 'عُهدة مصروفة' : 'Ohda Spent'}</p>
-                <p className="text-base font-black text-rose-600 mt-1">${metrics?.ohda?.totalSpent?.toFixed(2)}</p>
+                <p className="text-base font-black text-rose-600 mt-1">${metrics?.ohda?.totalSpent?.toFixed(2) || '0.00'}</p>
               </div>
               <div className="p-3 bg-yellow-50 rounded-2xl border border-yellow-200">
-                <p className="text-[11px] font-bold text-amber-800">{language === 'ar' ? 'متبقي العُهدة' : 'Remaining Balance'}</p>
-                <p className="text-base font-black text-zinc-900 mt-1">${metrics?.ohda?.netBalance?.toFixed(2)}</p>
+                <p className="text-[11px] font-bold text-amber-800">{language === 'ar' ? 'متبقي العُهدة' : 'Remaining Ohda'}</p>
+                <p className="text-base font-black text-zinc-900 mt-1">${metrics?.ohda?.netBalance?.toFixed(2) || '0.00'}</p>
               </div>
             </div>
 
+            {/* Customer Repairs Table */}
             <div>
-              <p className="font-bold text-xs text-zinc-800 mb-2">{language === 'ar' ? 'أحدث أعمال السيارات والدهان:' : 'Recent Car Jobs:'}</p>
+              <p className="font-bold text-xs text-purple-900 mb-2">{language === 'ar' ? 'أحدث فواتير وإصلاحات العملاء (البودي شوب):' : 'Recent Body Shop Invoices:'}</p>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 mb-4">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-purple-950 text-white font-bold">
+                    <tr>
+                      <th className="p-2.5">#</th>
+                      <th className="p-2.5">{t('customer')}</th>
+                      <th className="p-2.5">{language === 'ar' ? 'طريقة الدفع' : 'Payment'}</th>
+                      <th className="p-2.5 text-right">{t('amount')} ($)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white font-medium">
+                    {metrics?.bodyShop?.repairs?.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-4 text-center text-slate-400 font-italic">
+                          {language === 'ar' ? 'لا توجد فواتير عملاء' : 'No customer invoices'}
+                        </td>
+                      </tr>
+                    ) : (
+                      metrics?.bodyShop?.repairs?.slice(0, 5).map((r: any) => (
+                        <tr key={r.id} className="hover:bg-purple-50/30">
+                          <td className="p-2.5 font-bold text-purple-700">#{r.id}</td>
+                          <td className="p-2.5 font-bold text-zinc-900">{r.customers?.name || 'عميل نقدي'}</td>
+                          <td className="p-2.5">
+                            <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-[10px]">{r.payment_method || 'Cash'}</span>
+                          </td>
+                          <td className="p-2.5 text-right font-black text-emerald-600">${Number(r.paid_amount || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Car Jobs Table */}
+            <div>
+              <p className="font-bold text-xs text-zinc-800 mb-2">{language === 'ar' ? 'أحدث أعمال ومقايسات السيارات:' : 'Recent Car Jobs:'}</p>
               <div className="overflow-x-auto rounded-2xl border border-slate-200">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-zinc-900 text-white font-bold">
@@ -501,14 +554,22 @@ export default function OwnerDashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 bg-white font-medium">
-                    {metrics?.carExpenses?.slice(0, 5).map((ce: any) => (
-                      <tr key={ce.id}>
-                        <td className="p-2.5 font-bold">#{ce.id}</td>
-                        <td className="p-2.5">{ce.customers?.name || 'عميل'}</td>
-                        <td className="p-2.5 text-slate-600">{ce.car_info || '-'}</td>
-                        <td className="p-2.5 text-right font-black text-emerald-600">${Number(ce.total_cost || 0).toFixed(2)}</td>
+                    {metrics?.carExpenses?.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="p-4 text-center text-slate-400 font-italic">
+                          {language === 'ar' ? 'لا توجد أعمال سيارات' : 'No car jobs'}
+                        </td>
                       </tr>
-                    ))}
+                    ) : (
+                      metrics?.carExpenses?.slice(0, 5).map((ce: any) => (
+                        <tr key={ce.id}>
+                          <td className="p-2.5 font-bold text-yellow-600">#{ce.id}</td>
+                          <td className="p-2.5 font-bold text-zinc-900">{ce.customers?.name || 'عميل'}</td>
+                          <td className="p-2.5 text-slate-600">{ce.car_info || '-'}</td>
+                          <td className="p-2.5 text-right font-black text-emerald-600">${Number(ce.total_cost || 0).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
