@@ -30,10 +30,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
-  AlertCircle,
-  Copy,
-  Check,
 } from 'lucide-react';
+
 
 export default function WeeklyExpensesPage() {
   const { t, language } = useTranslation();
@@ -59,9 +57,6 @@ export default function WeeklyExpensesPage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // Copy SQL banner state
-  const [copiedSql, setCopiedSql] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -192,30 +187,6 @@ export default function WeeklyExpensesPage() {
       await deleteWeeklyExpense(id);
       loadData();
     }
-  };
-
-  const handleCopySql = () => {
-    const sql = `CREATE TABLE IF NOT EXISTS public.weekly_expenses (
-  id SERIAL PRIMARY KEY,
-  branch_id TEXT REFERENCES branches(id) DEFAULT 'main-shop',
-  category TEXT DEFAULT 'عام',
-  type TEXT DEFAULT 'manual',
-  description TEXT,
-  amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
-  date TEXT NOT NULL,
-  week_start TEXT,
-  week_end TEXT,
-  reference_id INTEGER,
-  notes TEXT,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-ALTER TABLE public.weekly_expenses ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read and write on weekly_expenses"
-ON public.weekly_expenses FOR ALL TO public USING (true) WITH CHECK (true);
-NOTIFY pgrst, 'reload schema';`;
-    navigator.clipboard.writeText(sql);
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 3000);
   };
 
   const handlePrintWeeklyReport = () => {
@@ -687,29 +658,6 @@ NOTIFY pgrst, 'reload schema';`;
             </table>
           </div>
         )}
-      </div>
-
-      {/* Database Schema Setup Help Box (in case user needs SQL) */}
-      <div className="bg-slate-50 rounded-3xl p-5 border border-slate-200 text-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <p className="font-bold text-zinc-900 flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4 text-amber-500" />
-            <span>{isAr ? 'إعداد قاعدة البيانات (Supabase SQL)' : 'Database Setup (Supabase SQL)'}</span>
-          </p>
-          <p className="text-slate-500 text-[11px]">
-            {isAr
-              ? 'إذا لم يكن جدول weekly_expenses منشأ مسبقاً في Supabase، يمكنك نسخ كود الإنشاء بنقرة واحدة وتشغيله في SQL Editor.'
-              : 'If weekly_expenses table is not yet created in Supabase, click below to copy the SQL script.'}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleCopySql}
-          className="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 font-bold text-zinc-800 transition-all flex items-center gap-1.5 shadow-sm self-start md:self-auto shrink-0"
-        >
-          {copiedSql ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-          <span>{copiedSql ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ كود SQL للجدول' : 'Copy SQL')}</span>
-        </button>
       </div>
 
       {/* MODAL: ADD MANUAL WEEKLY EXPENSE */}
