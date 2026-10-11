@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Expense, getExpenses, addExpense, deleteExpense } from '@/lib/shared/queries';
+import { Expense, getExpenses, addExpense, deleteExpense, addWeeklyExpense } from '@/lib/shared/queries';
 import { Modal } from './Modal';
-import { DollarSign, Plus, Trash2, Calendar, Filter, X, Printer } from 'lucide-react';
+import { DollarSign, Plus, Trash2, Calendar, Filter, X, Printer, CheckSquare, Square, AlertCircle } from 'lucide-react';
+
 import { useTranslation } from '@/lib/i18n/context';
 import { printContent } from '@/lib/utils/print';
 
@@ -30,7 +31,10 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [fromCash, setFromCash] = useState(true);
   const [fromOhda, setFromOhda] = useState(branchId === 'body-shop');
+  const [includeInDaily, setIncludeInDaily] = useState(true);
+  const [includeInWeekly, setIncludeInWeekly] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
 
   const loadData = async (start?: string, end?: string) => {
     setLoading(true);
@@ -63,23 +67,49 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
   const handleCreateExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || Number(amount) <= 0) return;
+    if (!includeInDaily && !includeInWeekly) {
+      alert(language === 'ar' ? 'يرجى اختيار جهة تسجيل المصروف (يومي أو أسبوعي على الأقل)' : 'Please select at least one destination (Daily or Weekly).');
+      return;
+    }
+
     setSubmitting(true);
-    await addExpense({
-      description: description || null,
-      amount: Number(amount),
-      category: category || 'General',
-      date: date || new Date().toISOString().split('T')[0],
-      from_cash: fromCash,
-      from_ohda: fromOhda,
-      branch_id: branchId,
-    });
+    const expenseDate = date || new Date().toISOString().split('T')[0];
+    const expenseAmt = Number(amount);
+
+    if (includeInDaily) {
+      await addExpense({
+        description: description || null,
+        amount: expenseAmt,
+        category: category || 'General',
+        date: expenseDate,
+        from_cash: fromCash,
+        from_ohda: fromOhda,
+        branch_id: branchId,
+      });
+    }
+
+    if (includeInWeekly && branchId === 'main-shop') {
+      await addWeeklyExpense({
+        branch_id: 'main-shop',
+        type: includeInDaily ? 'regular_expense' : 'manual',
+        category: category || 'عام',
+        description: description || 'مصروف عام',
+        amount: expenseAmt,
+        date: expenseDate,
+        notes: includeInDaily ? 'مُسجل في المصروفات اليومية والأسبوعية معاً' : 'مصروف تشغيلي أسبوعي فقط (مستبعد من اليومية)',
+      });
+    }
+
     setSubmitting(false);
     setDescription('');
     setAmount('');
     setCategory('');
+    setIncludeInDaily(true);
+    setIncludeInWeekly(false);
     setIsAddModalOpen(false);
     loadData();
   };
+
 
   const handleDeleteExpense = async (id: number) => {
     if (confirm(t('confirmDelete'))) {
@@ -417,6 +447,72 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
             />
           </div>
 
+          {branchId === 'main-shop' && (
+            <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2.5">
+              <p className="font-bold text-amber-950 text-xs">
+                {language === 'ar' ? 'جهة تسجيل هذا المصروف:' : 'Destination for this expense:'}
+              </p>
+              <div className="space-y-2">
+                <label className="flex items-start gap-2.5 cursor-pointer bg-white p-2.5 rounded-xl border border-amber-200/80 hover:bg-amber-50/50 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={includeInDaily}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setIncludeInDaily(val);
+                      if (!val && !includeInWeekly) setIncludeInWeekly(true);
+                    }}
+                    className="mt-0.5 rounded border-slate-300 text-yellow-500 focus:ring-0"
+                  />
+                  <div>
+                    <span className="font-bold text-zinc-900 block">
+                      {language === 'ar' ? 'إضافة إلى المصروفات اليومية (المعتاد)' : 'Include in Daily Expenses'}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      {language === 'ar' ? 'يظهر في تقرير مصروفات اليوم ويُخصم من حركة الخزينة اليومية' : 'Appears in today daily report and cash till'}
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-2.5 cursor-pointer bg-white p-2.5 rounded-xl border border-amber-200/80 hover:bg-amber-50/50 transition-all">
+                  <input
+                    type="checkbox"
+                    checked={includeInWeekly}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setIncludeInWeekly(val);
+                      if (!val && !includeInDaily) setIncludeInDaily(true);
+                    }}
+                    className="mt-0.5 rounded border-slate-300 text-yellow-500 focus:ring-0"
+                  />
+                  <div>
+                    <span className="font-bold text-zinc-900 block">
+                      {language === 'ar' ? 'إضافة إلى مصاريف التشغيل الأسبوعية' : 'Include in Weekly Operating Expenses'}
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      {language === 'ar'
+                        ? includeInDaily
+                          ? 'سيتم ترحيله للأسبوع ويُخصم من اليومية أيضاً'
+                          : 'سيُخصم من أرباح الأسبوع فقط (دون التأثير على مصروفات أو درج اليوم)'
+                        : 'Routes to weekly report; deducts from weekly net profit'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {!includeInDaily && includeInWeekly && (
+                <div className="p-2 rounded-lg bg-yellow-100/70 border border-yellow-300 text-[10px] text-yellow-900 font-bold flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-yellow-700 shrink-0" />
+                  <span>
+                    {language === 'ar'
+                      ? 'ملاحظة: هذا المصروف سيُسجل كـ "مصروف أسبوعي فقط" ولن يظهر في كشف اليومية.'
+                      : 'Note: This expense is logged to weekly expenses only and will not show in daily report.'}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {branchId === 'body-shop' && (
             <div className="flex items-center space-x-2 rtl:space-x-reverse pt-2">
               <input
@@ -431,6 +527,7 @@ export function ExpensesView({ branchId, branchTitle }: ExpensesViewProps) {
               </label>
             </div>
           )}
+
 
           <div className="flex justify-end space-x-3 rtl:space-x-reverse pt-4 border-t border-zinc-100">
             <button

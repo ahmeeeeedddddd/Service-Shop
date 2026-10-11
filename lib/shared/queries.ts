@@ -71,6 +71,22 @@ export interface Expense {
   branch_id?: string | null;
 }
 
+export interface WeeklyExpense {
+  id: number;
+  branch_id?: string | null;
+  category?: string | null;
+  type?: string | null; // 'salary', 'supplier_payment', 'regular_expense', 'manual'
+  description?: string | null;
+  amount: number;
+  date: string;
+  week_start?: string | null;
+  week_end?: string | null;
+  reference_id?: number | null;
+  notes?: string | null;
+  created_at?: string;
+}
+
+
 export interface OhdaRecord {
   id: number;
   date: string;
@@ -433,6 +449,98 @@ export async function addExpense(payload: Omit<Expense, 'id'>): Promise<Expense 
   }
   return data;
 }
+
+// ─── Weekly Operating Expenses ───────────────────────────────────────────────
+export function getMondayToSaturdayWeek(inputDate?: string | Date): {
+  weekStart: string;
+  weekEnd: string;
+} {
+  const d = inputDate ? (typeof inputDate === 'string' ? new Date(inputDate) : new Date(inputDate)) : new Date();
+  const day = d.getDay(); // 0: Sun, 1: Mon, ..., 6: Sat
+  // Mon to Sat week: Mon is start
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + diffToMonday);
+
+  const saturday = new Date(monday);
+  saturday.setDate(monday.getDate() + 5);
+
+  const format = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const dayStr = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dayStr}`;
+  };
+
+  return {
+    weekStart: format(monday),
+    weekEnd: format(saturday),
+  };
+}
+
+export async function getWeeklyExpenses(
+  branchId: string = 'main-shop',
+  startDate?: string,
+  endDate?: string
+): Promise<WeeklyExpense[]> {
+  try {
+    let query = supabase
+      .from('weekly_expenses')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('id', { ascending: false });
+    if (branchId) query = query.eq('branch_id', branchId);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', formatEndDateForQuery(endDate)!);
+    const { data, error } = await query;
+    if (error) {
+      console.error('Error fetching weekly expenses:', error);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error('Unexpected error fetching weekly expenses:', err);
+    return [];
+  }
+}
+
+export async function addWeeklyExpense(
+  payload: Omit<WeeklyExpense, 'id' | 'created_at'>
+): Promise<WeeklyExpense | null> {
+  try {
+    // If week_start or week_end missing, compute from date
+    let toInsert = { ...payload };
+    if (!toInsert.week_start || !toInsert.week_end) {
+      const range = getMondayToSaturdayWeek(toInsert.date || new Date());
+      toInsert.week_start = range.weekStart;
+      toInsert.week_end = range.weekEnd;
+    }
+    const { data, error } = await supabase.from('weekly_expenses').insert([toInsert]).select().single();
+    if (error) {
+      console.error('Error adding weekly expense:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Unexpected error adding weekly expense:', err);
+    return null;
+  }
+}
+
+export async function deleteWeeklyExpense(id: number): Promise<boolean> {
+  try {
+    const { error } = await supabase.from('weekly_expenses').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting weekly expense:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Unexpected error deleting weekly expense:', err);
+    return false;
+  }
+}
+
 
 // ─── Ohda Records ─────────────────────────────────────────────────────────────
 export async function getOhdaRecords(branchId: string = 'body-shop', startDate?: string, endDate?: string): Promise<OhdaRecord[]> {

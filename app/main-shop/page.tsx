@@ -267,6 +267,14 @@ export default function MainShopDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/main-shop/weekly-expenses"
+            className="inline-flex items-center space-x-1.5 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-black bg-yellow-400 hover:bg-yellow-500 shadow-md shadow-yellow-400/20 transition-all"
+          >
+            <Wallet className="w-4 h-4" />
+            <span>{language === 'ar' ? 'مصاريف تشغيل أسبوعية' : 'Weekly Expenses'}</span>
+          </Link>
+
           <button
             type="button"
             onClick={handlePrintDailyReport}
@@ -278,13 +286,14 @@ export default function MainShopDashboardPage() {
 
           <Link
             href="/main-shop/repairs"
-            className="inline-flex items-center space-x-2 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-zinc-900 bg-yellow-400 hover:bg-yellow-500 shadow-md shadow-yellow-400/20 transition-all"
+            className="inline-flex items-center space-x-2 rtl:space-x-reverse px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-zinc-900 hover:bg-black shadow-md transition-all"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-yellow-400" />
             <span>{t('newRepairInvoice')}</span>
           </Link>
         </div>
       </div>
+
 
       {/* Date Filter Controls */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">

@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Supplier, getSuppliers, addSupplier, SupplierTransaction, getSupplierTransactions, addSupplierTransaction } from '@/lib/shared/queries';
+import {
+  Supplier,
+  getSuppliers,
+  addSupplier,
+  SupplierTransaction,
+  getSupplierTransactions,
+  addSupplierTransaction,
+  addWeeklyExpense,
+} from '@/lib/shared/queries';
 import { Modal } from './Modal';
 import { ShoppingBag, Plus, Phone, History, AlertCircle, Printer } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/context';
@@ -9,10 +17,13 @@ import { printContent } from '@/lib/utils/print';
 
 interface SuppliersViewProps {
   branchTitle: string;
+  branchId?: string;
 }
 
-export function SuppliersView({ branchTitle }: SuppliersViewProps) {
+
+export function SuppliersView({ branchTitle, branchId = 'main-shop' }: SuppliersViewProps) {
   const { t, language } = useTranslation();
+  const isMainShop = branchId === 'main-shop' || branchTitle.toLowerCase().includes('main');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -93,15 +104,30 @@ export function SuppliersView({ branchTitle }: SuppliersViewProps) {
     const amountNum = Number(txAmount);
     const currentBalance = Number(selectedSupplier.pending_amount || 0);
     const newBalance = txType === 'PURCHASE' ? currentBalance + amountNum : currentBalance - amountNum;
+    const todayStr = new Date().toISOString().split('T')[0];
 
     await addSupplierTransaction({
       supplier_id: selectedSupplier.id,
-      date: new Date().toISOString().split('T')[0],
+      date: todayStr,
       type: txType,
       amount: amountNum,
       balance_after: newBalance,
       note: txNote || null,
     });
+
+    // If recording a payment in main shop, route only to weekly expenses (not daily expenses)
+    if (txType === 'PAYMENT' && isMainShop) {
+      await addWeeklyExpense({
+        branch_id: 'main-shop',
+        type: 'supplier_payment',
+        category: 'موردين',
+        description: `دفعة مورد: ${selectedSupplier.name}${txNote ? ` (${txNote})` : ''}`,
+        amount: amountNum,
+        date: todayStr,
+        reference_id: selectedSupplier.id,
+        notes: txNote || null,
+      });
+    }
 
     setTxAmount('');
     setTxNote('');
@@ -114,6 +140,7 @@ export function SuppliersView({ branchTitle }: SuppliersViewProps) {
     const txs = await getSupplierTransactions(selectedSupplier.id);
     setTransactions(sortTransactions(txs));
   };
+
 
   const totalSupplierDebt = suppliers.reduce((acc, s) => acc + (Number(s.pending_amount) || 0), 0);
 
@@ -400,12 +427,24 @@ export function SuppliersView({ branchTitle }: SuppliersViewProps) {
               className="w-full bg-white border border-zinc-300 rounded-xl px-3 py-1.5 text-xs text-zinc-900"
             />
 
+            {txType === 'PAYMENT' && isMainShop && (
+              <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-bold flex items-start gap-1.5">
+                <AlertCircle className="w-4 h-4 mt-0.5 text-amber-600 shrink-0" />
+                <span>
+                  {language === 'ar'
+                    ? 'سيتم ترحيل هذه الدفعة تلقائياً إلى "مصاريف تشغيل أسبوعية" فقط دون التأثير على المصروفات اليومية أو الخزينة.'
+                    : 'This payment will route directly to Weekly Operating Expenses (does not affect Daily Expenses).'}
+                </span>
+              </div>
+            )}
+
             <button
               type="submit"
               className="w-full py-2 rounded-xl text-xs font-bold text-black bg-yellow-400 hover:bg-yellow-500 shadow-md"
             >
               Record Transaction
             </button>
+
           </form>
 
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">

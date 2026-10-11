@@ -411,7 +411,16 @@ export default function OwnerDashboardPage() {
           <Package className="w-4 h-4 text-yellow-400" />
           <span>{language === 'ar' ? 'قيمة قطع الغيار والمخزون' : 'Stock & Parts Inventory'}</span>
         </button>
+
+        <Link
+          href="/main-shop/weekly-expenses"
+          className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs font-black transition-all flex items-center gap-1.5 shrink-0 bg-yellow-400 hover:bg-yellow-500 text-black shadow-sm border border-yellow-500/40"
+        >
+          <DollarSign className="w-4 h-4 text-black" />
+          <span>{language === 'ar' ? 'مصاريف تشغيل أسبوعية' : 'Weekly Expenses'}</span>
+        </Link>
       </div>
+
 
       {/* TAB 1: DAILY FINANCIAL REPORTS OF BOTH SHOPS */}
       {activeTab === 'daily' && (

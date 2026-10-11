@@ -12,6 +12,8 @@ import {
   clearEmployeeAdjustments,
   clearAllEmployeeAdjustments,
   addExpense,
+  addWeeklyExpense,
+  getMondayToSaturdayWeek,
 } from '@/lib/shared/queries';
 import { Modal } from './Modal';
 import { useTranslation } from '@/lib/i18n/context';
@@ -29,7 +31,12 @@ import {
   MinusCircle,
   CreditCard,
   CheckCircle,
+  ArrowUpRight,
+  Send,
+  Calendar,
 } from 'lucide-react';
+
+
 
 interface SalariesViewProps {
   branchId: string;
@@ -68,9 +75,20 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
   const [bonusAmount, setBonusAmount] = useState<number>(0);
   const [bonusNote, setBonusNote] = useState<string>('');
 
+  // Push All Salaries to Weekly Modal State
+  const [isPushWeeklyModalOpen, setIsPushWeeklyModalOpen] = useState(false);
+  const [pushResetAdjustments, setPushResetAdjustments] = useState(true);
+  const [pushingWeekly, setPushingWeekly] = useState(false);
+
+  // Single Salary Payout Destination ('weekly' or 'daily')
+  const [singleSalaryDestination, setSingleSalaryDestination] = useState<'weekly' | 'daily'>(
+    branchId === 'main-shop' ? 'weekly' : 'daily'
+  );
+
   useEffect(() => {
     loadData();
   }, [branchId]);
+
 
   async function loadData() {
     setLoading(true);
@@ -168,21 +186,87 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
 
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Record expense for salary payment
-    await addExpense({
-      description: `راتب: ${selectedEmp.name} (${salaryDays} أيام عمل)`,
-      amount: netSalary,
-      category: 'مرتبات',
-      date: todayStr,
-      from_cash: true,
-      branch_id: branchId,
-    });
+    // Record expense based on chosen destination
+    if (singleSalaryDestination === 'weekly') {
+      const weekRange = getMondayToSaturdayWeek(todayStr);
+      await addWeeklyExpense({
+        branch_id: branchId,
+        type: 'salary',
+        category: 'مرتبات',
+        description: `راتب: ${selectedEmp.name} (${salaryDays} أيام عمل)`,
+        amount: netSalary,
+        date: todayStr,
+        week_start: weekRange.weekStart,
+        week_end: weekRange.weekEnd,
+        reference_id: selectedEmp.id,
+        notes: `أساسي: $${basePay} | سلف: $${borrows} | خصم: $${deductions} | مكافآت: $${totalBonus}`,
+      });
+    } else {
+      await addExpense({
+        description: `راتب: ${selectedEmp.name} (${salaryDays} أيام عمل)`,
+        amount: netSalary,
+        category: 'مرتبات',
+        date: todayStr,
+        from_cash: true,
+        branch_id: branchId,
+      });
+    }
 
     // Clear employee's pending adjustments
     await clearEmployeeAdjustments(selectedEmp.id);
     setIsSalaryModalOpen(false);
     loadData();
   };
+
+  // Push All Salaries to Weekly Operating Expenses
+  const handlePushAllSalariesToWeekly = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (employees.length === 0 || pushingWeekly) return;
+
+    setPushingWeekly(true);
+    const todayStr = new Date().toISOString().split('T')[0];
+    const weekRange = getMondayToSaturdayWeek(todayStr);
+
+    let pushedCount = 0;
+    let pushedTotal = 0;
+
+    for (const emp of employees) {
+      const { borrows, deductions, bonuses } = getEmpAdjustments(emp);
+      const basePay = (emp.daily_rate || 0) * 6;
+      const netSalary = basePay - deductions - borrows + bonuses;
+
+      if (netSalary > 0) {
+        await addWeeklyExpense({
+          branch_id: branchId,
+          type: 'salary',
+          category: 'مرتبات',
+          description: `راتب: ${emp.name} (أسبوع 6 أيام)`,
+          amount: netSalary,
+          date: todayStr,
+          week_start: weekRange.weekStart,
+          week_end: weekRange.weekEnd,
+          reference_id: emp.id,
+          notes: `أساسي: $${basePay} | سلف: $${borrows} | خصومات: $${deductions} | مكافآت: $${bonuses}`,
+        });
+        pushedCount++;
+        pushedTotal += netSalary;
+      }
+    }
+
+    if (pushResetAdjustments) {
+      await clearAllEmployeeAdjustments(branchId);
+    }
+
+    setPushingWeekly(false);
+    setIsPushWeeklyModalOpen(false);
+    await loadData();
+    alert(
+      language === 'ar'
+        ? `✅ تم ترحيل رواتب ${pushedCount} موظف بإجمالي $${pushedTotal.toLocaleString()} بنجاح إلى مصاريف التشغيل الأسبوعية (دون التأثير على المصروفات اليومية)!`
+        : `✅ Successfully pushed salaries for ${pushedCount} employees ($${pushedTotal.toLocaleString()}) to Weekly Operating Expenses!`
+    );
+  };
+
 
   // Confirm Deduction
   const handleConfirmDeduction = async (e: React.FormEvent) => {
@@ -347,7 +431,17 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {branchId === 'main-shop' && (
+            <button
+              type="button"
+              onClick={() => setIsPushWeeklyModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl font-black text-xs text-black bg-yellow-400 hover:bg-yellow-500 transition-all flex items-center gap-1.5 shadow-md shadow-yellow-400/20"
+            >
+              <Send className="w-4 h-4 text-black" />
+              <span>{language === 'ar' ? 'ترحيل جميع الرواتب للمصاريف الأسبوعية' : 'Push All Salaries to Weekly'}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={handleResetAllAdjustments}
@@ -359,13 +453,14 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
           <button
             type="button"
             onClick={handlePrintPayroll}
-            className="px-4 py-2.5 rounded-xl font-bold text-xs text-zinc-900 bg-yellow-400 hover:bg-yellow-500 transition-colors flex items-center gap-1.5 shadow-sm"
+            className="px-4 py-2.5 rounded-xl font-bold text-xs text-zinc-900 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition-colors flex items-center gap-1.5 shadow-sm"
           >
             <Printer className="w-4 h-4" />
             <span>{language === 'ar' ? 'طباعة كشف المرتبات' : 'Print Payroll'}</span>
           </button>
         </div>
       </div>
+
 
       {/* Add / Edit Employee Form Card */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
@@ -660,6 +755,56 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
                     </div>
                   </div>
 
+                  {branchId === 'main-shop' && (
+                    <div className="p-3 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2">
+                      <p className="font-bold text-amber-950">
+                        {language === 'ar' ? 'جهة تسجيل الراتب:' : 'Expense Destination:'}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          singleSalaryDestination === 'weekly' ? 'bg-white border-amber-400 shadow-sm' : 'bg-transparent border-amber-200'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="singleSalaryDest"
+                            value="weekly"
+                            checked={singleSalaryDestination === 'weekly'}
+                            onChange={() => setSingleSalaryDestination('weekly')}
+                            className="text-amber-500 focus:ring-0"
+                          />
+                          <div>
+                            <p className="font-bold text-zinc-900">
+                              {language === 'ar' ? 'مصاريف تشغيل أسبوعية' : 'Weekly Operating Expenses'}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">
+                              {language === 'ar' ? 'تُخصم من الأسبوع فقط ولا تؤثر على اليومية' : 'Deducted from week only'}
+                            </p>
+                          </div>
+                        </label>
+                        <label className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                          singleSalaryDestination === 'daily' ? 'bg-white border-amber-400 shadow-sm' : 'bg-transparent border-amber-200'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="singleSalaryDest"
+                            value="daily"
+                            checked={singleSalaryDestination === 'daily'}
+                            onChange={() => setSingleSalaryDestination('daily')}
+                            className="text-amber-500 focus:ring-0"
+                          />
+                          <div>
+                            <p className="font-bold text-zinc-900">
+                              {language === 'ar' ? 'المصروفات اليومية' : 'Daily Expenses'}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">
+                              {language === 'ar' ? 'تظهر في تقرير اليوم والدرج' : 'Included in today drawer'}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setIsSalaryModalOpen(false)} className="px-4 py-2 font-semibold text-slate-500">
                       {t('cancel')}
@@ -674,6 +819,128 @@ export function SalariesView({ branchId, branchTitle }: SalariesViewProps) {
           </form>
         </Modal>
       )}
+
+      {/* MODAL: PUSH ALL SALARIES TO WEEKLY OPERATING EXPENSES */}
+      {isPushWeeklyModalOpen && (
+        <Modal
+          isOpen={isPushWeeklyModalOpen}
+          onClose={() => setIsPushWeeklyModalOpen(false)}
+          title={language === 'ar' ? 'ترحيل جميع الرواتب إلى مصاريف التشغيل الأسبوعية' : 'Push All Salaries to Weekly Operating Expenses'}
+          maxWidth="2xl"
+        >
+          <form onSubmit={handlePushAllSalariesToWeekly} className="space-y-4 text-xs">
+            {(() => {
+              const weekRange = getMondayToSaturdayWeek();
+              return (
+                <>
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-900 space-y-1">
+                    <p className="font-black text-sm flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-amber-600" />
+                      <span>
+                        {language === 'ar'
+                          ? `دورة الأسبوع الحالي (من الاثنين ${weekRange.weekStart} إلى السبت ${weekRange.weekEnd})`
+                          : `Current Week (Monday ${weekRange.weekStart} to Saturday ${weekRange.weekEnd})`}
+                      </span>
+                    </p>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      {language === 'ar'
+                        ? 'سيتم ترحيل رواتب جميع العاملين دفعة واحدة إلى قسم "مصاريف تشغيل أسبوعية". هذه المصروفات ستُخصم من إجمالي أرباح الأسبوع فقط، ولن تؤثر إطلاقاً على مصروفات اليوم أو تقرير اليومية.'
+                        : 'All employee net salaries will be recorded under Weekly Operating Expenses for this week. Daily expenses remain untouched.'}
+                    </p>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                    <div className="max-h-60 overflow-y-auto">
+                      <table className="w-full text-left rtl:text-right text-[11px]">
+                        <thead className="bg-zinc-900 text-white font-bold sticky top-0">
+                          <tr>
+                            <th className="p-2.5">{language === 'ar' ? 'الموظف' : 'Employee'}</th>
+                            <th className="p-2.5 text-center">{language === 'ar' ? 'اليومية' : 'Rate'}</th>
+                            <th className="p-2.5 text-center">{language === 'ar' ? 'الأساسي (6 أيام)' : 'Base (6d)'}</th>
+                            <th className="p-2.5 text-center">{language === 'ar' ? 'السلف والخصومات' : 'Deductions/Borrows'}</th>
+                            <th className="p-2.5 text-center">{language === 'ar' ? 'المكافآت' : 'Bonuses'}</th>
+                            <th className="p-2.5 text-right rtl:text-left">{language === 'ar' ? 'صافي الراتب' : 'Net Salary'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {employees.map((emp) => {
+                            const { borrows, deductions, bonuses } = getEmpAdjustments(emp);
+                            const base = (emp.daily_rate || 0) * 6;
+                            const net = base - borrows - deductions + bonuses;
+                            return (
+                              <tr key={emp.id} className="hover:bg-slate-50">
+                                <td className="p-2.5 font-bold text-zinc-900">{emp.name}</td>
+                                <td className="p-2.5 text-center">${(emp.daily_rate || 0).toFixed(2)}</td>
+                                <td className="p-2.5 text-center">${base.toFixed(2)}</td>
+                                <td className="p-2.5 text-center text-rose-600 font-bold">-${(borrows + deductions).toFixed(2)}</td>
+                                <td className="p-2.5 text-center text-emerald-600 font-bold">+${bonuses.toFixed(2)}</td>
+                                <td className="p-2.5 text-right rtl:text-left font-black text-emerald-700">${net.toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-yellow-50 rounded-2xl border border-yellow-300 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-yellow-900">
+                        {language === 'ar' ? 'إجمالي الرواتب الصافية التي سيتم ترحيلها:' : 'Total Net Payroll to Push:'}
+                      </p>
+                      <p className="text-[11px] text-yellow-800">
+                        {employees.length} {language === 'ar' ? 'موظف' : 'employees'}
+                      </p>
+                    </div>
+                    <p className="text-2xl font-black text-zinc-900">
+                      ${totalWeeklySalaries.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="checkbox"
+                      id="pushResetAdjustments"
+                      checked={pushResetAdjustments}
+                      onChange={(e) => setPushResetAdjustments(e.target.checked)}
+                      className="rounded border-slate-300 text-yellow-500 focus:ring-0"
+                    />
+                    <label htmlFor="pushResetAdjustments" className="text-xs font-bold text-zinc-800 cursor-pointer">
+                      {language === 'ar'
+                        ? 'تصفير جميع السلف والخصومات والمكافآت لكل العاملين بعد إتمام الترحيل'
+                        : 'Reset all employee advances, deductions, and bonuses after pushing'}
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      disabled={pushingWeekly}
+                      onClick={() => setIsPushWeeklyModalOpen(false)}
+                      className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+                    >
+                      {t('cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={pushingWeekly || employees.length === 0}
+                      className="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 font-black text-black rounded-xl shadow-md transition-all flex items-center gap-2"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>
+                        {pushingWeekly
+                          ? language === 'ar' ? 'جارٍ الترحيل...' : 'Pushing...'
+                          : language === 'ar' ? 'تأكيد ترحيل الرواتب للأسبوع' : 'Confirm Push to Weekly'}
+                      </span>
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </form>
+        </Modal>
+      )}
+
 
       {/* MODAL: BORROW (سلفة) */}
       {isBorrowModalOpen && selectedEmp && (

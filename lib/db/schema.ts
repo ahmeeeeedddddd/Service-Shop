@@ -150,3 +150,19 @@ export const profiles = pgTable('profiles', {
   branchId: text('branch_id').references(() => branches.id),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
+
+export const weeklyExpenses = pgTable('weekly_expenses', {
+  id: serial('id').primaryKey(),
+  branchId: text('branch_id').references(() => branches.id).default('main-shop'),
+  category: text('category').default('عام'),
+  type: text('type').default('manual'), // 'salary', 'supplier_payment', 'regular_expense', 'manual'
+  description: text('description'),
+  amount: numeric('amount', { precision: 12, scale: 2 }).default('0'),
+  date: text('date').notNull(),
+  weekStart: text('week_start'),
+  weekEnd: text('week_end'),
+  referenceId: integer('reference_id'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+

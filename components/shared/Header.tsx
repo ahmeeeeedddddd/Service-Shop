@@ -58,7 +58,9 @@ export function Header() {
     { label: t('suppliersAccount'), href: '/main-shop/suppliers' },
     { label: t('dailyExpenses'), href: '/main-shop/expenses' },
     { label: t('employeeSalaries'), href: '/main-shop/salaries' },
+    { label: language === 'ar' ? 'مصاريف تشغيل أسبوعية' : 'Weekly Expenses', href: '/main-shop/weekly-expenses' },
   ];
+
 
   const bodyShopLinks = [
     { label: language === 'ar' ? 'الرئيسية' : 'Overview', href: '/body-shop' },
