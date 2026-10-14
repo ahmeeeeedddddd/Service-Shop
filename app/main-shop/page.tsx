@@ -71,12 +71,19 @@ export default function MainShopDashboardPage() {
     else if (method === 'PayByParts') payByPartsPaid += paid;
     else if (method === 'SplitPayment') {
       splitIncome += paid;
-      // Parse split payment details if stored in notes
+      // Parse split payment details and distribute to correct method totals
       if (r.notes && r.notes.includes('__SPLIT__:')) {
         try {
           const splitObj = JSON.parse(r.notes.substring(r.notes.indexOf('__SPLIT__:') + 10));
-          if (splitObj.method1 === 'Cash') cashIncome += Number(splitObj.amount1) || 0;
-          if (splitObj.method2 === 'Cash') cashIncome += Number(splitObj.amount2) || 0;
+          const addToMethod = (m: string, amount: number) => {
+            if (m === 'Cash') cashIncome += amount;
+            else if (m === 'Instapay') instapayIncome += amount;
+            else if (m === 'Bank Alahly') bankAlahlyIncome += amount;
+            else if (m === 'Bank Masr') bankMasrIncome += amount;
+            else if (m === 'Vodafone Cash') vodafoneIncome += amount;
+          };
+          addToMethod(splitObj.method1, Number(splitObj.amount1) || 0);
+          addToMethod(splitObj.method2, Number(splitObj.amount2) || 0);
         } catch (e) {}
       }
     }

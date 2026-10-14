@@ -178,8 +178,15 @@ export default function MainShopIncomeReportPage() {
     else if (m === 'SplitPayment' && r.notes && r.notes.includes('__SPLIT__:')) {
       try {
         const splitObj = JSON.parse(r.notes.substring(r.notes.indexOf('__SPLIT__:') + 10));
-        if (splitObj.method1 === 'Cash') totCash += Number(splitObj.amount1) || 0;
-        if (splitObj.method2 === 'Cash') totCash += Number(splitObj.amount2) || 0;
+        const addToMethod = (method: string, amount: number) => {
+          if (method === 'Cash') totCash += amount;
+          else if (method === 'Instapay') totInstapay += amount;
+          else if (method === 'Bank Alahly') totBankA += amount;
+          else if (method === 'Bank Masr') totBankM += amount;
+          else if (method === 'Vodafone Cash') totVodafone += amount;
+        };
+        addToMethod(splitObj.method1, Number(splitObj.amount1) || 0);
+        addToMethod(splitObj.method2, Number(splitObj.amount2) || 0);
       } catch (e) {}
     }
   });
