@@ -541,6 +541,28 @@ export async function deleteWeeklyExpense(id: number): Promise<boolean> {
   }
 }
 
+export async function updateWeeklyExpense(
+  id: number,
+  updates: Partial<Omit<WeeklyExpense, 'id' | 'created_at'>>
+): Promise<WeeklyExpense | null> {
+  try {
+    const { data, error } = await supabase
+      .from('weekly_expenses')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error('Error updating weekly expense:', error);
+      return null;
+    }
+    return data;
+  } catch (err) {
+    console.error('Unexpected error updating weekly expense:', err);
+    return null;
+  }
+}
+
 
 // ─── Ohda Records ─────────────────────────────────────────────────────────────
 export async function getOhdaRecords(branchId: string = 'body-shop', startDate?: string, endDate?: string): Promise<OhdaRecord[]> {

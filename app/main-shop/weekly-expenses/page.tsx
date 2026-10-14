@@ -5,6 +5,7 @@ import {
   WeeklyExpense,
   getWeeklyExpenses,
   addWeeklyExpense,
+  updateWeeklyExpense,
   deleteWeeklyExpense,
   getMondayToSaturdayWeek,
   getRepairs,
@@ -19,6 +20,7 @@ import {
   DollarSign,
   Plus,
   Trash2,
+  Pencil,
   Calendar,
   Printer,
   TrendingUp,
@@ -57,6 +59,41 @@ export default function WeeklyExpensesPage() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Edit Weekly Expense Modal State
+  const [editingExpense, setEditingExpense] = useState<WeeklyExpense | null>(null);
+  const [editDesc, setEditDesc] = useState('');
+  const [editAmount, setEditAmount] = useState('');
+  const [editCategory, setEditCategory] = useState('عام');
+  const [editDate, setEditDate] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const openEditModal = (expense: WeeklyExpense) => {
+    setEditingExpense(expense);
+    setEditDesc(expense.description || '');
+    setEditAmount(String(expense.amount || ''));
+    setEditCategory(expense.category || 'عام');
+    setEditDate(expense.date || new Date().toISOString().split('T')[0]);
+    setEditNotes(expense.notes || '');
+  };
+
+  const handleEditSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpense) return;
+    if (!editAmount || Number(editAmount) <= 0) return;
+    setEditSubmitting(true);
+    await updateWeeklyExpense(editingExpense.id, {
+      description: editDesc || (isAr ? 'مصروف تشغيلي' : 'Operating Expense'),
+      amount: Number(editAmount),
+      category: editCategory || 'عام',
+      date: editDate || editingExpense.date,
+      notes: editNotes || null,
+    });
+    setEditSubmitting(false);
+    setEditingExpense(null);
+    loadData();
+  };
 
   useEffect(() => {
     loadData();
@@ -607,7 +644,7 @@ export default function WeeklyExpensesPage() {
                   <th className="p-3.5 text-center">{isAr ? 'التاريخ' : 'Date'}</th>
                   <th className="p-3.5 text-right rtl:text-left">{isAr ? 'المبلغ' : 'Amount'} ($)</th>
                   <th className="p-3.5">{isAr ? 'ملاحظات' : 'Notes'}</th>
-                  <th className="p-3.5 text-center">{isAr ? 'إجراء' : 'Action'}</th>
+                  <th className="p-3.5 text-center">{isAr ? 'إجراءات' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -642,14 +679,24 @@ export default function WeeklyExpensesPage() {
                       </td>
                       <td className="p-3.5 text-slate-500 text-[11px] max-w-xs truncate">{e.notes || '-'}</td>
                       <td className="p-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteItem(e.id)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          title={isAr ? 'حذف' : 'Delete'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(e)}
+                            className="p-1.5 text-slate-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors"
+                            title={isAr ? 'تعديل' : 'Edit'}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteItem(e.id)}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title={isAr ? 'حذف' : 'Delete'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -753,6 +800,99 @@ export default function WeeklyExpensesPage() {
                 className="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 font-bold text-black rounded-xl shadow-md"
               >
                 {submitting ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (isAr ? 'حفظ المصروف' : 'Save Expense')}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* MODAL: EDIT WEEKLY EXPENSE */}
+      {editingExpense && (
+        <Modal
+          isOpen={!!editingExpense}
+          onClose={() => setEditingExpense(null)}
+          title={isAr ? 'تعديل مصروف تشغيلي أسبوعي' : 'Edit Weekly Operating Expense'}
+          maxWidth="md"
+        >
+          <form onSubmit={handleEditSave} className="space-y-4 text-xs">
+            <div>
+              <label className="block font-bold text-zinc-800 mb-1">{isAr ? 'البيان / الوصف' : 'Description'} *</label>
+              <input
+                type="text"
+                required
+                value={editDesc}
+                onChange={(ev) => setEditDesc(ev.target.value)}
+                placeholder={isAr ? 'مثال: صيانة معدات، فواتير تشغيل...' : 'e.g. Equipment maintenance, rent...'}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-zinc-900 font-medium focus:bg-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-bold text-zinc-800 mb-1">{isAr ? 'المبلغ ($)' : 'Amount ($)'} *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={editAmount}
+                  onChange={(ev) => setEditAmount(ev.target.value)}
+                  placeholder="0.00"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-zinc-900 font-bold focus:bg-white focus:outline-none focus:border-yellow-400"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-zinc-800 mb-1">{isAr ? 'التصنيف' : 'Category'}</label>
+                <select
+                  value={editCategory}
+                  onChange={(ev) => setEditCategory(ev.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-zinc-900 font-bold focus:bg-white focus:outline-none focus:border-yellow-400"
+                >
+                  <option value="عام">{isAr ? 'عام' : 'General'}</option>
+                  <option value="صيانة">{isAr ? 'صيانة وتشغيل' : 'Maintenance'}</option>
+                  <option value="مستلزمات">{isAr ? 'مستلزمات ورشة' : 'Supplies'}</option>
+                  <option value="فواتير">{isAr ? 'فواتير ومرافق' : 'Utilities'}</option>
+                  <option value="إيجار">{isAr ? 'إيجار' : 'Rent'}</option>
+                  <option value="أخرى">{isAr ? 'أخرى' : 'Other'}</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-bold text-zinc-800 mb-1">{isAr ? 'التاريخ' : 'Date'}</label>
+              <input
+                type="date"
+                value={editDate}
+                onChange={(ev) => setEditDate(ev.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-zinc-900 font-bold focus:bg-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-zinc-800 mb-1">{isAr ? 'ملاحظات إضافية' : 'Notes'}</label>
+              <input
+                type="text"
+                value={editNotes}
+                onChange={(ev) => setEditNotes(ev.target.value)}
+                placeholder={isAr ? 'أي تفاصيل اختيارية...' : 'Optional details...'}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-zinc-900 font-medium focus:bg-white focus:outline-none focus:border-yellow-400"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                className="px-4 py-2 font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={editSubmitting}
+                className="px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 font-bold text-black rounded-xl shadow-md"
+              >
+                {editSubmitting ? (isAr ? 'جارٍ الحفظ...' : 'Saving...') : (isAr ? 'حفظ التعديلات' : 'Save Changes')}
               </button>
             </div>
           </form>
