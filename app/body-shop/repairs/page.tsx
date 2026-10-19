@@ -100,6 +100,8 @@ export default function BodyShopRepairsPage() {
 
   // Table row input references for auto-focusing
   const rowNameRefs = useRef<(HTMLInputElement | null)[]>([]);
+  // Synchronous guard against rapid duplicate clicks (React setState is async)
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     loadData();
@@ -333,12 +335,15 @@ export default function BodyShopRepairsPage() {
   };
 
   const handleConfirmAndSaveRepair = async () => {
-    if (isSubmitting || isBillProcessed) {
+    // Use a ref as a synchronous lock so rapid clicks are blocked immediately
+    // before React state has a chance to re-render.
+    if (isSubmittingRef.current || isBillProcessed) {
       if (isBillProcessed) alert(t('billAlreadyProcessed'));
       return;
     }
     if (!currentBillData) return;
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
     try {
       let finalNotes = currentBillData.notes || '';
@@ -381,6 +386,7 @@ export default function BodyShopRepairsPage() {
         loadData();
       }
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -404,6 +410,7 @@ export default function BodyShopRepairsPage() {
     setIsReceiptModalOpen(false);
     setCurrentBillData(null);
     setIsBillProcessed(false);
+    isSubmittingRef.current = false;
   };
 
   const handleDeleteRepair = async (id: number) => {
