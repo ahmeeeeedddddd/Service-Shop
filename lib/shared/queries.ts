@@ -1,4 +1,12 @@
 import { supabase } from '../db/client';
+import {
+  assertAllowedTable,
+  assertPositiveInt,
+  sanitizeSearchTerm,
+  safeParseJson,
+  safeStringifyJson,
+  sanitizePayload,
+} from '../utils/sanitize';
 
 export interface Customer {
   id: number;
@@ -157,8 +165,9 @@ export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
   let query = supabase.from('customers').select('*').order('id', { ascending: false });
 
   if (searchQuery && searchQuery.trim()) {
-    // Server-side filter — searches entire DB, no meaningful cap
-    const term = searchQuery.trim();
+    // Sanitize before embedding in PostgREST filter string (prevents ReDoS & filter injection)
+    const term = sanitizeSearchTerm(searchQuery);
+    if (!term) return [];
     query = query.or(`name.ilike.%${term}%,phone.ilike.%${term}%,car_name.ilike.%${term}%,plate_number.ilike.%${term}%`).limit(5000);
   } else {
     // No search: load only the 50 most recent to keep initial load fast
@@ -174,7 +183,8 @@ export async function getCustomers(searchQuery?: string): Promise<Customer[]> {
 }
 
 export async function addCustomer(payload: Omit<Customer, 'id' | 'created_at'>): Promise<Customer | null> {
-  const { data, error } = await supabase.from('customers').insert([payload]).select().single();
+  const clean = sanitizePayload(payload as Record<string, unknown>);
+  const { data, error } = await supabase.from('customers').insert([clean]).select().single();
   if (error) {
     console.error('Error adding customer:', error);
     return null;
@@ -183,7 +193,9 @@ export async function addCustomer(payload: Omit<Customer, 'id' | 'created_at'>):
 }
 
 export async function updateCustomer(id: number, payload: Partial<Customer>): Promise<boolean> {
-  const { error } = await supabase.from('customers').update(payload).eq('id', id);
+  assertPositiveInt(id, 'customer id');
+  const clean = sanitizePayload(payload as Record<string, unknown>);
+  const { error } = await supabase.from('customers').update(clean).eq('id', id);
   if (error) {
     console.error('Error updating customer:', error);
     return false;
@@ -192,6 +204,7 @@ export async function updateCustomer(id: number, payload: Partial<Customer>): Pr
 }
 
 export async function deleteCustomer(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'customer id');
   const { error } = await supabase.from('customers').delete().eq('id', id);
   if (error) {
     console.error('Error deleting customer:', error);
@@ -383,11 +396,16 @@ export async function addEmployee(payload: Omit<Employee, 'id' | 'created_at'>):
 }
 
 // Helper to fetch all rows across 1000-limit PostgREST pages
+const FETCH_ALL_ROWS_MAX_PAGES = 20; // Safety cap: max 20,000 rows per call
+
 export async function fetchAllRows<T = any>(table: string, selectCols: string = '*', branchId?: string): Promise<T[]> {
+  // Guard: table name must be in the explicit allowlist
+  assertAllowedTable(table);
+
   let allData: T[] = [];
   let page = 0;
   const pageSize = 1000;
-  while (true) {
+  while (page < FETCH_ALL_ROWS_MAX_PAGES) {
     let query = supabase.from(table).select(selectCols).range(page * pageSize, (page + 1) * pageSize - 1);
     if (branchId) query = query.eq('branch_id', branchId);
     const { data, error } = await query;
@@ -680,6 +698,7 @@ export async function addPendingBill(payload: Omit<PendingBill, 'id' | 'customer
 }
 
 export async function deletePendingBill(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'pending bill id');
   const { error } = await supabase.from('pending_bills').delete().eq('id', id);
   if (error) {
     console.error('Error deleting pending bill:', error);
@@ -698,6 +717,7 @@ export async function updateEmployee(id: number, payload: Partial<Employee>): Pr
 }
 
 export async function deleteEmployee(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'employee id');
   const { error } = await supabase.from('employees').delete().eq('id', id);
   if (error) {
     console.error('Error deleting employee:', error);
@@ -707,6 +727,7 @@ export async function deleteEmployee(id: number): Promise<boolean> {
 }
 
 export async function deleteExpense(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'expense id');
   const { error } = await supabase.from('expenses').delete().eq('id', id);
   if (error) {
     console.error('Error deleting expense:', error);
@@ -716,6 +737,7 @@ export async function deleteExpense(id: number): Promise<boolean> {
 }
 
 export async function deletePart(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'part id');
   const { error } = await supabase.from('parts').delete().eq('id', id);
   if (error) {
     console.error('Error deleting part:', error);
@@ -751,6 +773,7 @@ export async function addCarExpense(payload: Omit<CarExpense, 'id' | 'customers'
 }
 
 export async function deleteCarExpense(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'car expense id');
   const { error } = await supabase.from('car_expenses').delete().eq('id', id);
   if (error) {
     console.error('Error deleting car expense:', error);
@@ -769,6 +792,7 @@ export async function updateCarExpense(id: number, payload: Partial<CarExpense>)
 }
 
 export async function deleteOhdaRecord(id: number): Promise<boolean> {
+  assertPositiveInt(id, 'ohda record id');
   const { error } = await supabase.from('ohda_records').delete().eq('id', id);
   if (error) {
     console.error('Error deleting ohda record:', error);
@@ -851,14 +875,8 @@ export async function processPendingBill(
   const { data: bill } = await supabase.from('pending_bills').select('*').eq('id', billId).single();
   if (!bill) return null;
 
-  let items: any[] = [];
-  if (bill.line_items_json) {
-    try {
-      items = JSON.parse(bill.line_items_json);
-    } catch (e) {
-      console.error('Failed to parse line_items_json:', e);
-    }
-  }
+  // Use safe parser — malformed JSON returns [] instead of throwing
+  const items: any[] = safeParseJson<any[]>(bill.line_items_json, []);
 
   // Create real repair
   const repairPayload = {
@@ -905,14 +923,10 @@ export async function addEmployeeAdjustment(
   const { data: emp } = await supabase.from('employees').select('pending_adjustments').eq('id', empId).single();
   if (!emp) return false;
 
-  let list: any[] = [];
-  if (emp.pending_adjustments) {
-    try {
-      list = typeof emp.pending_adjustments === 'string' ? JSON.parse(emp.pending_adjustments) : emp.pending_adjustments;
-    } catch (e) {
-      list = [];
-    }
-  }
+  const list: any[] = safeParseJson<any[]>(
+    typeof emp.pending_adjustments === 'string' ? emp.pending_adjustments : null,
+    Array.isArray(emp.pending_adjustments) ? emp.pending_adjustments : []
+  );
 
   list.push({
     id: Date.now(),
@@ -924,28 +938,27 @@ export async function addEmployeeAdjustment(
 
   const { error } = await supabase
     .from('employees')
-    .update({ pending_adjustments: JSON.stringify(list) })
+    .update({ pending_adjustments: safeStringifyJson(list) })
     .eq('id', empId);
 
   return !error;
 }
 
 export async function deleteEmployeeAdjustment(empId: number, adjId: number): Promise<boolean> {
+  assertPositiveInt(empId, 'empId');
   const { data: emp } = await supabase.from('employees').select('pending_adjustments').eq('id', empId).single();
   if (!emp || !emp.pending_adjustments) return false;
 
-  let list: any[] = [];
-  try {
-    list = typeof emp.pending_adjustments === 'string' ? JSON.parse(emp.pending_adjustments) : emp.pending_adjustments;
-  } catch (e) {
-    return false;
-  }
+  let list: any[] = safeParseJson<any[]>(
+    typeof emp.pending_adjustments === 'string' ? emp.pending_adjustments : null,
+    Array.isArray(emp.pending_adjustments) ? emp.pending_adjustments : []
+  );
 
   list = list.filter((item: any) => item.id !== adjId);
 
   const { error } = await supabase
     .from('employees')
-    .update({ pending_adjustments: JSON.stringify(list) })
+    .update({ pending_adjustments: safeStringifyJson(list) })
     .eq('id', empId);
 
   return !error;
